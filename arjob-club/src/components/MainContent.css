@@ -1,0 +1,86 @@
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  padding: 20px;
+}
+
+/* Título principal */
+.title {
+  display: flex;
+  font-size: 3rem; /* Maior destaque para o título */
+  color: hsl(0, 0%, 0%);
+  font-weight: bold;
+  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7); /* Adiciona contraste com o fundo */
+  margin: 0;
+  margin-right: 60%;
+}
+
+/* Subtítulo */
+.subtitle {
+  font-size: 1.2rem;
+  color: #a19b9b;
+  margin: 10px 0 30px; /* Melhor espaçamento para organização visual */
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); /* Suave para maior legibilidade */
+  font-weight: bold;
+  margin-right: 60%;
+}
+
+/* Logo ou nome do sistema */
+.logo {
+  font-size: 3.5rem;
+  font-weight: bold;
+  color: #000000;
+  text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.8); /* Cria destaque para o logo */
+  margin: 50px 0;
+  margin-bottom: 31.5%;
+}
+
+/* Rodapé */
+.footer {
+  position: absolute;
+  bottom: 10px; /* Ajusta para ficar mais próximo da borda */
+  width: 100%; /* Ocupa toda a largura da tela */
+  font-size: 0.9rem;
+  color: #ffffff;
+  background-color: rgba(
+    0,
+    0,
+    0,
+    0.6
+  ); /* Fundo semitransparente para contraste */
+  text-align: center;
+  padding: 10px 0; /* Adiciona espaçamento interno */
+  border-top: 1px solid rgba(255, 255, 255, 0.2); /* Linha sutil no topo */
+}
+
+/* Espaçamento no rodapé */
+.footer p {
+  margin: 5px 0;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .title {
+    font-size: 2.5rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+
+  .logo {
+    font-size: 2.8rem;
+  }
+
+  .footer {
+    font-size: 0.8rem;
+    padding: 8px 0;
+  }
+}
