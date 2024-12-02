@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom"; // Importa o Link para navegação
 import "./Sidebar.css";
 
 const Sidebar = () => {
@@ -7,44 +8,28 @@ const Sidebar = () => {
       <nav className="menu">
         <ul>
           <li>
-            <button>
-              <i className="bi bi-cart-plus-fill"></i> Iniciar Venda (F2)
-            </button>
+            <Link to="/iniciar-venda">Iniciar Venda (F2)</Link>
           </li>
           <li>
-            <button>
-              <i className="bi bi-list-check"></i> Listagem (F11)
-            </button>
+            <Link to="/listagem">Listagem (F11)</Link>
           </li>
           <li>
-            <button>
-              <i className="bi bi-cloud-arrow-up-fill"></i> Importar (F5)
-            </button>
+            <Link to="/importar">Importar (F5)</Link>
           </li>
           <li>
-            <button>
-              <i className="bi bi-cash-coin"></i> Receber Parcelas (F6)
-            </button>
+            <Link to="/receber-parcelas">Receber Parcelas (F6)</Link>
           </li>
           <li>
-            <button>
-              <i className="bi bi-person-fill"></i> Clientes (F7)
-            </button>
+            <Link to="/clientes">Clientes (F7)</Link>
           </li>
           <li>
-            <button>
-              <i className="bi bi-box-seam"></i> Produtos (F8)
-            </button>
+            <Link to="/produtos">Produtos (F8)</Link>
           </li>
           <li>
-            <button>
-              <i className="bi bi-arrow-repeat"></i> Troca (Ctrl + T)
-            </button>
+            <Link to="/troca">Troca (Ctrl + T)</Link>
           </li>
           <li>
-            <button>
-              <i className="bi bi-gear-fill"></i> Supervisor (F9)
-            </button>
+            <Link to="/supervisor">Supervisor (F9)</Link>
           </li>
         </ul>
       </nav>
