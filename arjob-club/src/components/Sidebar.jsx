@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom"; // Importa o Link para navegação
-import "./Sidebar.css";
+import { Link } from 'react-router-dom';  // Importe o Link do react-router-dom
+import './Sidebar.css'
 
 const Sidebar = () => {
   return (

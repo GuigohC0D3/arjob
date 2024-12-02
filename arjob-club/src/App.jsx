@@ -1,16 +1,21 @@
-import Sidebar from "./components/Sidebar";
-import MainContent from "./components/MainContent";
-import "./App.css";
-import AppRoutes from "./routes/routes"; // Importando o arquivo de rotas
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Sidebar from './components/Sidebar'; // Certifique-se de importar a Sidebar corretamente
+import MainContent from './components/MainContent';
+import IniciarVenda from './pages/IniciarVenda';
 
-const App = () => {
-  return (
-    <div className="container">
-      <Sidebar />
-      <MainContent />
-      <AppRoutes />
+const App = () => (
+  <Router>  {/* Envolva sua aplicação com o Router */}
+    <div className="app">
+      <Sidebar />  {/* Sidebar que contém os links de navegação */}
+      <div className="main-content">
+        <Routes>
+          <Route path="/" element={<MainContent />} />
+          <Route path="/iniciar-venda" element={<IniciarVenda />} />
+          {/* Outras rotas */}
+        </Routes>
+      </div>
     </div>
-  );
-};
+  </Router>
+);
 
 export default App;

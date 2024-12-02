@@ -1,74 +1,95 @@
+/* Estilo para o componente principal */
 .main-content {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
   position: relative;
+  padding: 20px;
+  background-image: url('path-to-background.jpg'); /* Ajuste o caminho para sua imagem */
   background-size: cover;
   background-position: center;
-  padding: 20px;
+  min-height: 100vh; /* Garante que o conteúdo ocupe toda a altura da tela */
 }
 
 /* Título principal */
 .title {
-  display: flex;
-  font-size: 3rem; /* Maior destaque para o título */
-  color: hsl(0, 0%, 0%);
+  font-size: 3.5rem; /* Ajuste o tamanho do título */
   font-weight: bold;
-  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7); /* Adiciona contraste com o fundo */
-  margin: 0;
-  margin-right: 60%;
+  color: #333;
+  text-shadow: 3px 3px 10px rgba(0, 0, 0, 0.6); /* Melhor contraste */
+  margin-bottom: 10px;
+  transition: all 0.3s ease; /* Animação suave */
 }
 
 /* Subtítulo */
 .subtitle {
   font-size: 1.2rem;
-  color: #a19b9b;
-  margin: 10px 0 30px; /* Melhor espaçamento para organização visual */
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); /* Suave para maior legibilidade */
-  font-weight: bold;
-  margin-right: 60%;
+  color: #bbb;
+  margin: 5px 0 20px;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
 }
 
 /* Logo ou nome do sistema */
 .logo {
-  font-size: 3.5rem;
+  font-size: 4rem;
   font-weight: bold;
-  color: #000000;
-  text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.8); /* Cria destaque para o logo */
-  margin: 50px 0;
-  margin-bottom: 31.5%;
+  color: #000;
+  text-shadow: 4px 4px 12px rgba(0, 0, 0, 0.7);
+  margin: 30px 0;
+  transition: transform 0.3s ease; /* Transição suave */
+}
+
+/* Barra de navegação (links ou botões) */
+.nav-links {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 30px;
+}
+
+.nav-links a {
+  text-decoration: none;
+  font-size: 1.2rem;
+  color: #fff;
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 10px 20px;
+  margin: 5px 0;
+  border-radius: 5px;
+  font-weight: bold;
+  text-transform: uppercase;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.nav-links a:hover {
+  background-color: #3498db;
+  transform: scale(1.1); /* Efeito de zoom suave ao passar o mouse */
 }
 
 /* Rodapé */
 .footer {
   position: absolute;
-  bottom: 10px; /* Ajusta para ficar mais próximo da borda */
-  width: 100%; /* Ocupa toda a largura da tela */
+  bottom: 20px;
+  width: 100%;
   font-size: 0.9rem;
-  color: #ffffff;
-  background-color: rgba(
-    0,
-    0,
-    0,
-    0.6
-  ); /* Fundo semitransparente para contraste */
+  color: #fff;
+  background-color: rgba(0, 0, 0, 0.7);
   text-align: center;
-  padding: 10px 0; /* Adiciona espaçamento interno */
-  border-top: 1px solid rgba(255, 255, 255, 0.2); /* Linha sutil no topo */
+  padding: 10px 0;
+  border-top: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 /* Espaçamento no rodapé */
 .footer p {
   margin: 5px 0;
+  font-size: 0.8rem;
 }
 
-/* Responsividade */
+/* Responsividade para telas menores */
 @media (max-width: 768px) {
   .title {
-    font-size: 2.5rem;
+    font-size: 2.8rem; /* Ajuste para telas menores */
   }
 
   .subtitle {
@@ -76,11 +97,16 @@
   }
 
   .logo {
-    font-size: 2.8rem;
+    font-size: 3rem;
   }
 
   .footer {
     font-size: 0.8rem;
     padding: 8px 0;
+  }
+
+  .nav-links a {
+    font-size: 1rem; /* Tamanho de fonte menor para links */
+    padding: 8px 16px;
   }
 }
