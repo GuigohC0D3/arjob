@@ -1,0 +1,224 @@
+/* Variáveis de cores para fácil manutenção */
+:root {
+    --primary-color: #3498db;
+    --primary-hover: #2980b9;
+    --secondary-color: #e74c3c;
+    --secondary-hover: #c0392b;
+    --background-color: #f4f4f9;
+    --header-color: #2c3e50;
+    --text-color: #34495e;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Container principal */
+  .iniciar-venda-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin-top: 130%;
+    background-color: var(--background-color);
+    font-family: 'Roboto', sans-serif;
+    padding: 20px;
+    gap: 20px;
+  }
+  
+  /* Cabeçalho */
+  .venda-header {
+    background-color: var(--header-color);
+    color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 4px 8px var(--shadow-color);
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  .venda-header h1 {
+    font-size: 2.2rem;
+    margin: 0;
+    font-weight: bold;
+  }
+  
+  .venda-header p {
+    font-size: 1.1rem;
+    margin-top: 8px;
+    opacity: 0.9;
+  }
+  
+  /* Conteúdo principal */
+  .venda-main {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+  }
+  
+  .venda-main h2,
+  .venda-main p {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #000;
+  }
+  
+  .venda-main input,
+  .venda-main select {
+    font-size: 1rem;
+    padding: 10px;
+    margin-top: 10px;
+    width: 100%;
+    max-width: 400px;
+    border: 1px solid var(--shadow-color);
+    border-radius: 8px;
+    background-color: #ffffff;
+    box-shadow: inset 0 2px 4px var(--shadow-color);
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  
+  .venda-main input:focus,
+  .venda-main select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 5px var(--primary-color);
+    outline: none;
+  }
+  
+  /* Lista de produtos */
+  .produtos-lista h3 {
+    font-size: 1.5rem;
+    color: #000;
+  }
+  
+  .produtos-lista ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    color: #000;
+  }
+  
+  .produtos-lista li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #ffffff;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px var(--shadow-color);
+    transition: transform 0.2s, box-shadow 0.3s;
+  }
+  
+  .produtos-lista li:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px var(--shadow-color);
+  }
+  
+  .produtos-lista button {
+    background-color: var(--primary-color);
+    color: #ffffff;
+    border: none;
+    padding: 8px 16px;
+    font-size: 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .produtos-lista button:hover {
+    background-color: var(--primary-hover);
+  }
+  
+  /* Detalhes da comanda */
+  .detalhes-comanda {
+    background-color: #ffffff;
+    color: #000;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px var(--shadow-color);
+  }
+  
+  .detalhes-comanda p {
+    font-size: 1.1rem;
+    margin: 10px 0;
+    font-weight: 600;
+    color: #000;
+  }
+  
+  /* Botões */
+  .btn {
+    background-color: var(--primary-color);
+    color: #ffffff;
+    font-size: 1.1rem;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s;
+  }
+  
+  .btn:hover {
+    background-color: var(--primary-hover);
+    transform: scale(1.05);
+  }
+  
+  .btn.voltar {
+    background-color: var(--secondary-color);
+  }
+  
+  label {
+    color: #000;
+  }
+  
+  .btn.voltar:hover {
+    background-color: var(--secondary-hover);
+  }
+  
+  /* Footer */
+  .venda-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px;
+    font-size: 0.9rem;
+    color: #000;
+  }
+  
+  /* Responsividade */
+  @media (max-width: 768px) {
+    .venda-header h1 {
+      font-size: 1.8rem;
+    }
+  
+    .venda-header p {
+      font-size: 1rem;
+    }
+  
+    .produtos-lista li {
+      font-size: 1rem;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  
+    .opcoes-comanda {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+    }
+  
+    .btn {
+      width: 100%;
+      margin-top: 10px;
+      font-size: 1rem;
+    }
+  }
+  
+  /* Animação */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  

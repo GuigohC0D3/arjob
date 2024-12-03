@@ -2,19 +2,30 @@ import './MainContent.css'
 
 const MainContent = () => {
   return (
-    <div className="main-content">
-      <h1 className="title">COMANDA LIVRE</h1>
-      <p className="subtitle">Pressione F2 para iniciar a comanda ou <br/>Pressione CTRL + F para fechar a comanda</p>
-      <div className="logo">
-        <span>ARJOB</span>
-      </div>
+    <>
+      {/* Cabeçalho */}
+      <header className="header">
+        <h1 className="title">COMANDA LIVRE</h1>
+        <p className="subtitle">
+          Pressione <strong>F2</strong> para iniciar a comanda ou <br />
+          Pressione <strong>CTRL + F</strong> para fechar a comanda
+        </p>
+      </header>
 
-      <div className="footer">
+      {/* Conteúdo principal */}
+      <main className="main">
+        <div className="logo">ARJOB</div>
+      </main>
+
+      {/* Rodapé */}
+      <footer className="footer">
         <p>Operador: ADMINISTRADOR</p>
+        <br />
         <p>Computador: CLEITON</p>
+        <br />
         <p>Servidor: 16/10/2023 16:18</p>
-      </div>
-    </div>
+      </footer>
+    </>
   );
 };
 

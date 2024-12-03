@@ -1,112 +1,80 @@
-/* Estilo para o componente principal */
-.main-content {
+/* Configurações globais */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Arial', sans-serif;
+  background: linear-gradient(135deg, #004d7a, #008793, #00bf72, #a8eb12);
+  color: white;
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+}
+
+/* Cabeçalho */
+.header {
   text-align: center;
-  position: relative;
-  padding: 20px;
-  background-image: url('path-to-background.jpg'); /* Ajuste o caminho para sua imagem */
-  background-size: cover;
-  background-position: center;
-  min-height: 100vh; /* Garante que o conteúdo ocupe toda a altura da tela */
+  margin-bottom: 2rem;
 }
 
-/* Título principal */
 .title {
-  font-size: 3.5rem; /* Ajuste o tamanho do título */
+  font-size: 3rem;
   font-weight: bold;
-  color: #333;
-  text-shadow: 3px 3px 10px rgba(0, 0, 0, 0.6); /* Melhor contraste */
-  margin-bottom: 10px;
-  transition: all 0.3s ease; /* Animação suave */
+  margin: 0;
 }
 
-/* Subtítulo */
 .subtitle {
   font-size: 1.2rem;
-  color: #bbb;
-  margin: 5px 0 20px;
-  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
+  margin: 0.5rem 0;
 }
 
-/* Logo ou nome do sistema */
-.logo {
-  font-size: 4rem;
-  font-weight: bold;
-  color: #000;
-  text-shadow: 4px 4px 12px rgba(0, 0, 0, 0.7);
-  margin: 30px 0;
-  transition: transform 0.3s ease; /* Transição suave */
+.subtitle strong {
+  color: #ffd700; /* Dourado para destaque */
 }
 
-/* Barra de navegação (links ou botões) */
-.nav-links {
+/* Conteúdo principal */
+.main {
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  margin-top: 30px;
+  flex-grow: 1;
 }
 
-.nav-links a {
-  text-decoration: none;
-  font-size: 1.2rem;
-  color: #fff;
-  background-color: rgba(0, 0, 0, 0.6);
-  padding: 10px 20px;
-  margin: 5px 0;
-  border-radius: 5px;
+.logo {
+  font-size: 5rem;
   font-weight: bold;
-  text-transform: uppercase;
-  transition: background-color 0.3s ease, transform 0.3s ease;
-}
-
-.nav-links a:hover {
-  background-color: #3498db;
-  transform: scale(1.1); /* Efeito de zoom suave ao passar o mouse */
+  color: white;
+  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+  animation: fade-in 2s ease-in-out;
 }
 
 /* Rodapé */
 .footer {
-  position: absolute;
-  bottom: 20px;
-  width: 100%;
-  font-size: 0.9rem;
-  color: #fff;
-  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.7); /* Fundo mais escuro */
+  color: white;
+  width: 100%; /* Garante que ocupe toda a largura */
+  padding: 1rem;
   text-align: center;
-  padding: 10px 0;
-  border-top: 2px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.9rem;
+  position: fixed; /* Fixa no rodapé da tela */
+  bottom: 0; /* Alinha na parte inferior */
+  left: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.3); /* Linha de separação */
 }
 
-/* Espaçamento no rodapé */
-.footer p {
-  margin: 5px 0;
-  font-size: 0.8rem;
-}
 
-/* Responsividade para telas menores */
-@media (max-width: 768px) {
-  .title {
-    font-size: 2.8rem; /* Ajuste para telas menores */
+/* Efeito de transição */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
   }
-
-  .subtitle {
-    font-size: 1rem;
-  }
-
-  .logo {
-    font-size: 3rem;
-  }
-
-  .footer {
-    font-size: 0.8rem;
-    padding: 8px 0;
-  }
-
-  .nav-links a {
-    font-size: 1rem; /* Tamanho de fonte menor para links */
-    padding: 8px 16px;
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
