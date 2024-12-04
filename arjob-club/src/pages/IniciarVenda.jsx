@@ -97,7 +97,7 @@ const IniciarVenda = () => {
 
       <main className="venda-main">
         <h2>
-          Cliente:{" "}
+          CPF:{" "}
           <input
             type="text"
             value={cliente.nome}
@@ -177,18 +177,18 @@ const IniciarVenda = () => {
           </div>
         </div>
 
+        {/* Alinhamento dos botões */}
         <div className="opcoes-comanda">
           <button onClick={finalizarComanda} className="btn finalizar">
             Finalizar Comanda
           </button>
+          <button onClick={() => navigate("/comandas")} className="btn voltar">
+            Voltar
+          </button>
         </div>
       </main>
 
-      <footer className="venda-footer">
-        <button onClick={() => navigate("/comandas")} className="btn voltar">
-          Voltar
-        </button>
-      </footer>
+      <footer className="venda-footer"></footer>
     </div>
   );
 };
