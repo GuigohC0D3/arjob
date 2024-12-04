@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';  // Importe o Link do react-router-dom
-import './Sidebar.css'
+import 'bootstrap-icons/font/bootstrap-icons.css';  // Importe os ícones do Bootstrap
+import './Sidebar.css';
 
 const Sidebar = () => {
   return (
@@ -8,28 +9,44 @@ const Sidebar = () => {
       <nav className="menu">
         <ul>
           <li>
-            <Link to="/iniciar-venda">Iniciar Venda (F2)</Link>
+            <Link to="/iniciar-venda">
+              <i className="bi bi-cart-plus"></i> Iniciar Venda (F2)
+            </Link>
           </li>
           <li>
-            <Link to="/listagem">Listagem (F11)</Link>
+            <Link to="/listagem">
+              <i className="bi bi-list-ul"></i> Listagem (F11)
+            </Link>
           </li>
           <li>
-            <Link to="/importar">Importar (F5)</Link>
+            <Link to="/importar">
+              <i className="bi bi-upload"></i> Importar (F5)
+            </Link>
           </li>
           <li>
-            <Link to="/receber-parcelas">Receber Parcelas (F6)</Link>
+            <Link to="/receber-parcelas">
+              <i className="bi bi-credit-card"></i> Receber Parcelas (F6)
+            </Link>
           </li>
           <li>
-            <Link to="/clientes">Clientes (F7)</Link>
+            <Link to="/clientes">
+              <i className="bi bi-person"></i> Clientes (F7)
+            </Link>
           </li>
           <li>
-            <Link to="/produtos">Produtos (F8)</Link>
+            <Link to="/produtos">
+              <i className="bi bi-box"></i> Produtos (F8)
+            </Link>
           </li>
           <li>
-            <Link to="/troca">Troca (Ctrl + T)</Link>
+            <Link to="/troca">
+              <i className="bi bi-arrow-repeat"></i> Troca (Ctrl + T)
+            </Link>
           </li>
           <li>
-            <Link to="/supervisor">Supervisor (F9)</Link>
+            <Link to="/supervisor">
+              <i className="bi bi-briefcase"></i> Supervisor (F9)
+            </Link>
           </li>
         </ul>
       </nav>
