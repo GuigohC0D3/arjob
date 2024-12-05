@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import MainContent from "./components/MainContent";  // Caminho ajustado para subir um nível
 import IniciarVenda from "../pages/IniciarVenda";
 import ComandasListagem from "../pages/ComandasListagem";
+import ImportarFinanceiros from "../pages/ImportarFinanceiros";
 
 const AppRoutes = () => {
   return (
@@ -12,6 +13,7 @@ const AppRoutes = () => {
         <Route path="/" element={<MainContent />} />
         <Route path="/iniciar-venda" element={<IniciarVenda />} />
         <Route path="/Listagem" element={<ComandasListagem />} />
+        <Route path="/Importar" element={<ImportarFinanceiros/>} />
       </Routes>
     </Router>
   );

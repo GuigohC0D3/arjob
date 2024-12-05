@@ -20,7 +20,7 @@ const Sidebar = () => {
           </li>
           <li>
             <Link to="/importar">
-              <i className="bi bi-upload"></i> Importar (F5)
+              <i className="bi bi-upload"></i> Exportar (F5)
             </Link>
           </li>
           <li>

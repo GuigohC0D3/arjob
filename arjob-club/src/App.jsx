@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar'; // Certifique-se de importar a Sideb
 import MainContent from './components/MainContent';
 import IniciarVenda from './pages/IniciarVenda';
 import ListagemComandas from './pages/ListagemComandas'
+import ImportarFinanceiros from './pages/ImportarFinanceiros';
 
 const App = () => (
   <Router>  {/* Envolva sua aplicação com o Router */}
@@ -13,7 +14,7 @@ const App = () => (
           <Route path="/" element={<MainContent />} />
           <Route path="/iniciar-venda" element={<IniciarVenda />} />
           <Route path="/Listagem" element={<ListagemComandas />}/>
-          {/* Outras rotas */}
+          <Route path="/Importar" element={<ImportarFinanceiros/>} />
         </Routes>
       </div>
     </div>
