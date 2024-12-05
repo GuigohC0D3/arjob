@@ -15,7 +15,7 @@ const Sidebar = () => {
           </li>
           <li>
             <Link to="/listagem">
-              <i className="bi bi-list-ul"></i> Listagem (F11)
+              <i className="bi bi-list-ul"></i> Histórico (F11)
             </Link>
           </li>
           <li>
