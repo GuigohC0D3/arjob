@@ -2,10 +2,10 @@ import { useState, useRef } from "react";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
 import { Button } from "primereact/button";
-import 'primeicons/primeicons.css'; // Ícones
-import 'primeflex/primeflex.css'; // Classes utilitárias (flex, etc.)
-import 'primereact/resources/primereact.min.css'; // CSS base do PrimeReact
-import 'primereact/resources/themes/lara-light-blue/theme.css'; // Tema do PrimeReact (exemplo)
+import "primeicons/primeicons.css"; // Ícones
+import "primeflex/primeflex.css"; // Classes utilitárias (flex, etc.)
+import "primereact/resources/primereact.min.css"; // CSS base do PrimeReact
+import "primereact/resources/themes/lara-light-blue/theme.css"; // Tema do PrimeReact
 import "./CadastroCliente.css";
 
 const CadastroCliente = () => {
@@ -36,8 +36,8 @@ const CadastroCliente = () => {
       detail: "Cliente cadastrado com sucesso!",
       life: 3000,
     });
-    // Lógica de cadastro do cliente
     console.log("Cliente cadastrado: ", cliente);
+    // Limpar formulário
     setCliente({
       nome: "",
       cpf: "",
@@ -60,6 +60,7 @@ const CadastroCliente = () => {
 
   const confirmSubmit = () => {
     confirmDialog({
+      group: "headless",
       message: "Tem certeza de que deseja cadastrar este cliente?",
       header: "Confirmação de Cadastro",
       icon: "pi pi-exclamation-triangle",
@@ -71,17 +72,14 @@ const CadastroCliente = () => {
   return (
     <>
       <Toast ref={toast} />
-      <ConfirmDialog 
+      <ConfirmDialog
         group="headless"
         content={({ headerRef, contentRef, footerRef, hide, message }) => (
           <div className="flex flex-column align-items-center p-5 surface-overlay border-round">
             <div className="border-circle bg-primary inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-8">
               <i className="pi pi-question text-5xl"></i>
             </div>
-            <span
-              className="font-bold text-2xl block mb-2 mt-4"
-              ref={headerRef}
-            >
+            <span className="font-bold text-2xl block mb-2 mt-4" ref={headerRef}>
               {message.header}
             </span>
             <p className="mb-0" ref={contentRef}>
@@ -91,8 +89,8 @@ const CadastroCliente = () => {
               <Button
                 label="Salvar"
                 onClick={(event) => {
-                  hide(event); // Esconde o diálogo
-                  accept();    // Chama o método accept para cadastrar o cliente
+                  hide(event);
+                  accept();
                 }}
                 className="w-8rem"
               />
@@ -100,8 +98,8 @@ const CadastroCliente = () => {
                 label="Cancelar"
                 outlined
                 onClick={(event) => {
-                  hide(event); // Esconde o diálogo
-                  reject();    // Chama o método reject
+                  hide(event);
+                  reject();
                 }}
                 className="w-8rem"
               />
@@ -205,7 +203,8 @@ const CadastroCliente = () => {
           <Button
             type="button"
             label="Cadastrar Cliente"
-            onClick={confirmSubmit} // Exibe a confirmação
+            onClick={confirmSubmit}
+            className="p-button-success"
           />
         </form>
       </div>
