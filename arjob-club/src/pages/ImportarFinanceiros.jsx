@@ -24,6 +24,7 @@ ChartJS.register(
 
 const ImportarFinanceiros = () => {
   const [file, setFile] = useState(null);
+  const [fileName, setFileName] = useState("");
   const [preview, setPreview] = useState([]);
   const [uploadStatus, setUploadStatus] = useState("");
   const [dashboardData, setDashboardData] = useState(null);
@@ -32,8 +33,18 @@ const ImportarFinanceiros = () => {
     const uploadedFile = event.target.files[0];
     if (uploadedFile) {
       setFile(uploadedFile);
-      parseFile(uploadedFile);
+      setFileName(uploadedFile.name); // Exibe o nome do arquivo
     }
+  };
+
+  const handleUpload = () => {
+    if (!file) {
+      setUploadStatus("Por favor, selecione um arquivo.");
+      return;
+    }
+
+    parseFile(file); // Processa o arquivo ao clicar em "Importar"
+    setUploadStatus("Arquivo importado com sucesso!");
   };
 
   const parseFile = (uploadedFile) => {
@@ -90,15 +101,6 @@ const ImportarFinanceiros = () => {
     });
   };
 
-  const handleUpload = () => {
-    if (!file) {
-      setUploadStatus("Por favor, selecione um arquivo.");
-      return;
-    }
-
-    setUploadStatus("Arquivo importado com sucesso!");
-  };
-
   return (
     <div className="importar-container">
       <h1>Importar Dados Financeiros</h1>
@@ -112,6 +114,7 @@ const ImportarFinanceiros = () => {
           accept=".csv"
           onChange={handleFileChange}
         />
+        {fileName && <p className="file-name">Arquivo selecionado: {fileName}</p>}
         <button onClick={handleUpload} className="btn-import">
           Importar
         </button>

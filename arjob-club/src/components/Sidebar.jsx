@@ -1,6 +1,6 @@
-import { Link } from 'react-router-dom';  // Importe o Link do react-router-dom
-import 'bootstrap-icons/font/bootstrap-icons.css';  // Importe os ícones do Bootstrap
-import './Sidebar.css';
+import { Link } from "react-router-dom"; // Importe o Link do react-router-dom
+import "bootstrap-icons/font/bootstrap-icons.css"; // Importe os ícones do Bootstrap
+import "./Sidebar.css";
 
 const Sidebar = () => {
   return (
@@ -29,7 +29,7 @@ const Sidebar = () => {
             </Link>
           </li>
           <li>
-            <Link to="/clientes">
+            <Link to="/Cliente">
               <i className="bi bi-person"></i> Clientes (F7)
             </Link>
           </li>

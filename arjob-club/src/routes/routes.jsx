@@ -5,6 +5,7 @@ import MainContent from "./components/MainContent";  // Caminho ajustado para su
 import IniciarVenda from "../pages/IniciarVenda";
 import ComandasListagem from "../pages/ComandasListagem";
 import ImportarFinanceiros from "../pages/ImportarFinanceiros";
+import CadastroCliente from "../pages/CadastroCliente";
 
 const AppRoutes = () => {
   return (
@@ -14,6 +15,7 @@ const AppRoutes = () => {
         <Route path="/iniciar-venda" element={<IniciarVenda />} />
         <Route path="/Listagem" element={<ComandasListagem />} />
         <Route path="/Importar" element={<ImportarFinanceiros/>} />
+        <Route path="/Cliente" element={<CadastroCliente/>} />
       </Routes>
     </Router>
   );

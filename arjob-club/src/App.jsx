@@ -4,6 +4,7 @@ import MainContent from './components/MainContent';
 import IniciarVenda from './pages/IniciarVenda';
 import ListagemComandas from './pages/ListagemComandas'
 import ImportarFinanceiros from './pages/ImportarFinanceiros';
+import CadastroCliente from './pages/CadastroCliente';
 
 const App = () => (
   <Router>  {/* Envolva sua aplicação com o Router */}
@@ -15,6 +16,7 @@ const App = () => (
           <Route path="/iniciar-venda" element={<IniciarVenda />} />
           <Route path="/Listagem" element={<ListagemComandas />}/>
           <Route path="/Importar" element={<ImportarFinanceiros/>} />
+          <Route path="/Cliente" element={<CadastroCliente/>} />
         </Routes>
       </div>
     </div>
