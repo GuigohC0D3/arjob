@@ -1,0 +1,125 @@
+/* Estilo geral */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f9f9f9;
+  }
+  
+  /* Container principal */
+  .fluxo-de-caixa {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  h2, h3 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  
+  /* Formulário */
+  .formulario {
+    margin-bottom: 20px;
+  }
+  
+  .formulario .p-dropdown,
+  .formulario .p-inputtext,
+  .formulario .p-calendar {
+    width: 100%;
+    margin-bottom: 15px;
+  }
+  
+  .formulario .p-button {
+    width: 100%;
+    background-color: #007bff;
+    border: none;
+    font-weight: bold;
+  }
+  
+  .formulario .p-button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Resumo */
+  .resumo-saldo {
+    text-align: center;
+    background-color: #e3f2fd;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+  
+  .resumo-saldo p {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 0;
+    color: #007bff;
+  }
+  
+  /* Tabela de movimentações */
+  .tabela-movimentacoes .p-datatable {
+    border: none;
+  }
+  
+  .tabela-movimentacoes .p-datatable-header {
+    background-color: #f1f1f1;
+    color: #333;
+    font-weight: bold;
+  }
+  
+  .tabela-movimentacoes .p-datatable .p-column-title {
+    font-weight: bold;
+    color: #555;
+  }
+  
+  .tabela-movimentacoes .p-datatable-tbody > tr > td {
+    padding: 10px;
+    text-align: center;
+  }
+  
+  .tabela-movimentacoes .p-datatable-tbody > tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  
+  /* Botões */
+  .p-button-success {
+    background-color: #28a745;
+    border: none;
+  }
+  
+  .p-button-success:hover {
+    background-color: #218838;
+  }
+  
+  .p-button-warning {
+    background-color: #ffc107;
+    border: none;
+  }
+  
+  .p-button-warning:hover {
+    background-color: #e0a800;
+  }
+  
+  /* Responsividade */
+  @media (max-width: 768px) {
+    .fluxo-de-caixa {
+      padding: 15px;
+    }
+  
+    .formulario .p-dropdown,
+    .formulario .p-inputtext,
+    .formulario .p-calendar,
+    .formulario .p-button {
+      font-size: 14px;
+    }
+  
+    .resumo-saldo p {
+      font-size: 16px;
+    }
+  }
+  

@@ -24,7 +24,7 @@ const Sidebar = () => {
             </Link>
           </li>
           <li>
-            <Link to="/receber-parcelas">
+            <Link to="/Fluxo">
               <i className="bi bi-credit-card"></i> Receber Parcelas (F6)
             </Link>
           </li>

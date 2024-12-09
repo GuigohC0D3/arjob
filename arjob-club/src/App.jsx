@@ -5,6 +5,7 @@ import IniciarVenda from './pages/IniciarVenda';
 import ListagemComandas from './pages/ListagemComandas'
 import ImportarFinanceiros from './pages/ImportarFinanceiros';
 import CadastroCliente from './pages/CadastroCliente';
+import FluxoDeCaixa from './pages/FluxoDeCaixa';
 
 const App = () => (
   <Router>  {/* Envolva sua aplicação com o Router */}
@@ -17,6 +18,7 @@ const App = () => (
           <Route path="/Listagem" element={<ListagemComandas />}/>
           <Route path="/Importar" element={<ImportarFinanceiros/>} />
           <Route path="/Cliente" element={<CadastroCliente/>} />
+          <Route path="/Fluxo" element={<FluxoDeCaixa/>} />
         </Routes>
       </div>
     </div>

@@ -6,6 +6,7 @@ import IniciarVenda from "../pages/IniciarVenda";
 import ComandasListagem from "../pages/ComandasListagem";
 import ImportarFinanceiros from "../pages/ImportarFinanceiros";
 import CadastroCliente from "../pages/CadastroCliente";
+import FluxoDeCaixa from "../pages/FluxoDeCaixa";
 
 const AppRoutes = () => {
   return (
@@ -16,6 +17,7 @@ const AppRoutes = () => {
         <Route path="/Listagem" element={<ComandasListagem />} />
         <Route path="/Importar" element={<ImportarFinanceiros/>} />
         <Route path="/Cliente" element={<CadastroCliente/>} />
+        <Route path="/Fluxo" element={<FluxoDeCaixa/>} />
       </Routes>
     </Router>
   );
