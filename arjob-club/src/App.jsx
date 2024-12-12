@@ -11,12 +11,11 @@ import Preloading from './pages/Preloading';
 
 // Renomeamos o componente interno para evitar conflitos
 const AppContent = () => {
-  const location = useLocation(); // Hook para obter a rota atual
+  const location = useLocation(); 
   const isLoginPage = location.pathname === '/'; // Verifica se a página atual é a de login
 
   return (
     <>
-      {/* Renderiza a sidebar apenas se não for a página de login */}
       {!isLoginPage && <Sidebar />}
 
       <div className={`main-content ${isLoginPage ? 'login-page' : ''}`}>

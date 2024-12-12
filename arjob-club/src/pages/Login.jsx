@@ -10,8 +10,7 @@ const Login = () => {
 
   const handleLogin = (e) => {
     e.preventDefault();
-
-    // Exemplo de validação simples (troque por uma chamada à API se necessário)
+    
     if (cpf === "12345678900" && senha === "admin") {
       navigate("/home"); // Redireciona para a página principal
     } else {
@@ -21,7 +20,7 @@ const Login = () => {
 
   return (
     <div className="login-container">
-      <h2>Login</h2>
+      <h2>Entrada no Sistema</h2>
       {error && <p className="error-message">{error}</p>}
       <form onSubmit={handleLogin}>
         <div className="input-group">

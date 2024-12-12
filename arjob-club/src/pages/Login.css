@@ -1,13 +1,11 @@
 /* Global Reset */
 /* Container Principal */
 .login-container {
-  width: 100%;
-  max-width: 400px;
-  padding: 2rem;
+  width: 300px; /* Largura do formulário */
+  background: rgba(255, 255, 255, 0.9); /* Fundo semi-transparente */
+  padding: 20px;
   border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  background-color: #ffffff;
-  text-align: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Sombra leve */
 }
 
 .login-container h2 {

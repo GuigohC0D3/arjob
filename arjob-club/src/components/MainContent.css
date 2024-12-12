@@ -1,15 +1,13 @@
 /* Configurações globais */
 body {
-  font-family: 'Roboto', Arial, sans-serif;
   margin: 0;
   padding: 0;
-  height: 100vh; /* Altura total da viewport */
-  display: flex; /* Flexbox para centralização */
+  display: flex;
   justify-content: center; /* Centraliza horizontalmente */
   align-items: center; /* Centraliza verticalmente */
-  background-color: #f4f4f9; /* Cor de fundo */
+  height: 100vh; /* Garante que o contêiner ocupe a altura total da tela */
+  background-color: #b3d9ff; /* Fundo azul claro, caso seja necessário */
 }
-
 
 /* Cabeçalho */
 .header {
@@ -64,7 +62,6 @@ body {
   left: 0;
   border-top: 1px solid rgba(255, 255, 255, 0.3); /* Linha de separação */
 }
-
 
 /* Efeito de transição */
 @keyframes fade-in {
