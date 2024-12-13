@@ -1,196 +1,147 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useComanda } from "../Hooks/UseComanda"; // Importando o hook para o contexto
 import "./IniciarVenda.css";
 
 const IniciarVenda = () => {
-  const { adicionarComanda } = useComanda(); // Acessando a função para adicionar uma comanda
-  const [cliente, setCliente] = useState({ nome: "Cleiton", mesa: "5" });
-  const [produtos, setProdutos] = useState([
-    { nome: "Produto 1", preco: 15.0, quantidade: 1 },
-    { nome: "Produto 2", preco: 20.0, quantidade: 2 },
-  ]);
-  const [couvert, setCouvert] = useState(10.0);
-  const [servico, setServico] = useState(10.0); // 10%
-  const [status, setStatus] = useState("Aberta"); // Status inicial da comanda
-  const navigate = useNavigate(); // Usando useNavigate para navegação
+  const [selectedMesa, setSelectedMesa] = useState(null); // Armazena a mesa selecionada
+  const [comandas, setComandas] = useState({}); // Armazena as comandas por mesa
+  const [novaComanda, setNovaComanda] = useState(""); // Armazena o número da nova comanda
+  const [produtos, setProdutos] = useState([]); // Armazena os produtos filtrados
+  const categorias = ["Entradas", "Pratos", "Bebidas", "Sobremesas"]; // Categorias para filtro
 
-  // Função para adicionar quantidade de produto
-  const adicionarProduto = (index) => {
-    const novosProdutos = [...produtos];
-    novosProdutos[index].quantidade += 1;
-    setProdutos(novosProdutos); // Atualizando o estado
-  };
+  const produtosMock = [
+    { id: 1, nome: "Cerveja", preco: 8.0, categoria: "Bebidas" },
+    { id: 2, nome: "Coca-Cola", preco: 5.0, categoria: "Bebidas" },
+    { id: 3, nome: "Picanha", preco: 45.0, categoria: "Pratos" },
+    { id: 4, nome: "Petit Gateau", preco: 20.0, categoria: "Sobremesas" },
+  ]; // Produtos de exemplo
 
-  // Função para remover um produto
-  const removerProduto = (index) => {
-    const novosProdutos = [...produtos];
-    if (novosProdutos[index].quantidade > 1) {
-      novosProdutos[index].quantidade -= 1;
+  const mesas = Array.from({ length: 20 }, (_, i) => i + 1); // Gera as mesas de 1 a 20
+
+  const handleMesaClick = (mesa) => {
+    if (comandas[mesa]) {
+      // Se a mesa já tem comanda, vai para a tela da comanda
+      setSelectedMesa(mesa);
+    } else {
+      // Se a mesa está disponível, abre opção para nova comanda
+      setSelectedMesa(mesa);
     }
-    setProdutos(novosProdutos); // Atualizando o estado
   };
 
-  // Função para atualizar o valor do couvert
-  const atualizarCouvert = (valor) => {
-    setCouvert(valor); // Atualizando o estado
-  };
-
-  // Função para atualizar o serviço (10%)
-  const atualizarServico = (valor) => {
-    setServico(valor); // Atualizando o estado
-  };
-
-  // Função para alterar o nome do cliente
-  const alterarNomeCliente = (novoNome) => {
-    setCliente({ ...cliente, nome: novoNome });
-  };
-
-  // Função para alterar a mesa do cliente
-  const alterarMesaCliente = (novaMesa) => {
-    setCliente({ ...cliente, mesa: novaMesa });
-  };
-
-  // Função para finalizar a comanda e salvar
-  const finalizarComanda = () => {
-    const comanda = {
-      cliente,
-      produtos,
-      couvert,
-      servico,
-      total: calcularTotal(),
-      status: "Fechada", // Mudando o status para "Fechada" quando a comanda é finalizada
-      data: new Date().toLocaleString(),
-    };
-
-    // Adicionando a comanda ao contexto global
-    adicionarComanda(comanda);
-
-    // Atualizando o status da comanda para "Fechada"
-    setStatus("Fechada");
-
-    // Redirecionando para a página de listagem
-    navigate("/comandas"); // Usando navigate para redirecionar
-  };
-
-  // Função para alterar o status manualmente (exemplo: "Fechada", "Aberta", "Cancelada", etc.)
-  const alterarStatus = (novoStatus) => {
-    setStatus(novoStatus);
-  };
-
-  // Calculando o total da comanda
-  const calcularTotal = () => {
-    const totalProdutos = produtos.reduce(
-      (total, produto) => total + produto.preco * produto.quantidade,
-      0
-    );
-    const totalServico = (totalProdutos * servico) / 100;
-    return totalProdutos + totalServico + couvert;
+  const handleAbrirComanda = () => {
+    setComandas({ ...comandas, [selectedMesa]: novaComanda });
+    setNovaComanda("");
   };
 
   return (
-    <div className="iniciar-venda-container">
-      <header className="venda-header">
-        <h1>Iniciar Venda</h1>
-        <p>Dados do Cliente e Produtos</p>
-      </header>
-
-      <main className="venda-main">
-        <h2>
-          CPF:{" "}
-          <input
-            type="text"
-            value={cliente.nome}
-            onChange={(e) => alterarNomeCliente(e.target.value)}
-            className="input-cliente"
-          />
-        </h2>
-        <p>
-          Mesa:{" "}
-          <input
-            type="text"
-            value={cliente.mesa}
-            onChange={(e) => alterarMesaCliente(e.target.value)}
-            className="input-mesa"
-          />
-        </p>
-
-        <div className="produtos-lista">
-          <h3>Produtos Consumidos</h3>
-          <ul>
-            {produtos.map((produto, index) => (
-              <li key={index}>
-                {produto.nome} - R${produto.preco} x {produto.quantidade}
-                <button onClick={() => adicionarProduto(index)}>+</button>
-                <button onClick={() => removerProduto(index)}>-</button>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="detalhes-comanda">
-          <p>Couvert: R${couvert}</p>
-          <p>Serviço (10%): R${(calcularTotal() - couvert).toFixed(2)}</p>
-          <p>Total: R${calcularTotal().toFixed(2)}</p>
-
-          <div>
-            <label>
-              Alterar Couvert:{" "}
-              <input
-                type="number"
-                value={couvert}
-                onChange={(e) => atualizarCouvert(parseFloat(e.target.value))}
-                min="0"
-                step="0.01"
-                className="input-couvert"
-              />
-            </label>
-          </div>
-
-          <div>
-            <label>
-              Alterar Serviço (%):{" "}
-              <input
-                type="number"
-                value={servico}
-                onChange={(e) => atualizarServico(parseFloat(e.target.value))}
-                min="0"
-                max="100"
-                className="input-servico"
-              />
-            </label>
-          </div>
-
-          {/* Alteração do Status da Comanda */}
-          <div className="status-comanda">
-            <label>Status da Comanda:</label>
-            <select
-              value={status}
-              onChange={(e) => alterarStatus(e.target.value)}
-              className="input-status"
+    <>
+      {/* Tela principal: Seleção de mesa */}
+      {!selectedMesa && (
+        <div className="mesas-container">
+          {mesas.map((mesa) => (
+            <button
+              key={mesa}
+              className={`mesa ${comandas[mesa] ? "ocupada" : "disponivel"}`}
+              onClick={() => handleMesaClick(mesa)}
             >
-              <option value="Aberta">Aberta</option>
-              <option value="Fechada">Fechada</option>
-              <option value="Cancelada">Cancelada</option>
-              <option value="Em Andamento">Em Andamento</option>
-            </select>
+              {mesa}
+              {comandas[mesa] && (
+                <div className="comanda-info">
+                  <p>Tempo: 4H45M</p>
+                  <p>Total: R$340,00</p>
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Tela de nova comanda */}
+      {selectedMesa && !comandas[selectedMesa] && (
+        <div className="nova-comanda">
+          <h2>Abertura de comanda</h2>
+          <p>Mesa: {selectedMesa}</p>
+          <input
+            type="text"
+            placeholder="Número da Comanda"
+            value={novaComanda}
+            onChange={(e) => setNovaComanda(e.target.value)}
+          />
+          <div className="botoes">
+            <button className="voltar" onClick={() => setSelectedMesa(null)}>
+              Voltar
+            </button>
+            <button
+              className="abrir"
+              onClick={handleAbrirComanda}
+              disabled={!novaComanda}
+            >
+              Abrir Comanda
+            </button>
           </div>
         </div>
+      )}
 
-        {/* Alinhamento dos botões */}
-        <div className="opcoes-comanda">
-          <button onClick={finalizarComanda} className="btn finalizar">
-            Finalizar Comanda
-          </button>
-          <button onClick={() => navigate("/comandas")} className="btn voltar">
-            Voltar
-          </button>
+      {/* Tela da comanda da mesa */}
+      {selectedMesa && comandas[selectedMesa] && (
+        <div className="comanda-mesa">
+          <div className="header-comanda">
+            <div className="comanda-info">
+              <h2>Comanda: {comandas[selectedMesa]}</h2>
+              <p>Mesa: {selectedMesa}</p>
+              <p>Garçom: Guilherme</p>
+              <p>Tempo: 14h45m</p>
+            </div>
+            <div className="valor-comanda">
+              <h2>R$340,00</h2>
+              <p>Serviço (10%): R$ 20,00</p>
+            </div>
+          </div>
+
+          <div className="categorias">
+            {categorias.map((categoria) => (
+              <button
+                key={categoria}
+                className="categoria-btn"
+                onClick={() => {
+                  // Lógica para filtrar produtos por categoria
+                  setProdutos(
+                    produtosMock.filter((produto) => produto.categoria === categoria)
+                  );
+                }}
+              >
+                {categoria}
+              </button>
+            ))}
+          </div>
+
+          <div className="itens">
+            <h3>Itens não enviados</h3>
+            {produtos.length > 0 ? (
+              <div className="produtos-grid">
+                {produtos.map((produto) => (
+                  <div key={produto.id} className="produto-card">
+                    <p>{produto.nome}</p>
+                    <p>R$ {produto.preco.toFixed(2)}</p>
+                    <button className="add-carrinho">Adicionar</button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>Nenhum item novo adicionado</p>
+            )}
+          </div>
+
+          <div className="botoes">
+            <button className="voltar" onClick={() => setSelectedMesa(null)}>
+              Voltar
+            </button>
+            <button className="cancelar">Cancelar Venda</button>
+          </div>
         </div>
-      </main>
-
-      <footer className="venda-footer"></footer>
-    </div>
+      )}
+    </>
   );
 };
 
 export default IniciarVenda;
+   
