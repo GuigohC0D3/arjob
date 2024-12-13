@@ -2,20 +2,20 @@ import { useState } from "react";
 import "./IniciarVenda.css";
 
 const IniciarVenda = () => {
-  const [selectedMesa, setSelectedMesa] = useState(null); // Armazena a mesa selecionada
-  const [comandas, setComandas] = useState({}); // Armazena as comandas por mesa
-  const [novaComanda, setNovaComanda] = useState(""); // Armazena o número da nova comanda
-  const [produtos, setProdutos] = useState([]); // Armazena os produtos filtrados
-  const categorias = ["Entradas", "Pratos", "Bebidas", "Sobremesas"]; // Categorias para filtro
+  const [selectedMesa, setSelectedMesa] = useState(null);
+  const [comandas, setComandas] = useState({}); 
+  const [novaComanda, setNovaComanda] = useState(""); 
+  const [produtos, setProdutos] = useState([]); 
+  const categorias = ["Entradas", "Pratos", "Bebidas", "Sobremesas"]; 
 
   const produtosMock = [
-    { id: 1, nome: "Cerveja", preco: 8.0, categoria: "Bebidas" },
+    { id: 1, nome: "Cerveja", preco: 12.0, categoria: "Bebidas" },
     { id: 2, nome: "Coca-Cola", preco: 5.0, categoria: "Bebidas" },
-    { id: 3, nome: "Picanha", preco: 45.0, categoria: "Pratos" },
+    { id: 3, nome: "Picanha", preco: 45.99, categoria: "Pratos" },
     { id: 4, nome: "Petit Gateau", preco: 20.0, categoria: "Sobremesas" },
-  ]; // Produtos de exemplo
+  ]; 
 
-  const mesas = Array.from({ length: 20 }, (_, i) => i + 1); // Gera as mesas de 1 a 20
+  const mesas = Array.from({ length: 20 }, (_, i) => i + 1); 
 
   const handleMesaClick = (mesa) => {
     if (comandas[mesa]) {
