@@ -3,26 +3,27 @@ import "./IniciarVenda.css";
 
 const IniciarVenda = () => {
   const [selectedMesa, setSelectedMesa] = useState(null);
-  const [comandas, setComandas] = useState({}); 
-  const [novaComanda, setNovaComanda] = useState(""); 
-  const [produtos, setProdutos] = useState([]); 
-  const categorias = ["Entradas", "Pratos", "Bebidas", "Sobremesas"]; 
+  const [comandas, setComandas] = useState({});
+  const [novaComanda, setNovaComanda] = useState("");
+  const [produtos, setProdutos] = useState([]);
+  const [historicoComandas, setHistoricoComandas] = useState([]); // Histórico de comandas
+  const [mostrarFecharComanda, setMostrarFecharComanda] = useState(false); // Modal de fechar comanda
+
+  const categorias = ["Entradas", "Pratos", "Bebidas", "Sobremesas"];
 
   const produtosMock = [
     { id: 1, nome: "Cerveja", preco: 12.0, categoria: "Bebidas" },
     { id: 2, nome: "Coca-Cola", preco: 5.0, categoria: "Bebidas" },
     { id: 3, nome: "Picanha", preco: 45.99, categoria: "Pratos" },
     { id: 4, nome: "Petit Gateau", preco: 20.0, categoria: "Sobremesas" },
-  ]; 
+  ];
 
-  const mesas = Array.from({ length: 20 }, (_, i) => i + 1); 
+  const mesas = Array.from({ length: 20 }, (_, i) => i + 1);
 
   const handleMesaClick = (mesa) => {
     if (comandas[mesa]) {
-      // Se a mesa já tem comanda, vai para a tela da comanda
       setSelectedMesa(mesa);
     } else {
-      // Se a mesa está disponível, abre opção para nova comanda
       setSelectedMesa(mesa);
     }
   };
@@ -30,6 +31,26 @@ const IniciarVenda = () => {
   const handleAbrirComanda = () => {
     setComandas({ ...comandas, [selectedMesa]: novaComanda });
     setNovaComanda("");
+  };
+
+  const handleFecharComanda = () => {
+    // Adicionar a comanda atual ao histórico
+    const comandaFechada = {
+      mesa: selectedMesa,
+      comanda: comandas[selectedMesa],
+      total: 340.0, // Valor fixo apenas para exemplo
+      dataFechamento: new Date(),
+    };
+    setHistoricoComandas([...historicoComandas, comandaFechada]);
+
+    // Remover a comanda da mesa atual
+    const novasComandas = { ...comandas };
+    delete novasComandas[selectedMesa];
+    setComandas(novasComandas);
+
+    // Fechar modal e limpar seleção
+    setMostrarFecharComanda(false);
+    setSelectedMesa(null);
   };
 
   return (
@@ -103,7 +124,6 @@ const IniciarVenda = () => {
                 key={categoria}
                 className="categoria-btn"
                 onClick={() => {
-                  // Lógica para filtrar produtos por categoria
                   setProdutos(
                     produtosMock.filter((produto) => produto.categoria === categoria)
                   );
@@ -135,8 +155,46 @@ const IniciarVenda = () => {
             <button className="voltar" onClick={() => setSelectedMesa(null)}>
               Voltar
             </button>
-            <button className="cancelar">Cancelar Venda</button>
+            <button className="dividir">Dividir Conta</button>
+            <button
+              className="fechar"
+              onClick={() => setMostrarFecharComanda(true)}
+            >
+              Fechar Comanda
+            </button>
+          
           </div>
+        </div>
+      )}
+
+      {/* Modal para fechar comanda */}
+      {mostrarFecharComanda && (
+        <div className="modal">
+          <h2>Fechar Comanda</h2>
+          <p>Deseja imprimir a comanda ou baixar em PDF?</p>
+          <div className="botoes">
+            <button
+              className="imprimir"
+              onClick={() => alert("Comanda enviada para impressão!")}
+            >
+              Imprimir
+            </button>
+            <button
+              className="pdf"
+              onClick={() => alert("Comanda baixada em PDF!")}
+            >
+              Baixar PDF
+            </button>
+            <button
+              className="cancelar"
+              onClick={() => setMostrarFecharComanda(false)}
+            >
+              Cancelar
+            </button>
+          </div>
+          <button className="confirmar" onClick={handleFecharComanda}>
+            Confirmar Fechamento
+          </button>
         </div>
       )}
     </>
@@ -144,4 +202,3 @@ const IniciarVenda = () => {
 };
 
 export default IniciarVenda;
-   

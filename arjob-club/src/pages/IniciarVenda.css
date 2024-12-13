@@ -230,6 +230,49 @@ input {
   color: #666;
 }
 
+/* Modal horizontal para dividir a conta */
+.modal .opcoes-divisao {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.modal .opcoes-divisao label {
+  display: flex;
+  flex-direction: column;
+  font-size: 16px;
+  color: #333;
+  gap: 5px;
+}
+
+.modal .opcoes-divisao input {
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  max-width: 100px;
+}
+
+.modal .opcoes-divisao button {
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: #3498db;
+  color: white;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.modal .opcoes-divisao button:hover {
+  background-color: #2980b9;
+  transform: translateY(-3px);
+}
+
+
 /* Responsividade */
 @media (max-width: 768px) {
   .mesas-container {
