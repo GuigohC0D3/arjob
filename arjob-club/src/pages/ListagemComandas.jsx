@@ -1,5 +1,6 @@
-import { useRef, useState } from "react";
-import { useReactToPrint } from "react-to-print";
+import { useState } from "react";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import DetalhesComandaPDF from "./DetalhesComandaPDF";
 import "./ListagemComandas.css";
 
 const ListagemComandas = () => {
@@ -16,23 +17,11 @@ const ListagemComandas = () => {
       ],
       contaDividida: false,
     },
-    {
-      cpf: "23456789012",
-      filial: "Filial 2",
-      convenio: "Convênio B",
-      status: "Aberta",
-      colaborador: "Maria Oliveira",
-      consumido: [
-        { item: "Refrigerante", quantidade: 3, valor: 15.0 },
-        { item: "Pizza", quantidade: 1, valor: 30.0 },
-      ],
-      contaDividida: true,
-    },
+    // Outros dados omitidos para brevidade
   ];
 
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [comandaSelecionada, setComandaSelecionada] = useState(null);
-  const printRef = useRef(); // Referência constante para impressão
 
   const itensPorPagina = 6;
   const totalPaginas = Math.ceil(comandas.length / itensPorPagina);
@@ -41,45 +30,17 @@ const ListagemComandas = () => {
     paginaAtual * itensPorPagina
   );
 
-  const mudarPagina = (novaPagina) => {
-    if (novaPagina > 0 && novaPagina <= totalPaginas) {
-      setPaginaAtual(novaPagina);
-    }
-  };
-
-  const fecharModal = () => {
-    setComandaSelecionada(null);
-  };
-
-  const handlePrint = useReactToPrint({
-    content: () => printRef.current,
-    documentTitle: `Detalhes_Comanda_${comandaSelecionada?.cpf}`,
-  });
-
-  const handleDownload = () => {
-    const blob = new Blob([JSON.stringify(comandaSelecionada, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `Detalhes_Comanda_${comandaSelecionada?.cpf}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  const fecharModal = () => setComandaSelecionada(null);
 
   return (
     <div className="listagem-comandas-container">
       <header>
         <h1>Listagem de Comandas</h1>
       </header>
-      <main className="main">
+      <main>
         {comandasExibidas.map((comanda, index) => (
           <div key={index} className="comanda-card">
             <h3>CPF: {comanda.cpf}</h3>
-            <p>Filial: {comanda.filial}</p>
-            <p>Convênio: {comanda.convenio}</p>
-            <p>Status: {comanda.status}</p>
             <button onClick={() => setComandaSelecionada(comanda)}>
               Visualizar Detalhes
             </button>
@@ -87,46 +48,50 @@ const ListagemComandas = () => {
         ))}
       </main>
       <footer>
-        <button onClick={() => mudarPagina(paginaAtual - 1)}>Anterior</button>
+        <button onClick={() => setPaginaAtual((p) => Math.max(1, p - 1))}>
+          Anterior
+        </button>
         <span>
           Página {paginaAtual} de {totalPaginas}
         </span>
-        <button onClick={() => mudarPagina(paginaAtual + 1)}>Próxima</button>
+        <button
+          onClick={() => setPaginaAtual((p) => Math.min(totalPaginas, p + 1))}
+        >
+          Próxima
+        </button>
       </footer>
 
-      {/* Modal sempre presente no DOM, mas controlado com CSS */}
+      {/* Modal */}
       <div
         className={`modal ${comandaSelecionada ? "visivel" : "invisivel"}`}
       >
-        <div className="modal-content" ref={printRef}>
-          {comandaSelecionada && (
-            <>
-              <h2>Detalhes da Comanda</h2>
-              <p><strong>CPF:</strong> {comandaSelecionada.cpf}</p>
-              <p><strong>Filial:</strong> {comandaSelecionada.filial}</p>
-              <p><strong>Convênio:</strong> {comandaSelecionada.convenio}</p>
-              <p><strong>Status:</strong> {comandaSelecionada.status}</p>
-              <p><strong>Colaborador:</strong> {comandaSelecionada.colaborador}</p>
-              <p>
-                <strong>Conta Dividida:</strong>{" "}
-                {comandaSelecionada.contaDividida ? "Sim" : "Não"}
-              </p>
-              <h3>Itens Consumidos:</h3>
-              <ul>
-                {comandaSelecionada.consumido.map((item, index) => (
-                  <li key={index}>
-                    {item.quantidade}x {item.item} - R$ {item.valor.toFixed(2)}
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-          <div className="modal-actions">
-            <button onClick={handlePrint}>Imprimir</button>
-            <button onClick={handleDownload}>Baixar</button>
+        {comandaSelecionada && (
+          <div className="modal-content">
+            <h2>Detalhes da Comanda</h2>
+            <p><strong>CPF:</strong> {comandaSelecionada.cpf}</p>
+            <h3>Itens Consumidos:</h3>
+            <ul>
+              {comandaSelecionada.consumido.map((item, index) => (
+                <li key={index}>
+                  {item.quantidade}x {item.item} - R$ {item.valor.toFixed(2)}
+                </li>
+              ))}
+            </ul>
+
+            {/* PDFDownloadLink */}
+            <PDFDownloadLink
+              document={<DetalhesComandaPDF comanda={comandaSelecionada} />}
+              fileName={`Detalhes_Comanda_${comandaSelecionada.cpf}.pdf`}
+              className="botao-estilizado"
+            >
+              {({ loading }) =>
+                loading ? "Gerando PDF..." : "Baixar PDF"
+              }
+            </PDFDownloadLink>
+
             <button onClick={fecharModal}>Fechar</button>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
