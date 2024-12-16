@@ -32,7 +32,7 @@ const ListagemComandas = () => {
 
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [comandaSelecionada, setComandaSelecionada] = useState(null);
-  const printRef = useRef();
+  const printRef = useRef(); // Referência constante para impressão
 
   const itensPorPagina = 6;
   const totalPaginas = Math.ceil(comandas.length / itensPorPagina);
@@ -94,35 +94,40 @@ const ListagemComandas = () => {
         <button onClick={() => mudarPagina(paginaAtual + 1)}>Próxima</button>
       </footer>
 
-      {comandaSelecionada && (
-        <div className="modal">
-          <div className="modal-content" ref={printRef}>
-            <h2>Detalhes da Comanda</h2>
-            <p><strong>CPF:</strong> {comandaSelecionada.cpf}</p>
-            <p><strong>Filial:</strong> {comandaSelecionada.filial}</p>
-            <p><strong>Convênio:</strong> {comandaSelecionada.convenio}</p>
-            <p><strong>Status:</strong> {comandaSelecionada.status}</p>
-            <p><strong>Colaborador:</strong> {comandaSelecionada.colaborador}</p>
-            <p>
-              <strong>Conta Dividida:</strong>{" "}
-              {comandaSelecionada.contaDividida ? "Sim" : "Não"}
-            </p>
-            <h3>Itens Consumidos:</h3>
-            <ul>
-              {comandaSelecionada.consumido.map((item, index) => (
-                <li key={index}>
-                  {item.quantidade}x {item.item} - R$ {item.valor.toFixed(2)}
-                </li>
-              ))}
-            </ul>
-            <div className="modal-actions">
-              <button onClick={handlePrint}>Imprimir</button>
-              <button onClick={handleDownload}>Baixar</button>
-              <button onClick={fecharModal}>Fechar</button>
-            </div>
+      {/* Modal sempre presente no DOM, mas controlado com CSS */}
+      <div
+        className={`modal ${comandaSelecionada ? "visivel" : "invisivel"}`}
+      >
+        <div className="modal-content" ref={printRef}>
+          {comandaSelecionada && (
+            <>
+              <h2>Detalhes da Comanda</h2>
+              <p><strong>CPF:</strong> {comandaSelecionada.cpf}</p>
+              <p><strong>Filial:</strong> {comandaSelecionada.filial}</p>
+              <p><strong>Convênio:</strong> {comandaSelecionada.convenio}</p>
+              <p><strong>Status:</strong> {comandaSelecionada.status}</p>
+              <p><strong>Colaborador:</strong> {comandaSelecionada.colaborador}</p>
+              <p>
+                <strong>Conta Dividida:</strong>{" "}
+                {comandaSelecionada.contaDividida ? "Sim" : "Não"}
+              </p>
+              <h3>Itens Consumidos:</h3>
+              <ul>
+                {comandaSelecionada.consumido.map((item, index) => (
+                  <li key={index}>
+                    {item.quantidade}x {item.item} - R$ {item.valor.toFixed(2)}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          <div className="modal-actions">
+            <button onClick={handlePrint}>Imprimir</button>
+            <button onClick={handleDownload}>Baixar</button>
+            <button onClick={fecharModal}>Fechar</button>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
