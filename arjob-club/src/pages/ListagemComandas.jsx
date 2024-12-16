@@ -1,86 +1,40 @@
-import { useState } from "react";
-import "./ListagemComandas.css"
+import { useRef, useState } from "react";
+import { useReactToPrint } from "react-to-print";
+import "./ListagemComandas.css";
 
 const ListagemComandas = () => {
-  // Definindo o JSON diretamente no componente
   const comandas = [
     {
-      "cpf": "12345678901",
-      "filial": "Filial 1",
-      "convenio": "Convênio A",
-      "status": "Fechada"
+      cpf: "12345678901",
+      filial: "Filial 1",
+      convenio: "Convênio A",
+      status: "Fechada",
+      colaborador: "João Silva",
+      consumido: [
+        { item: "Cerveja", quantidade: 2, valor: 10.0 },
+        { item: "Batata Frita", quantidade: 1, valor: 20.0 },
+      ],
+      contaDividida: false,
     },
     {
-      "cpf": "23456789012",
-      "filial": "Filial 2",
-      "convenio": "Convênio B",
-      "status": "Aberta"
+      cpf: "23456789012",
+      filial: "Filial 2",
+      convenio: "Convênio B",
+      status: "Aberta",
+      colaborador: "Maria Oliveira",
+      consumido: [
+        { item: "Refrigerante", quantidade: 3, valor: 15.0 },
+        { item: "Pizza", quantidade: 1, valor: 30.0 },
+      ],
+      contaDividida: true,
     },
-    {
-      "cpf": "34567890123",
-      "filial": "Filial 3",
-      "convenio": "Convênio C",
-      "status": "Fechada"
-    },
-    {
-      "cpf": "45678901234",
-      "filial": "Filial 4",
-      "convenio": "Convênio D",
-      "status": "Aberta"
-    },
-    {
-      "cpf": "56789012345",
-      "filial": "Filial 5",
-      "convenio": "Convênio E",
-      "status": "Fechada"
-    },
-    {
-      "cpf": "67890123456",
-      "filial": "Filial 6",
-      "convenio": "Convênio F",
-      "status": "Aberta"
-    },
-    {
-      "cpf": "78901234567",
-      "filial": "Filial 7",
-      "convenio": "Convênio G",
-      "status": "Fechada"
-    },
-    {
-      "cpf": "89012345678",
-      "filial": "Filial 8",
-      "convenio": "Convênio H",
-      "status": "Aberta"
-    },
-    {
-      "cpf": "90123456789",
-      "filial": "Filial 9",
-      "convenio": "Convênio I",
-      "status": "Fechada"
-    },
-    {
-      "cpf": "10123456789",
-      "filial": "Filial 10",
-      "convenio": "Convênio J",
-      "status": "Aberta"
-    },
-    {
-      "cpf": "11123456789",
-      "filial": "Filial 11",
-      "convenio": "Convênio K",
-      "status": "Fechada"
-    },
-    {
-      "cpf": "12123456789",
-      "filial": "Filial 12",
-      "convenio": "Convênio L",
-      "status": "Aberta"
-    }
   ];
 
   const [paginaAtual, setPaginaAtual] = useState(1);
-  const itensPorPagina = 6;
+  const [comandaSelecionada, setComandaSelecionada] = useState(null);
+  const printRef = useRef();
 
+  const itensPorPagina = 6;
   const totalPaginas = Math.ceil(comandas.length / itensPorPagina);
   const comandasExibidas = comandas.slice(
     (paginaAtual - 1) * itensPorPagina,
@@ -91,6 +45,27 @@ const ListagemComandas = () => {
     if (novaPagina > 0 && novaPagina <= totalPaginas) {
       setPaginaAtual(novaPagina);
     }
+  };
+
+  const fecharModal = () => {
+    setComandaSelecionada(null);
+  };
+
+  const handlePrint = useReactToPrint({
+    content: () => printRef.current,
+    documentTitle: `Detalhes_Comanda_${comandaSelecionada?.cpf}`,
+  });
+
+  const handleDownload = () => {
+    const blob = new Blob([JSON.stringify(comandaSelecionada, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Detalhes_Comanda_${comandaSelecionada?.cpf}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -105,9 +80,7 @@ const ListagemComandas = () => {
             <p>Filial: {comanda.filial}</p>
             <p>Convênio: {comanda.convenio}</p>
             <p>Status: {comanda.status}</p>
-            <button
-              onClick={() => alert(JSON.stringify(comanda, null, 2))}
-            >
+            <button onClick={() => setComandaSelecionada(comanda)}>
               Visualizar Detalhes
             </button>
           </div>
@@ -120,6 +93,36 @@ const ListagemComandas = () => {
         </span>
         <button onClick={() => mudarPagina(paginaAtual + 1)}>Próxima</button>
       </footer>
+
+      {comandaSelecionada && (
+        <div className="modal">
+          <div className="modal-content" ref={printRef}>
+            <h2>Detalhes da Comanda</h2>
+            <p><strong>CPF:</strong> {comandaSelecionada.cpf}</p>
+            <p><strong>Filial:</strong> {comandaSelecionada.filial}</p>
+            <p><strong>Convênio:</strong> {comandaSelecionada.convenio}</p>
+            <p><strong>Status:</strong> {comandaSelecionada.status}</p>
+            <p><strong>Colaborador:</strong> {comandaSelecionada.colaborador}</p>
+            <p>
+              <strong>Conta Dividida:</strong>{" "}
+              {comandaSelecionada.contaDividida ? "Sim" : "Não"}
+            </p>
+            <h3>Itens Consumidos:</h3>
+            <ul>
+              {comandaSelecionada.consumido.map((item, index) => (
+                <li key={index}>
+                  {item.quantidade}x {item.item} - R$ {item.valor.toFixed(2)}
+                </li>
+              ))}
+            </ul>
+            <div className="modal-actions">
+              <button onClick={handlePrint}>Imprimir</button>
+              <button onClick={handleDownload}>Baixar</button>
+              <button onClick={fecharModal}>Fechar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

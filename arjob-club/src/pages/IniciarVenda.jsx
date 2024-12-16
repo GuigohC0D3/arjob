@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { useReactToPrint } from "react-to-print";
 import "./IniciarVenda.css";
 
 const IniciarVenda = () => {
@@ -6,8 +7,8 @@ const IniciarVenda = () => {
   const [comandas, setComandas] = useState({});
   const [novaComanda, setNovaComanda] = useState("");
   const [produtos, setProdutos] = useState([]);
-  const [historicoComandas, setHistoricoComandas] = useState([]); // Histórico de comandas
-  const [mostrarFecharComanda, setMostrarFecharComanda] = useState(false); // Modal de fechar comanda
+  const [historicoComandas, setHistoricoComandas] = useState([]);
+  const [mostrarFecharComanda, setMostrarFecharComanda] = useState(false);
 
   const categorias = ["Entradas", "Pratos", "Bebidas", "Sobremesas"];
 
@@ -21,11 +22,7 @@ const IniciarVenda = () => {
   const mesas = Array.from({ length: 20 }, (_, i) => i + 1);
 
   const handleMesaClick = (mesa) => {
-    if (comandas[mesa]) {
-      setSelectedMesa(mesa);
-    } else {
-      setSelectedMesa(mesa);
-    }
+    setSelectedMesa(mesa);
   };
 
   const handleAbrirComanda = () => {
@@ -34,24 +31,27 @@ const IniciarVenda = () => {
   };
 
   const handleFecharComanda = () => {
-    // Adicionar a comanda atual ao histórico
     const comandaFechada = {
       mesa: selectedMesa,
       comanda: comandas[selectedMesa],
-      total: 340.0, // Valor fixo apenas para exemplo
+      total: 340.0,
       dataFechamento: new Date(),
     };
     setHistoricoComandas([...historicoComandas, comandaFechada]);
 
-    // Remover a comanda da mesa atual
     const novasComandas = { ...comandas };
     delete novasComandas[selectedMesa];
     setComandas(novasComandas);
 
-    // Fechar modal e limpar seleção
     setMostrarFecharComanda(false);
     setSelectedMesa(null);
   };
+
+  const componentRef = useRef();
+
+  const handlePrint = useReactToPrint({
+    content: () => componentRef.current,
+  });
 
   return (
     <>
@@ -102,9 +102,9 @@ const IniciarVenda = () => {
         </div>
       )}
 
-      {/* Tela da comanda da mesa */}
+      {/* Tela da comanda da mesa (para imprimir) */}
       {selectedMesa && comandas[selectedMesa] && (
-        <div className="comanda-mesa">
+        <div className="comanda-mesa" ref={componentRef}>
           <div className="header-comanda">
             <div className="comanda-info">
               <h2>Comanda: {comandas[selectedMesa]}</h2>
@@ -123,11 +123,11 @@ const IniciarVenda = () => {
               <button
                 key={categoria}
                 className="categoria-btn"
-                onClick={() => {
+                onClick={() =>
                   setProdutos(
                     produtosMock.filter((produto) => produto.categoria === categoria)
-                  );
-                }}
+                  )
+                }
               >
                 {categoria}
               </button>
@@ -162,7 +162,6 @@ const IniciarVenda = () => {
             >
               Fechar Comanda
             </button>
-          
           </div>
         </div>
       )}
@@ -173,10 +172,7 @@ const IniciarVenda = () => {
           <h2>Fechar Comanda</h2>
           <p>Deseja imprimir a comanda ou baixar em PDF?</p>
           <div className="botoes">
-            <button
-              className="imprimir"
-              onClick={() => alert("Comanda enviada para impressão!")}
-            >
+            <button className="imprimir" onClick={handlePrint}>
               Imprimir
             </button>
             <button

@@ -81,3 +81,68 @@
     font-size: 16px;
     font-weight: bold;
   }
+
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Fundo semi-transparente */
+    display: flex;
+    justify-content: center; /* Centraliza horizontalmente */
+    align-items: center; /* Centraliza verticalmente */
+    z-index: 1000;
+  }
+  
+  .modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    width: 80%; /* Largura do modal */
+    max-width: 600px; /* Largura máxima */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    text-align: left;
+    animation: fadeIn 0.3s ease-out; /* Animação ao aparecer */
+  }
+  
+  .modal-content h2 {
+    margin-bottom: 15px;
+  }
+  
+  .modal-content button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .modal-actions button:first-child {
+    background-color: #28a745; /* Verde para imprimir */
+    color: white;
+  }
+  
+  .modal-actions button:nth-child(2) {
+    background-color: #007bff; /* Azul para baixar */
+    color: white;
+  }
+  
+  .modal-actions button:last-child {
+    background-color: #dc3545; /* Vermelho para fechar */
+    color: white;
+  }
+  
+  /* Animação de entrada */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }

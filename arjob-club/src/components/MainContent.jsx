@@ -5,7 +5,6 @@ const MainContent = () => {
     <>
       {/* Cabeçalho */}
       <header className="header">
-        <h1 className="title">COMANDA LIVRE</h1>
         <p className="subtitle">
           Pressione <strong>F2</strong> para iniciar a comanda ou <br />
           Pressione <strong>CTRL + F</strong> para fechar a comanda
@@ -21,7 +20,7 @@ const MainContent = () => {
       <footer className="footer">
         <p>Operador: ADMINISTRADOR</p>
         <br />
-        <p>Computador: CLEITON</p>
+        <p>Computador: GUILHERME</p>
         <br />
         <p>Servidor: 16/10/2023 16:18</p>
       </footer>
