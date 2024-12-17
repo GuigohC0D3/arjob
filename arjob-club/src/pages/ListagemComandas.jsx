@@ -10,7 +10,7 @@ const ListagemComandas = () => {
       filial: "Filial 1",
       convenio: "Convênio C",
       status: "Fechada",
-      colaborador: "Guilherme Werneck",
+      colaborador: "Guigo Pereira",
       consumido: [
         { item: "Cerveja", quantidade: 2, valor: 10.0 },
         { item: "Batata Frita", quantidade: 1, valor: 20.0 },
