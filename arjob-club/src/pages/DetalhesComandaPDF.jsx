@@ -3,38 +3,106 @@ import PropTypes from "prop-types";
 
 // Estilos para o PDF
 const styles = StyleSheet.create({
-  page: { padding: 30, fontSize: 12 },
-  section: { marginBottom: 10 },
-  heading: { fontSize: 18, marginBottom: 10, fontWeight: "bold" },
-  item: { marginBottom: 5 },
+  page: {
+    padding: 20,
+    fontSize: 10,
+    fontFamily: "Courier", // Fonte monoespaçada
+  },
+  title: {
+    textAlign: "center",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  section: {
+    borderBottom: "1px dashed #000", // Linha pontilhada como separador
+    marginBottom: 10,
+    paddingBottom: 5,
+  },
+  row: {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 2,
+  },
+  item: {
+    fontSize: 10,
+  },
+  bold: {
+    fontWeight: "bold",
+  },
+  total: {
+    fontSize: 12,
+    fontWeight: "bold",
+    textAlign: "right",
+    marginTop: 10,
+    borderTop: "1px solid #000",
+    paddingTop: 5,
+  },
 });
 
-const DetalhesComandaPDF = ({ comanda }) => (
-  <Document>
-    <Page size="A4" style={styles.page}>
-      <View style={styles.section}>
-        <Text style={styles.heading}>Detalhes da Comanda</Text>
-        <Text>CPF: {comanda.cpf}</Text>
-        <Text>Filial: {comanda.filial}</Text>
-        <Text>Convênio: {comanda.convenio}</Text>
-        <Text>Status: {comanda.status}</Text>
-        <Text>Colaborador: {comanda.colaborador}</Text>
-        <Text>
-          Conta Dividida: {comanda.contaDividida ? "Sim" : "Não"}
-        </Text>
-      </View>
+const DetalhesComandaPDF = ({ comanda }) => {
+  // Calcular o total
+  const total = comanda.consumido.reduce(
+    (acc, item) => acc + item.valor * item.quantidade,
+    0
+  );
 
-      <View style={styles.section}>
-        <Text style={styles.heading}>Itens Consumidos</Text>
-        {comanda.consumido.map((item, index) => (
-          <Text key={index} style={styles.item}>
-            {item.quantidade}x {item.item} - R$ {item.valor.toFixed(2)}
-          </Text>
-        ))}
-      </View>
-    </Page>
-  </Document>
-);
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        {/* Título */}
+        <Text style={styles.title}>*** COMANDA ***</Text>
+
+        {/* Informações Principais */}
+        <View style={styles.section}>
+          <View style={styles.row}>
+            <Text style={styles.bold}>CPF:</Text>
+            <Text>{comanda.cpf}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.bold}>Filial:</Text>
+            <Text>{comanda.filial}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.bold}>Convênio:</Text>
+            <Text>{comanda.convenio}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.bold}>Colaborador:</Text>
+            <Text>{comanda.colaborador}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.bold}>Status:</Text>
+            <Text>{comanda.status}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.bold}>Conta Dividida:</Text>
+            <Text>{comanda.contaDividida ? "Sim" : "Não"}</Text>
+          </View>
+        </View>
+
+        {/* Itens Consumidos */}
+        <View>
+          <Text style={styles.bold}>Itens Consumidos:</Text>
+          {comanda.consumido.map((item, index) => (
+            <View key={index} style={styles.row}>
+              <Text style={styles.item}>
+                {item.quantidade}x {item.item}
+              </Text>
+              <Text style={styles.item}>
+                R$ {(item.valor * item.quantidade).toFixed(2)}
+              </Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Total */}
+        <Text style={styles.total}>Total: R$ {total.toFixed(2)}</Text>
+      </Page>
+    </Document>
+  );
+};
 
 // Validação de PropTypes
 DetalhesComandaPDF.propTypes = {

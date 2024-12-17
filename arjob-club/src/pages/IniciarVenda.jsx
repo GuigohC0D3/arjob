@@ -1,8 +1,10 @@
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useReactToPrint } from "react-to-print";
 import "./IniciarVenda.css";
 
 const IniciarVenda = () => {
+  const navigate = useNavigate(); // Hook para navegação
   const [selectedMesa, setSelectedMesa] = useState(null);
   const [comandas, setComandas] = useState({});
   const [novaComanda, setNovaComanda] = useState("");
@@ -21,6 +23,14 @@ const IniciarVenda = () => {
 
   const mesas = Array.from({ length: 20 }, (_, i) => i + 1);
 
+  useEffect(() => {
+    // Carregar o histórico de comandas do localStorage ao iniciar a página
+    const storedHistorico = localStorage.getItem("historicoComandas");
+    if (storedHistorico) {
+      setHistoricoComandas(JSON.parse(storedHistorico));
+    }
+  }, []);
+
   const handleMesaClick = (mesa) => {
     setSelectedMesa(mesa);
   };
@@ -37,7 +47,11 @@ const IniciarVenda = () => {
       total: 340.0,
       dataFechamento: new Date(),
     };
-    setHistoricoComandas([...historicoComandas, comandaFechada]);
+
+    // Atualizar histórico de comandas e salvar no localStorage
+    const updatedHistorico = [...historicoComandas, comandaFechada];
+    setHistoricoComandas(updatedHistorico);
+    localStorage.setItem("historicoComandas", JSON.stringify(updatedHistorico));
 
     const novasComandas = { ...comandas };
     delete novasComandas[selectedMesa];
@@ -45,6 +59,9 @@ const IniciarVenda = () => {
 
     setMostrarFecharComanda(false);
     setSelectedMesa(null);
+
+    // Redireciona para a página de ListagemComanda
+    navigate("/listagem-comanda");
   };
 
   const componentRef = useRef();

@@ -6,18 +6,45 @@ import "./ListagemComandas.css";
 const ListagemComandas = () => {
   const comandas = [
     {
-      cpf: "12345678901",
+      cpf: "02161721011",
       filial: "Filial 1",
-      convenio: "Convênio A",
+      convenio: "Convênio C",
       status: "Fechada",
-      colaborador: "João Silva",
+      colaborador: "Guilherme Werneck",
       consumido: [
         { item: "Cerveja", quantidade: 2, valor: 10.0 },
         { item: "Batata Frita", quantidade: 1, valor: 20.0 },
       ],
+      total: "R$40,00",
       contaDividida: false,
     },
-    // Outros dados omitidos para brevidade
+    {
+      cpf: "18673384087",
+      filial: "Filial 2",
+      convenio: "Convênio B",
+      status: "Aberta",
+      colaborador: "Daniel Silva",
+      consumido: [
+        { item: "Cerveja", quantidade: 2, valor: 10.0 },
+        { item: "Batata Frita", quantidade: 1, valor: 20.0 },
+      ],
+      total: "R$40,00",
+      contaDividida: false,
+    },
+    {
+      cpf: "37898181000",
+      filial: "Filial 3",
+      convenio: "Convênio A",
+      status: "Fechada",
+      colaborador: "João Gabriel",
+      consumido: [
+        { item: "Cerveja", quantidade: 2, valor: 10.0 },
+        { item: "Batata Frita", quantidade: 1, valor: 20.0 },
+      ],
+      total: "R$40,00",
+      contaDividida: true,
+    },
+    // Adicione mais dados de comandas conforme necessário
   ];
 
   const [paginaAtual, setPaginaAtual] = useState(1);
@@ -40,6 +67,7 @@ const ListagemComandas = () => {
       <main>
         {comandasExibidas.map((comanda, index) => (
           <div key={index} className="comanda-card">
+            <h3>Nome: {comanda.colaborador}</h3>
             <h3>CPF: {comanda.cpf}</h3>
             <button onClick={() => setComandaSelecionada(comanda)}>
               Visualizar Detalhes
@@ -68,6 +96,7 @@ const ListagemComandas = () => {
         {comandaSelecionada && (
           <div className="modal-content">
             <h2>Detalhes da Comanda</h2>
+            <p><strong>Colaborador:</strong> {comandaSelecionada.colaborador}</p>
             <p><strong>CPF:</strong> {comandaSelecionada.cpf}</p>
             <h3>Itens Consumidos:</h3>
             <ul>
@@ -77,6 +106,7 @@ const ListagemComandas = () => {
                 </li>
               ))}
             </ul>
+            <h3>Valor total: {comandaSelecionada.total}</h3>
 
             {/* PDFDownloadLink */}
             <PDFDownloadLink
