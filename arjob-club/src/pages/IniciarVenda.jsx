@@ -4,13 +4,14 @@ import { useReactToPrint } from "react-to-print";
 import "./IniciarVenda.css";
 
 const IniciarVenda = () => {
-  const navigate = useNavigate(); // Hook para navegação
+  const navigate = useNavigate();
   const [selectedMesa, setSelectedMesa] = useState(null);
   const [comandas, setComandas] = useState({});
   const [novaComanda, setNovaComanda] = useState("");
   const [produtos, setProdutos] = useState([]);
   const [historicoComandas, setHistoricoComandas] = useState([]);
   const [mostrarFecharComanda, setMostrarFecharComanda] = useState(false);
+  const [comandaDetalhes, setComandaDetalhes] = useState(null);
 
   const categorias = ["Entradas", "Pratos", "Bebidas", "Sobremesas"];
 
@@ -24,7 +25,6 @@ const IniciarVenda = () => {
   const mesas = Array.from({ length: 20 }, (_, i) => i + 1);
 
   useEffect(() => {
-    // Carregar o histórico de comandas do localStorage ao iniciar a página
     const storedHistorico = localStorage.getItem("historicoComandas");
     if (storedHistorico) {
       setHistoricoComandas(JSON.parse(storedHistorico));
@@ -40,16 +40,21 @@ const IniciarVenda = () => {
     setNovaComanda("");
   };
 
-  const handleFecharComanda = () => {
-    const comandaFechada = {
+  const handleFecharComandaClick = () => {
+    console.log("Fechar Comanda Click");
+    const comandaAtual = {
       mesa: selectedMesa,
       comanda: comandas[selectedMesa],
-      total: 340.0,
-      dataFechamento: new Date(),
+      total: 340.0, // Substitua pelo cálculo real
+      itens: produtosMock.slice(0, 3), // Exemplo de itens adicionados
+      dataFechamento: new Date().toLocaleString(),
     };
+    setComandaDetalhes(comandaAtual);
+    setMostrarFecharComanda(true);
+  };
 
-    // Atualizar histórico de comandas e salvar no localStorage
-    const updatedHistorico = [...historicoComandas, comandaFechada];
+  const handleConfirmarFechamento = () => {
+    const updatedHistorico = [...historicoComandas, comandaDetalhes];
     setHistoricoComandas(updatedHistorico);
     localStorage.setItem("historicoComandas", JSON.stringify(updatedHistorico));
 
@@ -59,8 +64,6 @@ const IniciarVenda = () => {
 
     setMostrarFecharComanda(false);
     setSelectedMesa(null);
-
-    // Redireciona para a página de ListagemComanda
     navigate("/listagem-comanda");
   };
 
@@ -72,7 +75,6 @@ const IniciarVenda = () => {
 
   return (
     <>
-      {/* Tela principal: Seleção de mesa */}
       {!selectedMesa && (
         <div className="mesas-container">
           {mesas.map((mesa) => (
@@ -93,7 +95,6 @@ const IniciarVenda = () => {
         </div>
       )}
 
-      {/* Tela de nova comanda */}
       {selectedMesa && !comandas[selectedMesa] && (
         <div className="nova-comanda">
           <h2>Abertura de comanda</h2>
@@ -119,7 +120,6 @@ const IniciarVenda = () => {
         </div>
       )}
 
-      {/* Tela da comanda da mesa (para imprimir) */}
       {selectedMesa && comandas[selectedMesa] && (
         <div className="comanda-mesa" ref={componentRef}>
           <div className="header-comanda">
@@ -172,42 +172,57 @@ const IniciarVenda = () => {
             <button className="voltar" onClick={() => setSelectedMesa(null)}>
               Voltar
             </button>
-            <button className="dividir">Dividir Conta</button>
-            <button
-              className="fechar"
-              onClick={() => setMostrarFecharComanda(true)}
-            >
+            <button className="fechar" onClick={handleFecharComandaClick}>
               Fechar Comanda
             </button>
           </div>
         </div>
       )}
 
-      {/* Modal para fechar comanda */}
-      {mostrarFecharComanda && (
-        <div className="modal">
-          <h2>Fechar Comanda</h2>
-          <p>Deseja imprimir a comanda ou baixar em PDF?</p>
-          <div className="botoes">
-            <button className="imprimir" onClick={handlePrint}>
-              Imprimir
-            </button>
-            <button
-              className="pdf"
-              onClick={() => alert("Comanda baixada em PDF!")}
-            >
-              Baixar PDF
-            </button>
-            <button
-              className="cancelar"
-              onClick={() => setMostrarFecharComanda(false)}
-            >
-              Cancelar
-            </button>
+      {mostrarFecharComanda && comandaDetalhes && (
+        <div
+          className="modal"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(0,0,0,0.5)",
+            zIndex: 9999,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <div style={{ background: "#fff", padding: "20px", borderRadius: "8px" }}>
+            <h2>Fechar Comanda</h2>
+            <p>Mesa: {comandaDetalhes.mesa}</p>
+            <p>Comanda: {comandaDetalhes.comanda}</p>
+            <p>Total: R$ {comandaDetalhes.total.toFixed(2)}</p>
+            <p>Data: {comandaDetalhes.dataFechamento}</p>
+            <ul>
+              {comandaDetalhes.itens.map((item) => (
+                <li key={item.id}>
+                  {item.nome} - R$ {item.preco.toFixed(2)}
+                </li>
+              ))}
+            </ul>
+            <div className="botoes">
+              <button className="imprimir" onClick={handlePrint}>
+                Importar
+              </button>
+              <button
+                className="cancelar"
+                onClick={() => setMostrarFecharComanda(false)}
+              >
+                Cancelar
+              </button>
+              <button className="confirmar" onClick={handleConfirmarFechamento}>
+                Confirmar Fechamento
+              </button>
+            </div>
           </div>
-          <button className="confirmar" onClick={handleFecharComanda}>
-            Confirmar Fechamento
-          </button>
         </div>
       )}
     </>
