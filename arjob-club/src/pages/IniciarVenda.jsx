@@ -63,11 +63,11 @@ const IniciarVenda = () => {
 
     setMostrarFecharComanda(false);
     setSelectedMesa(null);
-    navigate("/listagem-comanda");
+    navigate("/Listagem");
   };
 
   const handleImportar = () => {
-    navigate("/listagem-comanda");
+    navigate("/Listagem");
   };
 
   return (
