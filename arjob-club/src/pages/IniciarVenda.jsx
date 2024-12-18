@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useReactToPrint } from "react-to-print";
 import "./IniciarVenda.css";
 
 const IniciarVenda = () => {
@@ -41,7 +40,7 @@ const IniciarVenda = () => {
   };
 
   const handleFecharComandaClick = () => {
-    console.log("Fechar Comanda Click");
+    console.log("Fechar Comanda Click"); // Verificando se a função é chamada
     const comandaAtual = {
       mesa: selectedMesa,
       comanda: comandas[selectedMesa],
@@ -67,11 +66,9 @@ const IniciarVenda = () => {
     navigate("/listagem-comanda");
   };
 
-  const componentRef = useRef();
-
-  const handlePrint = useReactToPrint({
-    content: () => componentRef.current,
-  });
+  const handleImportar = () => {
+    navigate("/listagem-comanda");
+  };
 
   return (
     <>
@@ -121,7 +118,7 @@ const IniciarVenda = () => {
       )}
 
       {selectedMesa && comandas[selectedMesa] && (
-        <div className="comanda-mesa" ref={componentRef}>
+        <div className="comanda-mesa">
           <div className="header-comanda">
             <div className="comanda-info">
               <h2>Comanda: {comandas[selectedMesa]}</h2>
@@ -192,7 +189,7 @@ const IniciarVenda = () => {
             zIndex: 9999,
             display: "flex",
             justifyContent: "center",
-            alignItems: "center",
+            alignItems: "center"
           }}
         >
           <div style={{ background: "#fff", padding: "20px", borderRadius: "8px" }}>
@@ -209,7 +206,7 @@ const IniciarVenda = () => {
               ))}
             </ul>
             <div className="botoes">
-              <button className="imprimir" onClick={handlePrint}>
+              <button className="imprimir" onClick={handleImportar}>
                 Importar
               </button>
               <button
