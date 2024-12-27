@@ -7,28 +7,31 @@ const IniciarVenda = () => {
   const [mesas, setMesas] = useState([]); // Mesas vindas do backend
   const [selectedMesa, setSelectedMesa] = useState(null);
   const [comandas, setComandas] = useState({});
-  const [novaComanda, setNovaComanda] = useState("");
   const [produtos, setProdutos] = useState([]);
   const [produtosCategoria, setProdutosCategoria] = useState([]);
   const [historicoComandas, setHistoricoComandas] = useState([]);
   const [mostrarFecharComanda, setMostrarFecharComanda] = useState(false);
   const [comandaDetalhes, setComandaDetalhes] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const categorias = ["Entradas", "Pratos", "Bebidas", "Sobremesas"];
 
-  // Carregar mesas e produtos do backend
+  // Carregar mesas do backend
   useEffect(() => {
     const fetchMesas = async () => {
       try {
+        setLoading(true);
         const response = await fetch("http://127.0.0.1:5000/mesas");
         if (response.ok) {
           const data = await response.json();
-          setMesas(data); // Mesas devem vir no formato [{ id, numero, status }]
+          setMesas(data); // Mesas no formato [{ id, numero, status }]
         } else {
           console.error("Erro ao carregar mesas");
         }
       } catch (error) {
         console.error("Erro ao conectar ao servidor:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -41,27 +44,41 @@ const IniciarVenda = () => {
 
   const handleAbrirComanda = async () => {
     try {
+      setLoading(true);
       const response = await fetch("http://127.0.0.1:5000/comandas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ numero: novaComanda, mesa_id: selectedMesa.id }),
+        body: JSON.stringify({ mesa_id: selectedMesa.id }),
       });
+
       if (response.ok) {
         const data = await response.json();
-        setComandas({ ...comandas, [selectedMesa.id]: data.comanda_id });
-        setNovaComanda("");
+        console.log("Comanda aberta ou existente:", data);
+        setComandas({ ...comandas, [selectedMesa.id]: data.numero }); // Salva o número da comanda
+      } else {
+        const errorData = await response.json();
+        if (errorData.error === "Mesa já está ocupada") {
+          console.log("Mesa já ocupada, carregando comanda existente.");
+          setComandas({ ...comandas, [selectedMesa.id]: errorData.numero }); // Carregar comanda existente
+        } else {
+          console.error("Erro do servidor:", errorData);
+        }
       }
     } catch (error) {
       console.error("Erro ao abrir comanda:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleCategoriaClick = (categoria) => {
-    setProdutosCategoria(produtos.filter((produto) => produto.categoria === categoria));
+    setProdutosCategoria(
+      produtos.filter((produto) => produto.categoria === categoria)
+    );
   };
 
   const handleAdicionarProduto = (produto) => {
-    console.log("Adicionar produto:", produto); // Pode ser integrado para enviar ao backend
+    console.log("Adicionar produto:", produto); // Integre com o backend para salvar produtos
   };
 
   const handleFecharComandaClick = () => {
@@ -78,27 +95,41 @@ const IniciarVenda = () => {
 
   const handleConfirmarFechamento = async () => {
     try {
-      await fetch(`http://127.0.0.1:5000/comandas/${comandaDetalhes.comanda}/fechar`, {
-        method: "PUT",
-      });
-      setHistoricoComandas([...historicoComandas, comandaDetalhes]);
-      setMostrarFecharComanda(false);
-      setSelectedMesa(null);
-      navigate("/Listagem");
+      setLoading(true);
+      const response = await fetch(
+        `http://127.0.0.1:5000/comandas/${comandaDetalhes.comanda}/fechar`,
+        {
+          method: "PUT",
+        }
+      );
+      if (response.ok) {
+        setHistoricoComandas([...historicoComandas, comandaDetalhes]);
+        setMostrarFecharComanda(false);
+        setSelectedMesa(null);
+        navigate("/Listagem");
+      } else {
+        console.error("Erro ao fechar comanda");
+      }
     } catch (error) {
       console.error("Erro ao fechar comanda:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div>
+      {loading && <p>Carregando...</p>}
+
       {/* Listagem das Mesas */}
       {!selectedMesa && (
         <div className="mesas-container">
           {mesas.map((mesa) => (
             <button
               key={mesa.id}
-              className={`mesa ${mesa.status === "ocupada" ? "ocupada" : "disponivel"}`}
+              className={`mesa ${
+                mesa.status === "ocupada" ? "ocupada" : "disponivel"
+              }`}
               onClick={() => handleMesaClick(mesa)}
             >
               Mesa {mesa.numero}
@@ -112,15 +143,7 @@ const IniciarVenda = () => {
         <div className="nova-comanda">
           <h2>Abrir Comanda</h2>
           <p>Mesa: {selectedMesa.numero}</p>
-          <input
-            type="text"
-            placeholder="Número da Comanda"
-            value={novaComanda}
-            onChange={(e) => setNovaComanda(e.target.value)}
-          />
-          <button onClick={handleAbrirComanda} disabled={!novaComanda}>
-            Abrir
-          </button>
+          <button onClick={handleAbrirComanda}>Gerar e Abrir Comanda</button>
           <button onClick={() => setSelectedMesa(null)}>Voltar</button>
         </div>
       )}
@@ -131,7 +154,10 @@ const IniciarVenda = () => {
           <h2>Comanda Mesa {selectedMesa.numero}</h2>
           <div>
             {categorias.map((categoria) => (
-              <button key={categoria} onClick={() => handleCategoriaClick(categoria)}>
+              <button
+                key={categoria}
+                onClick={() => handleCategoriaClick(categoria)}
+              >
                 {categoria}
               </button>
             ))}
@@ -141,7 +167,9 @@ const IniciarVenda = () => {
               <div key={produto.id}>
                 <p>{produto.nome}</p>
                 <p>R$ {produto.preco.toFixed(2)}</p>
-                <button onClick={() => handleAdicionarProduto(produto)}>Adicionar</button>
+                <button onClick={() => handleAdicionarProduto(produto)}>
+                  Adicionar
+                </button>
               </div>
             ))}
           </div>
@@ -158,11 +186,15 @@ const IniciarVenda = () => {
           <p>Total: R$ {comandaDetalhes.total.toFixed(2)}</p>
           <ul>
             {comandaDetalhes.itens.map((item) => (
-              <li key={item.id}>{item.nome} - R$ {item.preco.toFixed(2)}</li>
+              <li key={item.id}>
+                {item.nome} - R$ {item.preco.toFixed(2)}
+              </li>
             ))}
           </ul>
           <button onClick={handleConfirmarFechamento}>Confirmar</button>
-          <button onClick={() => setMostrarFecharComanda(false)}>Cancelar</button>
+          <button onClick={() => setMostrarFecharComanda(false)}>
+            Cancelar
+          </button>
         </div>
       )}
     </div>

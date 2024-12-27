@@ -3,7 +3,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from flask_cors import cross_origin, CORS
 from math import ceil
 from datetime import datetime
-from ..controllers import clientes_controller, departamento_cliente_controller, departamentos_controller
+from ..controllers import clientes_controller, departamento_cliente_controller, departamentos_controller,  mesas_controller, comandas_controller, produtos_controller
 from ..entities import comandas
 from ..entities import movimentacao_caixa
 from ..entities import users
@@ -49,3 +49,36 @@ def adicionar_departamento_cliente():
     departamento_id = data.get('departamento_id')
     return departamento_cliente_controller.adicionar_departamento_cliente(cliente_id, departamento_id)
 
+@main_bp.route("/mesas", methods=["GET"])
+def listar_main():
+    return mesas_controller.listar_mesas()
+
+@main_bp.route("/mesas_post", methods=["POST"])
+def criar_mesa():
+    return mesas_controller.criar_mesa()
+
+@main_bp.route("/mesas/<int:mesa_id>/status", methods=["PUT"])
+def atualizar_status_mesa(mesa_id):
+    return mesas_controller.atualizar_status_mesa(mesa_id)
+
+@main_bp.route("/mesas/<int:mesa_id>", methods=["DELETE"])
+def excluir_mesa(mesa_id):
+    return mesas_controller.excluir_mesa(mesa_id)
+
+
+@main_bp.route("/comandas", methods=["POST"])
+def criar_comanda():
+    return comandas_controller.criar_comanda()
+
+@main_bp.route("/comandas/<int:comanda_id>/fechar", methods=["PUT"])
+def fechar_comanda(comanda_id):
+    return comandas_controller.fechar_comanda(comanda_id)
+
+@main_bp.route("/comandas", methods=["GET"])
+def listar_comandas():
+    return comandas_controller.listar_comandas()
+
+@main_bp.route("/produtos", methods=["GET"])
+def listar_produtos():
+    produtos, status = produtos_controller.get_produtos()
+    return jsonify(produtos), status
