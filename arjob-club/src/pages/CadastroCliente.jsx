@@ -1,11 +1,13 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
 import { Button } from "primereact/button";
-import "primeicons/primeicons.css"; // Ícones
-import "primeflex/primeflex.css"; // Classes utilitárias (flex, etc.)
-import "primereact/resources/primereact.min.css"; // CSS base do PrimeReact
-import "primereact/resources/themes/lara-light-blue/theme.css"; // Tema do PrimeReact
+import { Dropdown } from "primereact/dropdown";
+import InputMask from "react-input-mask"; // Biblioteca para máscaras de entrada
+import "primeicons/primeicons.css";
+import "primeflex/primeflex.css";
+import "primereact/resources/primereact.min.css";
+import "primereact/resources/themes/lara-light-blue/theme.css";
 import "./CadastroCliente.css";
 
 const CadastroCliente = () => {
@@ -19,94 +21,148 @@ const CadastroCliente = () => {
     departamento: "",
   });
 
+  const [departamentos, setDepartamentos] = useState([]);
   const toast = useRef(null);
+
+  // Função para carregar os departamentos do backend
+  useEffect(() => {
+    const fetchDepartamentos = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1:5000/departamentos");
+        if (response.ok) {
+          const data = await response.json();
+          setDepartamentos(
+            data.map((dep) => ({ label: dep.nome, value: dep.id }))
+          );
+        } else {
+          console.error("Erro ao carregar departamentos");
+        }
+      } catch (error) {
+        console.error("Erro ao conectar ao servidor:", error);
+      }
+    };
+    fetchDepartamentos();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setCliente({
-      ...cliente,
+
+    // Restringir entrada para números no campo "Filial"
+    if (name === "filial" && !/^\d*$/.test(value)) return;
+
+    setCliente((prevCliente) => ({
+      ...prevCliente,
       [name]: value,
-    });
+    }));
+  };
+
+  const handleDepartamentoChange = (e) => {
+    setCliente((prevCliente) => ({
+      ...prevCliente,
+      departamento: e.value,
+    }));
+  };
+
+  const handleConvenioChange = (e) => {
+    setCliente((prevCliente) => ({
+      ...prevCliente,
+      convenio: e.value,
+    }));
+  };
+
+  const enviarCadastro = async () => {
+    // Validação de campos obrigatórios
+    if (
+      !cliente.nome ||
+      !cliente.cpf ||
+      !cliente.email ||
+      !cliente.telefone ||
+      !cliente.filial ||
+      !cliente.convenio ||
+      !cliente.departamento
+    ) {
+      toast.current.show({
+        severity: "warn",
+        summary: "Atenção",
+        detail: "Preencha todos os campos antes de enviar!",
+        life: 3000,
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch("http://127.0.0.1:5000/clientes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(cliente),
+      });
+
+      if (response.ok) {
+        toast.current.show({
+          severity: "success",
+          summary: "Sucesso",
+          detail: "Cliente cadastrado com sucesso!",
+          life: 3000,
+        });
+
+        setCliente({
+          nome: "",
+          cpf: "",
+          email: "",
+          telefone: "",
+          filial: "",
+          convenio: "",
+          departamento: "",
+        });
+      } else {
+        const errorData = await response.json();
+        toast.current.show({
+          severity: "error",
+          summary: "Erro",
+          detail: errorData.message || "Erro ao cadastrar cliente.",
+          life: 3000,
+        });
+      }
+    } catch (error) {
+      console.error("Erro de conexão:", error);
+      toast.current.show({
+        severity: "error",
+        summary: "Erro",
+        detail: "Não foi possível conectar ao servidor.",
+        life: 3000,
+      });
+    }
   };
 
   const accept = () => {
-    toast.current.show({
-      severity: "info",
-      summary: "Confirmado",
-      detail: "Cliente cadastrado com sucesso!",
-      life: 3000,
-    });
-    console.log("Cliente cadastrado: ", cliente);
-    // Limpar formulário
-    setCliente({
-      nome: "",
-      cpf: "",
-      email: "",
-      telefone: "",
-      filial: "",
-      convenio: "",
-      departamento: "",
-    });
+    enviarCadastro();
   };
 
   const reject = () => {
     toast.current.show({
       severity: "warn",
-      summary: "Rejeitado",
-      detail: "Cadastro não realizado.",
+      summary: "Cancelado",
+      detail: "Cadastro do cliente cancelado.",
       life: 3000,
     });
   };
 
   const confirmSubmit = () => {
     confirmDialog({
-      group: "headless",
       message: "Tem certeza de que deseja cadastrar este cliente?",
       header: "Confirmação de Cadastro",
       icon: "pi pi-exclamation-triangle",
-      accept: accept,
-      reject: reject,
+      accept,
+      reject,
     });
   };
 
   return (
     <>
       <Toast ref={toast} />
-      <ConfirmDialog
-        group="headless"
-        content={({ headerRef, contentRef, footerRef, hide, message }) => (
-          <div className="flex flex-column align-items-center p-5 surface-overlay border-round">
-            <div className="border-circle bg-primary inline-flex justify-content-center align-items-center h-6rem w-6rem -mt-8">
-              <i className="pi pi-question text-5xl"></i>
-            </div>
-            <span className="font-bold text-2xl block mb-2 mt-4" ref={headerRef}>
-              {message.header}
-            </span>
-            <p className="mb-0" ref={contentRef}>
-              {message.message}
-            </p>
-            <div className="flex align-items-center gap-2 mt-4" ref={footerRef}>
-              <Button
-                label="Salvar"
-                onClick={(event) => {
-                  hide(event);
-                  accept();
-                }}
-                className="w-8rem"
-              />
-              <Button
-                label="Cancelar"
-                outlined
-                onClick={(event) => {
-                  hide(event);
-                  reject();
-                }}
-                className="w-8rem"
-              />
-            </div>
-          </div>
-        )}
-      />
+      <ConfirmDialog />
       <div className="cadastro-container">
         <h2>Cadastro de Cliente</h2>
         <form onSubmit={(e) => e.preventDefault()}>
@@ -122,11 +178,10 @@ const CadastroCliente = () => {
                 required
               />
             </div>
-
             <div className="input-group">
               <label htmlFor="cpf">CPF:</label>
-              <input
-                type="text"
+              <InputMask
+                mask="999.999.999-99"
                 id="cpf"
                 name="cpf"
                 value={cliente.cpf}
@@ -134,9 +189,6 @@ const CadastroCliente = () => {
                 required
               />
             </div>
-          </div>
-
-          <div className="input-group-row">
             <div className="input-group">
               <label htmlFor="email">Email:</label>
               <input
@@ -148,11 +200,13 @@ const CadastroCliente = () => {
                 required
               />
             </div>
+          </div>
 
+          <div className="input-group-row">
             <div className="input-group">
               <label htmlFor="telefone">Telefone:</label>
-              <input
-                type="text"
+              <InputMask
+                mask="(99) 99999-9999"
                 id="telefone"
                 name="telefone"
                 value={cliente.telefone}
@@ -160,9 +214,6 @@ const CadastroCliente = () => {
                 required
               />
             </div>
-          </div>
-
-          <div className="input-group-row">
             <div className="input-group">
               <label htmlFor="filial">Filial:</label>
               <input
@@ -174,28 +225,30 @@ const CadastroCliente = () => {
                 required
               />
             </div>
-
             <div className="input-group">
               <label htmlFor="convenio">Convênio:</label>
-              <input
-                type="text"
+              <Dropdown
                 id="convenio"
-                name="convenio"
                 value={cliente.convenio}
-                onChange={handleInputChange}
-                required
+                options={[
+                  { label: "Globo", value: "Globo" },
+                  { label: "Nazária", value: "Nazária" },
+                ]}
+                onChange={handleConvenioChange}
+                placeholder="Selecione um convênio"
               />
             </div>
+          </div>
 
+          <div className="input-group-row">
             <div className="input-group">
               <label htmlFor="departamento">Departamento:</label>
-              <input
-                type="text"
+              <Dropdown
                 id="departamento"
-                name="departamento"
                 value={cliente.departamento}
-                onChange={handleInputChange}
-                required
+                options={departamentos}
+                onChange={handleDepartamentoChange}
+                placeholder="Selecione um departamento"
               />
             </div>
           </div>

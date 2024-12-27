@@ -4,225 +4,168 @@ import "./IniciarVenda.css";
 
 const IniciarVenda = () => {
   const navigate = useNavigate();
+  const [mesas, setMesas] = useState([]); // Mesas vindas do backend
   const [selectedMesa, setSelectedMesa] = useState(null);
   const [comandas, setComandas] = useState({});
   const [novaComanda, setNovaComanda] = useState("");
   const [produtos, setProdutos] = useState([]);
+  const [produtosCategoria, setProdutosCategoria] = useState([]);
   const [historicoComandas, setHistoricoComandas] = useState([]);
   const [mostrarFecharComanda, setMostrarFecharComanda] = useState(false);
   const [comandaDetalhes, setComandaDetalhes] = useState(null);
 
   const categorias = ["Entradas", "Pratos", "Bebidas", "Sobremesas"];
 
-  const produtosMock = [
-    { id: 1, nome: "Cerveja", preco: 12.0, categoria: "Bebidas" },
-    { id: 2, nome: "Coca-Cola", preco: 5.0, categoria: "Bebidas" },
-    { id: 3, nome: "Picanha", preco: 45.99, categoria: "Pratos" },
-    { id: 4, nome: "Petit Gateau", preco: 20.0, categoria: "Sobremesas" },
-  ];
-
-  const mesas = Array.from({ length: 20 }, (_, i) => i + 1);
-
+  // Carregar mesas e produtos do backend
   useEffect(() => {
-    const storedHistorico = localStorage.getItem("historicoComandas");
-    if (storedHistorico) {
-      setHistoricoComandas(JSON.parse(storedHistorico));
-    }
+    const fetchMesas = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1:5000/mesas");
+        if (response.ok) {
+          const data = await response.json();
+          setMesas(data); // Mesas devem vir no formato [{ id, numero, status }]
+        } else {
+          console.error("Erro ao carregar mesas");
+        }
+      } catch (error) {
+        console.error("Erro ao conectar ao servidor:", error);
+      }
+    };
+
+    fetchMesas();
   }, []);
 
   const handleMesaClick = (mesa) => {
     setSelectedMesa(mesa);
   };
 
-  const handleAbrirComanda = () => {
-    setComandas({ ...comandas, [selectedMesa]: novaComanda });
-    setNovaComanda("");
+  const handleAbrirComanda = async () => {
+    try {
+      const response = await fetch("http://127.0.0.1:5000/comandas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ numero: novaComanda, mesa_id: selectedMesa.id }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setComandas({ ...comandas, [selectedMesa.id]: data.comanda_id });
+        setNovaComanda("");
+      }
+    } catch (error) {
+      console.error("Erro ao abrir comanda:", error);
+    }
+  };
+
+  const handleCategoriaClick = (categoria) => {
+    setProdutosCategoria(produtos.filter((produto) => produto.categoria === categoria));
+  };
+
+  const handleAdicionarProduto = (produto) => {
+    console.log("Adicionar produto:", produto); // Pode ser integrado para enviar ao backend
   };
 
   const handleFecharComandaClick = () => {
-    console.log("Fechar Comanda Click"); // Verificando se a função é chamada
     const comandaAtual = {
-      mesa: selectedMesa,
-      comanda: comandas[selectedMesa],
-      total: 340.0, // Substitua pelo cálculo real
-      itens: produtosMock.slice(0, 3), // Exemplo de itens adicionados
+      mesa: selectedMesa.numero,
+      comanda: comandas[selectedMesa.id],
+      total: produtosCategoria.reduce((sum, produto) => sum + produto.preco, 0),
+      itens: produtosCategoria,
       dataFechamento: new Date().toLocaleString(),
     };
     setComandaDetalhes(comandaAtual);
     setMostrarFecharComanda(true);
   };
 
-  const handleConfirmarFechamento = () => {
-    const updatedHistorico = [...historicoComandas, comandaDetalhes];
-    setHistoricoComandas(updatedHistorico);
-    localStorage.setItem("historicoComandas", JSON.stringify(updatedHistorico));
-
-    const novasComandas = { ...comandas };
-    delete novasComandas[selectedMesa];
-    setComandas(novasComandas);
-
-    setMostrarFecharComanda(false);
-    setSelectedMesa(null);
-    navigate("/Listagem");
-  };
-
-  const handleImportar = () => {
-    navigate("/Listagem");
+  const handleConfirmarFechamento = async () => {
+    try {
+      await fetch(`http://127.0.0.1:5000/comandas/${comandaDetalhes.comanda}/fechar`, {
+        method: "PUT",
+      });
+      setHistoricoComandas([...historicoComandas, comandaDetalhes]);
+      setMostrarFecharComanda(false);
+      setSelectedMesa(null);
+      navigate("/Listagem");
+    } catch (error) {
+      console.error("Erro ao fechar comanda:", error);
+    }
   };
 
   return (
-    <>
+    <div>
+      {/* Listagem das Mesas */}
       {!selectedMesa && (
         <div className="mesas-container">
           {mesas.map((mesa) => (
             <button
-              key={mesa}
-              className={`mesa ${comandas[mesa] ? "ocupada" : "disponivel"}`}
+              key={mesa.id}
+              className={`mesa ${mesa.status === "ocupada" ? "ocupada" : "disponivel"}`}
               onClick={() => handleMesaClick(mesa)}
             >
-              {mesa}
-              {comandas[mesa] && (
-                <div className="comanda-info">
-                  <p>Tempo: 4H45M</p>
-                  <p>Total: R$340,00</p>
-                </div>
-              )}
+              Mesa {mesa.numero}
             </button>
           ))}
         </div>
       )}
 
-      {selectedMesa && !comandas[selectedMesa] && (
+      {/* Abertura de Comanda */}
+      {selectedMesa && !comandas[selectedMesa.id] && (
         <div className="nova-comanda">
-          <h2>Abertura de comanda</h2>
-          <p>Mesa: {selectedMesa}</p>
+          <h2>Abrir Comanda</h2>
+          <p>Mesa: {selectedMesa.numero}</p>
           <input
             type="text"
             placeholder="Número da Comanda"
             value={novaComanda}
             onChange={(e) => setNovaComanda(e.target.value)}
           />
-          <div className="botoes">
-            <button className="voltar" onClick={() => setSelectedMesa(null)}>
-              Voltar
-            </button>
-            <button
-              className="abrir"
-              onClick={handleAbrirComanda}
-              disabled={!novaComanda}
-            >
-              Abrir Comanda
-            </button>
-          </div>
+          <button onClick={handleAbrirComanda} disabled={!novaComanda}>
+            Abrir
+          </button>
+          <button onClick={() => setSelectedMesa(null)}>Voltar</button>
         </div>
       )}
 
-      {selectedMesa && comandas[selectedMesa] && (
-        <div className="comanda-mesa">
-          <div className="header-comanda">
-            <div className="comanda-info">
-              <h2>Comanda: {comandas[selectedMesa]}</h2>
-              <p>Mesa: {selectedMesa}</p>
-              <p>Garçom: Guilherme</p>
-              <p>Tempo: 14h45m</p>
-            </div>
-            <div className="valor-comanda">
-              <h2>R$340,00</h2>
-              <p>Serviço (10%): R$ 20,00</p>
-            </div>
-          </div>
-
-          <div className="categorias">
+      {/* Comanda Ativa */}
+      {selectedMesa && comandas[selectedMesa.id] && (
+        <div>
+          <h2>Comanda Mesa {selectedMesa.numero}</h2>
+          <div>
             {categorias.map((categoria) => (
-              <button
-                key={categoria}
-                className="categoria-btn"
-                onClick={() =>
-                  setProdutos(
-                    produtosMock.filter((produto) => produto.categoria === categoria)
-                  )
-                }
-              >
+              <button key={categoria} onClick={() => handleCategoriaClick(categoria)}>
                 {categoria}
               </button>
             ))}
           </div>
-
-          <div className="itens">
-            <h3>Itens não enviados</h3>
-            {produtos.length > 0 ? (
-              <div className="produtos-grid">
-                {produtos.map((produto) => (
-                  <div key={produto.id} className="produto-card">
-                    <p>{produto.nome}</p>
-                    <p>R$ {produto.preco.toFixed(2)}</p>
-                    <button className="add-carrinho">Adicionar</button>
-                  </div>
-                ))}
+          <div>
+            {produtosCategoria.map((produto) => (
+              <div key={produto.id}>
+                <p>{produto.nome}</p>
+                <p>R$ {produto.preco.toFixed(2)}</p>
+                <button onClick={() => handleAdicionarProduto(produto)}>Adicionar</button>
               </div>
-            ) : (
-              <p>Nenhum item novo adicionado</p>
-            )}
+            ))}
           </div>
-
-          <div className="botoes">
-            <button className="voltar" onClick={() => setSelectedMesa(null)}>
-              Voltar
-            </button>
-            <button className="fechar" onClick={handleFecharComandaClick}>
-              Fechar Comanda
-            </button>
-          </div>
+          <button onClick={handleFecharComandaClick}>Fechar Comanda</button>
+          <button onClick={() => setSelectedMesa(null)}>Voltar</button>
         </div>
       )}
 
-      {mostrarFecharComanda && comandaDetalhes && (
-        <div
-          className="modal"
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            background: "rgba(0,0,0,0.5)",
-            zIndex: 9999,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center"
-          }}
-        >
-          <div style={{ background: "#fff", padding: "20px", borderRadius: "8px" }}>
-            <h2>Fechar Comanda</h2>
-            <p>Mesa: {comandaDetalhes.mesa}</p>
-            <p>Comanda: {comandaDetalhes.comanda}</p>
-            <p>Total: R$ {comandaDetalhes.total.toFixed(2)}</p>
-            <p>Data: {comandaDetalhes.dataFechamento}</p>
-            <ul>
-              {comandaDetalhes.itens.map((item) => (
-                <li key={item.id}>
-                  {item.nome} - R$ {item.preco.toFixed(2)}
-                </li>
-              ))}
-            </ul>
-            <div className="botoes">
-              <button className="imprimir" onClick={handleImportar}>
-                Importar
-              </button>
-              <button
-                className="cancelar"
-                onClick={() => setMostrarFecharComanda(false)}
-              >
-                Cancelar
-              </button>
-              <button className="confirmar" onClick={handleConfirmarFechamento}>
-                Confirmar Fechamento
-              </button>
-            </div>
-          </div>
+      {/* Modal para Fechar Comanda */}
+      {mostrarFecharComanda && (
+        <div className="modal">
+          <h2>Fechar Comanda</h2>
+          <p>Mesa: {comandaDetalhes.mesa}</p>
+          <p>Total: R$ {comandaDetalhes.total.toFixed(2)}</p>
+          <ul>
+            {comandaDetalhes.itens.map((item) => (
+              <li key={item.id}>{item.nome} - R$ {item.preco.toFixed(2)}</li>
+            ))}
+          </ul>
+          <button onClick={handleConfirmarFechamento}>Confirmar</button>
+          <button onClick={() => setMostrarFecharComanda(false)}>Cancelar</button>
         </div>
       )}
-    </>
+    </div>
   );
 };
 

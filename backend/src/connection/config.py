@@ -1,11 +1,12 @@
 import psycopg2
+import os
 
 def connect_db():
-    DB_NAME = "comanda_club"
-    DB_USER = "postgres"
-    DB_PASS = "Admin"
-    DB_HOST = "127.0.0.1"
-    DB_PORT = "5433"
+    DB_NAME = os.getenv("DB_NAME", "comanda_club")
+    DB_USER = os.getenv("DB_USER", "postgres")
+    DB_PASS = os.getenv("DB_PASS", "Admin")
+    DB_HOST = os.getenv("DB_HOST", "127.0.0.1")
+    DB_PORT = os.getenv("DB_PORT", 5433)
 
     try:
         conn = psycopg2.connect(
