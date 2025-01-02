@@ -16,3 +16,12 @@ def add_client(nome=None, cpf=None, email=None, telefone=None, filial=None, conv
     except Exception as e:
         print("Erro no controlador add_client:", e)
         return json.dumps({"error": "Erro ao processar o cliente"}), 500
+
+
+def buscar_cliente_por_cpf(cpf):
+    try:
+        cliente, status_code = buscar_cliente_por_cpf(cpf)
+        return cliente, status_code
+    except Exception as e:
+        print(f"Erro no controlador buscar_cliente_por_cpf: {e}")
+        return {"error": "Erro interno no servidor"}, 500

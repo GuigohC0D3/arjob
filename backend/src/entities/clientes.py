@@ -1,5 +1,34 @@
 import psycopg2
 from ..connection.config import connect_db
+from flask import request, jsonify
+
+
+def get_clientes():
+    conn = connect_db()
+    if not conn:
+        return {"error": "Erro ao conectar ao banco de dados"}, 500
+
+    try:
+        cur = conn.cursor()
+
+        # Query para buscar todos os clientes
+        cur.execute("SELECT * FROM clientes")
+        rows = cur.fetchall()
+
+        # Converter os resultados para uma lista de dicionários
+        clientes = []
+        columns = [desc[0] for desc in cur.description]
+        for row in rows:
+            clientes.append(dict(zip(columns, row)))
+
+        cur.close()
+        conn.close()
+
+        return {"data": clientes, "status": 200}, 200
+    except Exception as e:
+        print(f"Erro ao buscar clientes: {e}")
+        return {"error": "Erro ao buscar clientes"}, 500
+
 
 def add_cliente(nome, cpf, email, telefone, filial, convenio, departamento_id):
     """
@@ -49,3 +78,40 @@ def add_cliente(nome, cpf, email, telefone, filial, convenio, departamento_id):
     else:
         print("Erro ao conectar ao banco de dados")
         return {'error': 'Erro ao conectar ao banco de dados', 'status': 500}
+
+
+def buscar_cliente_por_cpf(cpf):
+    """
+    Busca cliente pelo CPF.
+    """
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            # Remover pontuação para normalizar o CPF
+            cpf = cpf.replace('.', '').replace('-', '')
+            cur.execute("""
+                SELECT nome, cpf, email, telefone, filial, convenio
+                FROM clientes
+                WHERE REPLACE(REPLACE(REPLACE(cpf, '.', ''), '-', ''), '/', '') = %s
+            """, (cpf,))
+            cliente = cur.fetchone()
+            cur.close()
+            conn.close()
+
+            if cliente:
+                return {
+                    "nome": cliente[0],
+                    "cpf": cliente[1],
+                    "email": cliente[2],
+                    "telefone": cliente[3],
+                    "filial": cliente[4],
+                    "convenio": cliente[5]
+                }, 200
+            else:
+                return {"error": "Cliente não encontrado"}, 404
+        except Exception as e:
+            print(f"Erro ao buscar cliente no banco de dados: {e}")
+            return {"error": "Erro interno no servidor"}, 500
+    else:
+        return {"error": "Erro ao conectar ao banco de dados"}, 500

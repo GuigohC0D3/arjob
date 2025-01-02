@@ -13,6 +13,8 @@ const IniciarVenda = () => {
   const [mostrarFecharComanda, setMostrarFecharComanda] = useState(false);
   const [comandaDetalhes, setComandaDetalhes] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [cpfCliente, setCpfCliente] = useState(""); // CPF do cliente
+  const [clienteInfo, setClienteInfo] = useState(null); // Informações do cliente
 
   const categorias = ["Entradas", "Pratos", "Bebidas", "Sobremesas"];
 
@@ -34,6 +36,7 @@ const IniciarVenda = () => {
         setLoading(false);
       }
     };
+
     fetchMesas();
   }, []);
 
@@ -41,9 +44,40 @@ const IniciarVenda = () => {
     setSelectedMesa(mesa);
   };
 
+  const handleBuscarCliente = async () => {
+    if (!cpfCliente) {
+      alert("Por favor, insira um CPF válido.");
+      return;
+    }
+  
+    try {
+      setLoading(true);
+      const response = await fetch(`http://127.0.0.1:5000/clientes/${cpfCliente.trim()}`);
+      if (response.ok) {
+        const data = await response.json();
+        setClienteInfo(data);
+        console.log("Informações do cliente:", data);
+      } else {
+        console.error("Cliente não encontrado");
+        setClienteInfo(null);
+        alert("Cliente não encontrado. Verifique o CPF.");
+      }
+    } catch (error) {
+      console.error("Erro ao buscar cliente:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+
   const handleAbrirComanda = async () => {
     if (!selectedMesa || !selectedMesa.id) {
       console.error("Mesa selecionada inválida:", selectedMesa);
+      return;
+    }
+
+    if (!cpfCliente || !clienteInfo) {
+      alert("Por favor, insira e busque o CPF do cliente antes de abrir a comanda.");
       return;
     }
 
@@ -53,7 +87,7 @@ const IniciarVenda = () => {
       const response = await fetch("http://127.0.0.1:5000/comandas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mesa_id: selectedMesa.id }),
+        body: JSON.stringify({ mesa_id: selectedMesa.id, cliente_cpf: cpfCliente }),
       });
 
       if (response.ok) {
@@ -100,13 +134,19 @@ const IniciarVenda = () => {
         `http://127.0.0.1:5000/comandas/${comandaDetalhes.comanda}/fechar`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mesa_id: selectedMesa.id }),
         }
       );
       if (response.ok) {
+        // Adicionar ao histórico de comandas
         setHistoricoComandas([...historicoComandas, comandaDetalhes]);
         setMostrarFecharComanda(false);
+
+        // Atualizar o status da mesa para disponível
+        const mesaAtualizada = mesas.map((mesa) =>
+          mesa.id === selectedMesa.id ? { ...mesa, status: "disponivel" } : mesa
+        );
+        setMesas(mesaAtualizada);
+
         setSelectedMesa(null);
         navigate("/Listagem");
       } else {
@@ -143,6 +183,28 @@ const IniciarVenda = () => {
         <div className="nova-comanda">
           <h2>Abrir Comanda</h2>
           <p>Mesa: {selectedMesa.numero}</p>
+
+          <div className="cpf-container">
+            <label>
+              CPF do Cliente:
+              <input
+                type="text"
+                value={cpfCliente}
+                onChange={(e) => setCpfCliente(e.target.value)}
+                placeholder="Digite o CPF"
+              />
+            </label>
+            <button onClick={handleBuscarCliente}>Buscar Cliente</button>
+          </div>
+
+          {clienteInfo && (
+            <div className="cliente-info">
+              <h3>Informações do Cliente</h3>
+              <p>Nome: {clienteInfo.nome}</p>
+              <p>CPF: {clienteInfo.cpf}</p>
+            </div>
+          )}
+
           <button onClick={handleAbrirComanda}>Gerar e Abrir Comanda</button>
           <button onClick={() => setSelectedMesa(null)}>Voltar</button>
         </div>

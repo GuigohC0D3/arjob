@@ -5,6 +5,7 @@ from math import ceil
 from datetime import datetime
 from ..controllers import clientes_controller, departamento_cliente_controller, departamentos_controller,  mesas_controller, comandas_controller, produtos_controller
 from ..entities import comandas
+from ..entities.clientes import get_clientes 
 from ..entities import movimentacao_caixa
 from ..entities import users
 from ..connection.config import connect_db 
@@ -27,11 +28,30 @@ def addCliente():
         print("Erro no endpoint /clientes:", e)  # Log do erro no terminal
         return jsonify({"error": "Erro interno no servidor"}), 500
     
+@main_bp.route('/clientes', methods=['GET'])
+def get_clientes_endpoint():
+    try:
+        result, status_code = get_clientes()
+        return jsonify(result), status_code
+    except Exception as e:
+        print(f"Erro no endpoint /clientes: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
+
+@main_bp.route('/clientes/<cpf>', methods=['GET'])
+def get_cliente_por_cpf(cpf):
+    """
+    Busca cliente pelo CPF.
+    """
+    try:
+        cliente, status_code = clientes_controller.buscar_cliente_por_cpf(cpf)
+        return jsonify(cliente), status_code
+    except Exception as e:
+        print(f"Erro no endpoint /clientes/{cpf}: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
+
+
 @main_bp.route('/departamentos', methods=['GET'])
 def listar_departamentos():
-    """
-    Rota para listar todos os departamentos.
-    """
     try:
         return departamentos_controller.get_departamentos()
     except Exception as e:
