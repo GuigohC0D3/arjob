@@ -34,7 +34,6 @@ const IniciarVenda = () => {
         setLoading(false);
       }
     };
-
     fetchMesas();
   }, []);
 
@@ -43,7 +42,13 @@ const IniciarVenda = () => {
   };
 
   const handleAbrirComanda = async () => {
+    if (!selectedMesa || !selectedMesa.id) {
+      console.error("Mesa selecionada inválida:", selectedMesa);
+      return;
+    }
+
     try {
+      console.log("Tentando abrir comanda para a mesa:", selectedMesa);
       setLoading(true);
       const response = await fetch("http://127.0.0.1:5000/comandas", {
         method: "POST",
@@ -57,12 +62,7 @@ const IniciarVenda = () => {
         setComandas({ ...comandas, [selectedMesa.id]: data.numero }); // Salva o número da comanda
       } else {
         const errorData = await response.json();
-        if (errorData.error === "Mesa já está ocupada") {
-          console.log("Mesa já ocupada, carregando comanda existente.");
-          setComandas({ ...comandas, [selectedMesa.id]: errorData.numero }); // Carregar comanda existente
-        } else {
-          console.error("Erro do servidor:", errorData);
-        }
+        console.error("Erro do servidor ao abrir comanda:", errorData);
       }
     } catch (error) {
       console.error("Erro ao abrir comanda:", error);
@@ -100,6 +100,8 @@ const IniciarVenda = () => {
         `http://127.0.0.1:5000/comandas/${comandaDetalhes.comanda}/fechar`,
         {
           method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mesa_id: selectedMesa.id }),
         }
       );
       if (response.ok) {
@@ -127,9 +129,7 @@ const IniciarVenda = () => {
           {mesas.map((mesa) => (
             <button
               key={mesa.id}
-              className={`mesa ${
-                mesa.status === "ocupada" ? "ocupada" : "disponivel"
-              }`}
+              className={`mesa ${mesa.status === "ocupada" ? "ocupada" : "disponivel"}`}
               onClick={() => handleMesaClick(mesa)}
             >
               Mesa {mesa.numero}
@@ -148,7 +148,7 @@ const IniciarVenda = () => {
         </div>
       )}
 
-      {/* Comanda Ativa */}
+      {/* Ver Comanda */}
       {selectedMesa && comandas[selectedMesa.id] && (
         <div>
           <h2>Comanda Mesa {selectedMesa.numero}</h2>
