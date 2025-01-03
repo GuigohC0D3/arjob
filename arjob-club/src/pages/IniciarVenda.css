@@ -104,6 +104,10 @@ input {
   white-space: nowrap;
 }
 
+.select-mesa {
+  font-weight: bold;
+}
+
 .mesa:hover .mesa-tooltip {
   opacity: 1;
   transform: translateY(0);

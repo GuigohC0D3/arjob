@@ -63,7 +63,12 @@ const IniciarVenda = () => {
       );
       if (response.ok) {
         const data = await response.json();
-        setClienteInfo(data);
+        if (Array.isArray(data) && data.length > 0) {
+          setClienteInfo(data[0]); // Pegamos o primeiro item do array
+        } else {
+          setClienteInfo(null);
+          alert("Cliente não encontrado. Verifique o CPF.");
+        }
       } else {
         setClienteInfo(null);
         alert("Cliente não encontrado. Verifique o CPF.");
@@ -140,7 +145,9 @@ const IniciarVenda = () => {
       if (response.ok) {
         setMesas((prev) =>
           prev.map((mesa) =>
-            mesa.id === selectedMesa.id ? { ...mesa, status: "disponivel" } : mesa
+            mesa.id === selectedMesa.id
+              ? { ...mesa, status: "disponivel" }
+              : mesa
           )
         );
         setHistoricoComandas((prev) => [
@@ -168,7 +175,9 @@ const IniciarVenda = () => {
           {mesas.map((mesa) => (
             <button
               key={mesa.id}
-              className={`mesa ${mesa.status === "ocupada" ? "ocupada" : "disponivel"}`}
+              className={`mesa ${
+                mesa.status === "ocupada" ? "ocupada" : "disponivel"
+              }`}
               onClick={() => handleMesaClick(mesa)}
             >
               Mesa {mesa.numero}
@@ -195,11 +204,17 @@ const IniciarVenda = () => {
             <button onClick={handleBuscarCliente}>Buscar Cliente</button>
           </div>
 
-          {clienteInfo && (
+          {clienteInfo ? (
             <div className="cliente-info">
               <h3>Informações do Cliente</h3>
-              <p>Nome: {clienteInfo.nome}</p>
-              <p>CPF: {clienteInfo.cpf}</p>
+              <p>Nome: {clienteInfo.nome || "Não encontrado"}</p>
+              <p>CPF: {clienteInfo.cpf || "Não encontrado"}</p>
+            </div>
+          ) : (
+            <div className="cliente-info">
+              <h3>Informações do Cliente</h3>
+              <p>Nome: Nome não encontrado</p>
+              <p>CPF: CPF não encontrado</p>
             </div>
           )}
 
@@ -211,6 +226,8 @@ const IniciarVenda = () => {
       {selectedMesa && comandas[selectedMesa.id] && (
         <div>
           <h2>Comanda Mesa {selectedMesa.numero}</h2>
+          <p className="select-mesa">Nome: {clienteInfo.nome}</p>
+          <p className="select-mesa">CPF: {clienteInfo.cpf}</p>
           <div>
             {categorias.map((categoria) => (
               <button
@@ -226,7 +243,9 @@ const IniciarVenda = () => {
               <div key={produto.id}>
                 <p>{produto.nome}</p>
                 <p>R$ {produto.preco.toFixed(2)}</p>
-                <button onClick={() => console.log("Produto adicionado:", produto)}>
+                <button
+                  onClick={() => console.log("Produto adicionado:", produto)}
+                >
                   Adicionar
                 </button>
               </div>
@@ -263,7 +282,9 @@ const IniciarVenda = () => {
             ))}
           </ul>
           <button onClick={handleFecharComandaClick}>Confirmar</button>
-          <button onClick={() => setMostrarFecharComanda(false)}>Cancelar</button>
+          <button onClick={() => setMostrarFecharComanda(false)}>
+            Cancelar
+          </button>
         </div>
       )}
     </div>
