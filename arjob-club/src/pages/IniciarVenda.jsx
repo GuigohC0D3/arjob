@@ -19,8 +19,6 @@ const IniciarVenda = () => {
   const [cpfCliente, setCpfCliente] = useState("");
   const [clienteInfo, setClienteInfo] = useState(null);
 
-  const categorias = ["Entradas", "Pratos", "Bebidas", "Sobremesas"];
-
   // Carregar mesas ao montar o componente
   useEffect(() => {
     const fetchMesas = async () => {
@@ -115,13 +113,6 @@ const IniciarVenda = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Selecionar categoria de produtos
-  const handleCategoriaClick = (categoria) => {
-    setProdutosCategoria(
-      produtosCategoria.filter((produto) => produto.categoria === categoria)
-    );
   };
 
   // Fechar comanda
@@ -228,16 +219,6 @@ const IniciarVenda = () => {
           <h2>Comanda Mesa {selectedMesa.numero}</h2>
           <p className="select-mesa">Nome: {clienteInfo.nome}</p>
           <p className="select-mesa">CPF: {clienteInfo.cpf}</p>
-          <div>
-            {categorias.map((categoria) => (
-              <button
-                key={categoria}
-                onClick={() => handleCategoriaClick(categoria)}
-              >
-                {categoria}
-              </button>
-            ))}
-          </div>
           <div>
             {produtosCategoria.map((produto) => (
               <div key={produto.id}>
