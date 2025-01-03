@@ -63,6 +63,14 @@ body {
   border-top: 1px solid rgba(255, 255, 255, 0.3); /* Linha de separação */
 }
 
+.main-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: 340px;  /* Deixa espaço para a sidebar */
+  padding: 350px;
+}
+
 /* Efeito de transição */
 @keyframes fade-in {
   from {
