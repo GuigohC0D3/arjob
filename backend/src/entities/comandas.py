@@ -1,5 +1,6 @@
 from ..connection.config import connect_db
 from ..entities import mesas
+from datetime import datetime
 import random
 import string
 
@@ -66,39 +67,51 @@ def abrir_comanda(mesa_id):
     except Exception as e:
         print(f"Erro no controlador ao abrir comanda: {e}")
         return False, "Erro interno no servidor"
-
-def fechar_comanda(comanda_id):
+    
+def atualizar_status_comanda(comanda_id):
+    """
+    Atualiza o status da comanda no banco de dados, define a data de fechamento,
+    e libera a mesa associada para "disponível".
+    """
     conn = connect_db()
     if conn:
         try:
             cur = conn.cursor()
 
-            # Validar se a comanda está aberta
-            cur.execute("SELECT id FROM comandas WHERE id = %s AND status = 'aberta'", (comanda_id,))
-            if not cur.fetchone():
-                return False, "Comanda não encontrada ou já fechada"
+            # Atualiza a comanda para "fechada" e define a data de fechamento
+            cur.execute("""
+                UPDATE comandas
+                SET status = 'fechada', data_fechamento = NOW()
+                WHERE id = %s
+                RETURNING mesa_id
+            """, (comanda_id,))
+            result = cur.fetchone()
 
-            # Atualizar status da comanda
-            cur.execute("UPDATE comandas SET status = 'fechada' WHERE id = %s", (comanda_id,))
-            conn.commit()
+            if not result:
+                return {"error": "Comanda não encontrada"}, 404
 
-            # Atualizar status da mesa para "disponível"
-            cur.execute(
-                """
+            mesa_id = result[0]
+
+            # Libera a mesa associada para "disponível"
+            cur.execute("""
                 UPDATE mesas
                 SET status = 'disponivel'
-                WHERE id = (SELECT mesa_id FROM comandas WHERE id = %s)
-                """,
-                (comanda_id,)
-            )
+                WHERE id = %s
+            """, (mesa_id,))
+
             conn.commit()
             cur.close()
             conn.close()
-            return True, None
+
+            return {"message": "Comanda fechada e mesa liberada com sucesso!"}, 200
         except Exception as e:
-            print(f"Erro ao fechar comanda: {e}")
-            return False, "Erro ao fechar comanda no banco de dados"
-    return False, "Erro ao conectar ao banco de dados"
+            conn.rollback()
+            print(f"Erro ao fechar comanda e liberar mesa no banco de dados: {e}")
+            return {"error": "Erro ao fechar comanda no banco de dados"}, 500
+    else:
+        return {"error": "Erro ao conectar ao banco de dados"}, 500
+
+
 
 def listar_comandas():
     conn = connect_db()

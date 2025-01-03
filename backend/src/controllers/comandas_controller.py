@@ -1,5 +1,6 @@
 from flask import jsonify, request
 from ..entities import comandas, mesas
+from ..entities.comandas import atualizar_status_comanda
 
 def abrir_comanda(mesa_id, numero_comanda=None):
     try:
@@ -39,20 +40,23 @@ def criar_comanda():
     except Exception as e:
         print(f"Erro ao criar comanda: {e}")
         return jsonify({"error": "Erro ao criar comanda"}), 500
-
+    
 def fechar_comanda(comanda_id):
-    """
-    Endpoint para fechar uma comanda existente.
-    """
-    sucesso = comandas.fechar_comanda(comanda_id)
-    if sucesso:
-        return jsonify({"message": "Comanda fechada com sucesso"}), 200
-    return jsonify({"error": "Erro ao fechar comanda"}), 500
-
+    try:
+        # Chama a entidade para realizar a operação no banco
+        response, status_code = atualizar_status_comanda(comanda_id)
+        
+        # Certifica-se de retornar apenas dicionários e status
+        if isinstance(response, dict):
+            return response, status_code
+        else:
+            print("Resposta inesperada do banco de dados:", response)
+            return {"error": "Erro inesperado no servidor"}, 500
+    except Exception as e:
+        print(f"Erro no controlador fechar_comanda: {e}")
+        return {"error": "Erro interno no controlador"}, 500
+    
 def listar_comandas():
-    """
-    Endpoint para listar todas as comandas.
-    """
     resultado = comandas.listar_comandas()
     if resultado is not None:
         return jsonify(resultado), 200

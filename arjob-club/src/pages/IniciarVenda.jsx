@@ -4,29 +4,32 @@ import "./IniciarVenda.css";
 
 const IniciarVenda = () => {
   const navigate = useNavigate();
-  const [mesas, setMesas] = useState([]); // Mesas vindas do backend
+
+  // Estados principais
+  const [mesas, setMesas] = useState([]);
   const [selectedMesa, setSelectedMesa] = useState(null);
   const [comandas, setComandas] = useState({});
-  const [produtos, setProdutos] = useState([]);
   const [produtosCategoria, setProdutosCategoria] = useState([]);
   const [historicoComandas, setHistoricoComandas] = useState([]);
+
+  // Estados auxiliares
   const [mostrarFecharComanda, setMostrarFecharComanda] = useState(false);
   const [comandaDetalhes, setComandaDetalhes] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [cpfCliente, setCpfCliente] = useState(""); // CPF do cliente
-  const [clienteInfo, setClienteInfo] = useState(null); // Informações do cliente
+  const [cpfCliente, setCpfCliente] = useState("");
+  const [clienteInfo, setClienteInfo] = useState(null);
 
   const categorias = ["Entradas", "Pratos", "Bebidas", "Sobremesas"];
 
-  // Carregar mesas do backend
+  // Carregar mesas ao montar o componente
   useEffect(() => {
     const fetchMesas = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
         const response = await fetch("http://127.0.0.1:5000/mesas");
         if (response.ok) {
           const data = await response.json();
-          setMesas(data); // Mesas no formato [{ id, numero, status }]
+          setMesas(data);
         } else {
           console.error("Erro ao carregar mesas");
         }
@@ -40,25 +43,28 @@ const IniciarVenda = () => {
     fetchMesas();
   }, []);
 
+  // Selecionar mesa
   const handleMesaClick = (mesa) => {
     setSelectedMesa(mesa);
   };
 
+  // Buscar cliente pelo CPF
   const handleBuscarCliente = async () => {
-    if (!cpfCliente) {
+    const cpfLimpo = cpfCliente.replace(/\D/g, ""); // Remove formatações
+    if (!cpfLimpo) {
       alert("Por favor, insira um CPF válido.");
       return;
     }
-  
+
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await fetch(`http://127.0.0.1:5000/clientes/${cpfCliente.trim()}`);
+      const response = await fetch(
+        `http://127.0.0.1:5000/clientes/${cpfLimpo.trim()}`
+      );
       if (response.ok) {
         const data = await response.json();
         setClienteInfo(data);
-        console.log("Informações do cliente:", data);
       } else {
-        console.error("Cliente não encontrado");
         setClienteInfo(null);
         alert("Cliente não encontrado. Verifique o CPF.");
       }
@@ -68,32 +74,33 @@ const IniciarVenda = () => {
       setLoading(false);
     }
   };
-  
 
+  // Abrir nova comanda
   const handleAbrirComanda = async () => {
     if (!selectedMesa || !selectedMesa.id) {
-      console.error("Mesa selecionada inválida:", selectedMesa);
+      alert("Selecione uma mesa para abrir a comanda.");
       return;
     }
 
     if (!cpfCliente || !clienteInfo) {
-      alert("Por favor, insira e busque o CPF do cliente antes de abrir a comanda.");
+      alert("Insira e busque o CPF do cliente antes de abrir a comanda.");
       return;
     }
 
+    setLoading(true);
     try {
-      console.log("Tentando abrir comanda para a mesa:", selectedMesa);
-      setLoading(true);
       const response = await fetch("http://127.0.0.1:5000/comandas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mesa_id: selectedMesa.id, cliente_cpf: cpfCliente }),
+        body: JSON.stringify({
+          mesa_id: selectedMesa.id,
+          cliente_cpf: cpfCliente,
+        }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        console.log("Comanda aberta ou existente:", data);
-        setComandas({ ...comandas, [selectedMesa.id]: data.numero }); // Salva o número da comanda
+        setComandas((prev) => ({ ...prev, [selectedMesa.id]: data.numero }));
       } else {
         const errorData = await response.json();
         console.error("Erro do servidor ao abrir comanda:", errorData);
@@ -105,52 +112,45 @@ const IniciarVenda = () => {
     }
   };
 
+  // Selecionar categoria de produtos
   const handleCategoriaClick = (categoria) => {
     setProdutosCategoria(
-      produtos.filter((produto) => produto.categoria === categoria)
+      produtosCategoria.filter((produto) => produto.categoria === categoria)
     );
   };
 
-  const handleAdicionarProduto = (produto) => {
-    console.log("Adicionar produto:", produto); // Integre com o backend para salvar produtos
-  };
+  // Fechar comanda
+  const handleFecharComandaClick = async () => {
+    if (!selectedMesa || !comandas[selectedMesa.id]) {
+      alert("Não há uma comanda aberta para esta mesa.");
+      return;
+    }
 
-  const handleFecharComandaClick = () => {
-    const comandaAtual = {
-      mesa: selectedMesa.numero,
-      comanda: comandas[selectedMesa.id],
-      total: produtosCategoria.reduce((sum, produto) => sum + produto.preco, 0),
-      itens: produtosCategoria,
-      dataFechamento: new Date().toLocaleString(),
-    };
-    setComandaDetalhes(comandaAtual);
-    setMostrarFecharComanda(true);
-  };
-
-  const handleConfirmarFechamento = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
+      const comandaId = comandas[selectedMesa.id];
       const response = await fetch(
-        `http://127.0.0.1:5000/comandas/${comandaDetalhes.comanda}/fechar`,
+        `http://127.0.0.1:5000/comandas/${comandaId}/fechar`,
         {
           method: "PUT",
+          headers: { "Content-Type": "application/json" },
         }
       );
+
       if (response.ok) {
-        // Adicionar ao histórico de comandas
-        setHistoricoComandas([...historicoComandas, comandaDetalhes]);
-        setMostrarFecharComanda(false);
-
-        // Atualizar o status da mesa para disponível
-        const mesaAtualizada = mesas.map((mesa) =>
-          mesa.id === selectedMesa.id ? { ...mesa, status: "disponivel" } : mesa
+        setMesas((prev) =>
+          prev.map((mesa) =>
+            mesa.id === selectedMesa.id ? { ...mesa, status: "disponivel" } : mesa
+          )
         );
-        setMesas(mesaAtualizada);
-
+        setHistoricoComandas((prev) => [
+          ...prev,
+          { mesa: selectedMesa.numero, comanda: comandaId },
+        ]);
         setSelectedMesa(null);
-        navigate("/Listagem");
+        alert("Comanda fechada com sucesso!");
       } else {
-        console.error("Erro ao fechar comanda");
+        alert("Não foi possível fechar a comanda. Tente novamente.");
       }
     } catch (error) {
       console.error("Erro ao fechar comanda:", error);
@@ -163,7 +163,6 @@ const IniciarVenda = () => {
     <div>
       {loading && <p>Carregando...</p>}
 
-      {/* Listagem das Mesas */}
       {!selectedMesa && (
         <div className="mesas-container">
           {mesas.map((mesa) => (
@@ -178,7 +177,6 @@ const IniciarVenda = () => {
         </div>
       )}
 
-      {/* Abertura de Comanda */}
       {selectedMesa && !comandas[selectedMesa.id] && (
         <div className="nova-comanda">
           <h2>Abrir Comanda</h2>
@@ -210,7 +208,6 @@ const IniciarVenda = () => {
         </div>
       )}
 
-      {/* Ver Comanda */}
       {selectedMesa && comandas[selectedMesa.id] && (
         <div>
           <h2>Comanda Mesa {selectedMesa.numero}</h2>
@@ -229,7 +226,7 @@ const IniciarVenda = () => {
               <div key={produto.id}>
                 <p>{produto.nome}</p>
                 <p>R$ {produto.preco.toFixed(2)}</p>
-                <button onClick={() => handleAdicionarProduto(produto)}>
+                <button onClick={() => console.log("Produto adicionado:", produto)}>
                   Adicionar
                 </button>
               </div>
@@ -240,23 +237,33 @@ const IniciarVenda = () => {
         </div>
       )}
 
-      {/* Modal para Fechar Comanda */}
+      {historicoComandas.length > 0 && (
+        <div className="historico-comandas">
+          <h3>Histórico de Comandas</h3>
+          <ul>
+            {historicoComandas.map((historico, index) => (
+              <li key={index}>
+                Mesa {historico.mesa} - Comanda {historico.comanda}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {mostrarFecharComanda && (
         <div className="modal">
           <h2>Fechar Comanda</h2>
-          <p>Mesa: {comandaDetalhes.mesa}</p>
-          <p>Total: R$ {comandaDetalhes.total.toFixed(2)}</p>
+          <p>Mesa: {comandaDetalhes?.mesa}</p>
+          <p>Total: R$ {comandaDetalhes?.total?.toFixed(2)}</p>
           <ul>
-            {comandaDetalhes.itens.map((item) => (
+            {comandaDetalhes?.itens.map((item) => (
               <li key={item.id}>
                 {item.nome} - R$ {item.preco.toFixed(2)}
               </li>
             ))}
           </ul>
-          <button onClick={handleConfirmarFechamento}>Confirmar</button>
-          <button onClick={() => setMostrarFecharComanda(false)}>
-            Cancelar
-          </button>
+          <button onClick={handleFecharComandaClick}>Confirmar</button>
+          <button onClick={() => setMostrarFecharComanda(false)}>Cancelar</button>
         </div>
       )}
     </div>

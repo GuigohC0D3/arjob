@@ -39,9 +39,6 @@ def get_clientes_endpoint():
 
 @main_bp.route('/clientes/<cpf>', methods=['GET'])
 def get_cliente_por_cpf(cpf):
-    """
-    Busca cliente pelo CPF.
-    """
     try:
         cliente, status_code = clientes_controller.buscar_cliente_por_cpf(cpf)
         return jsonify(cliente), status_code
@@ -90,9 +87,20 @@ def excluir_mesa(mesa_id):
 def criar_comanda():
     return comandas_controller.criar_comanda()
 
-@main_bp.route("/comandas/<int:comanda_id>/fechar", methods=["PUT"])
+@main_bp.route('/comandas/<int:comanda_id>/fechar', methods=['PUT'])
 def fechar_comanda(comanda_id):
-    return comandas_controller.fechar_comanda(comanda_id)
+    try:
+        # Chama o controlador para fechar a comanda
+        response, status_code = comandas_controller.fechar_comanda(comanda_id)
+        
+        # Retorna um JSON serializável
+        if isinstance(response, dict):
+            return jsonify(response), status_code
+        else:
+            return jsonify({"error": "Resposta inesperada do servidor"}), 500
+    except Exception as e:
+        print(f"Erro no endpoint /comandas/{comanda_id}/fechar: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
 
 @main_bp.route("/comandas", methods=["GET"])
 def listar_comandas():
