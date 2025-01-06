@@ -6,3 +6,4 @@ def get_produtos():
         return produtos_listados, 200
     else:
         return {"error": "Erro ao listar produtos"}, 500
+

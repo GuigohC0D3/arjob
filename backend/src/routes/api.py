@@ -110,3 +110,4 @@ def listar_comandas():
 def listar_produtos():
     produtos, status = produtos_controller.get_produtos()
     return jsonify(produtos), status
+

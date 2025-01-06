@@ -19,3 +19,4 @@ def listar_produtos():
     else:
         print("Erro ao conectar ao banco de dados")
         return None
+    

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import SearchBar from "../components/Searchbar";
 import "./IniciarVenda.css";
 
 const IniciarVenda = () => {
@@ -18,7 +19,7 @@ const IniciarVenda = () => {
   const [loading, setLoading] = useState(false);
   const [cpfCliente, setCpfCliente] = useState("");
   const [clienteInfo, setClienteInfo] = useState(null);
-
+  
   // Carregar mesas ao montar o componente
   useEffect(() => {
     const fetchMesas = async () => {
@@ -168,6 +169,8 @@ const IniciarVenda = () => {
     }
   };
 
+  
+
   return (
     <div>
       {loading && <p>Carregando...</p>}
@@ -232,6 +235,7 @@ const IniciarVenda = () => {
           <p className="select-mesa">CPF: {clienteInfo?.cpf}</p>
 
           <h3>Produtos Disponíveis</h3>
+          <SearchBar />
           <div className="produtos-container">
             {produtosCategoria.map((produto) => {
               const preco = parseFloat(produto.preco); // Converte para número
