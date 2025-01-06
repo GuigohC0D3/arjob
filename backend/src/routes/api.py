@@ -3,7 +3,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from flask_cors import cross_origin, CORS
 from math import ceil
 from datetime import datetime
-from ..controllers import clientes_controller, departamento_cliente_controller, departamentos_controller,  mesas_controller, comandas_controller, produtos_controller
+from ..controllers import clientes_controller, departamento_cliente_controller, departamentos_controller,  mesas_controller, comandas_controller, produtos_controller, buscar_produtos_controller
 from ..entities import comandas
 from ..entities.clientes import get_clientes 
 from ..entities import movimentacao_caixa
@@ -110,4 +110,8 @@ def listar_comandas():
 def listar_produtos():
     produtos, status = produtos_controller.get_produtos()
     return jsonify(produtos), status
+
+@main_bp.route("/produtos/buscar", methods=["GET"])
+def buscar_produtos_route():
+    return buscar_produtos_controller.buscar_produtos()
 
