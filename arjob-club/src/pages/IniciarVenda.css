@@ -81,11 +81,11 @@ input {
 }
 
 .mesa.ocupada {
-  background-color: #3498db;
+  background-color: #e40808;
 }
 
 .mesa.ocupada:hover {
-  background-color: #2980b9;
+  background-color: #e40808a9;
 }
 
 /* Tooltip */
@@ -276,6 +276,71 @@ input {
   transform: translateY(-3px);
 }
 
+/* Estilo para os produtos */
+.produtos-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.produto-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  width: calc(25% - 15px); /* Para caber 4 produtos por linha */
+  padding: 15px;
+  background-color: #333;
+  color: rgb(255, 255, 255);
+  font-weight: bold;
+  font-size: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  position: relative;
+}
+
+.produto-item:hover {
+  background-color: #726f6f;
+  transform: scale(1.05);
+}
+
+.produto-item p {
+  margin: 5px 0;
+  font-size: 14px;
+  text-align: center;
+}
+
+.produto-item button {
+  margin-top: 10px;
+  padding: 8px 15px;
+  font-size: 14px;
+  border: none;
+  border-radius: 8px;
+  background-color: #2ecc71;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.produto-item button:hover {
+  background-color: #27ae60;
+}
+
+/* Responsividade para produtos */
+@media (max-width: 768px) {
+  .produto-item {
+    width: calc(50% - 15px); /* 2 produtos por linha em telas menores */
+  }
+}
+
+@media (max-width: 480px) {
+  .produto-item {
+    width: 100%; /* 1 produto por linha em telas pequenas */
+  }
+}
 
 /* Responsividade */
 @media (max-width: 768px) {

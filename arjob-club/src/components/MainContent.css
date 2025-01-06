@@ -64,11 +64,8 @@ body {
 }
 
 .main-content {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-left: 340px;  /* Deixa espaço para a sidebar */
-  padding: 350px;
+  margin-left: 240px;  /* Deixa espaço para a sidebar */
+  padding: 250px;
 }
 
 /* Efeito de transição */

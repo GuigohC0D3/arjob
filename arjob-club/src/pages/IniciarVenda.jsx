@@ -92,6 +92,7 @@ const IniciarVenda = () => {
 
     setLoading(true);
     try {
+      // Abrir a comanda
       const response = await fetch("http://127.0.0.1:5000/comandas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -104,6 +105,16 @@ const IniciarVenda = () => {
       if (response.ok) {
         const data = await response.json();
         setComandas((prev) => ({ ...prev, [selectedMesa.id]: data.numero }));
+
+        // Buscar produtos disponíveis
+        const produtosResponse = await fetch("http://127.0.0.1:5000/produtos");
+        if (produtosResponse.ok) {
+          const produtos = await produtosResponse.json();
+          console.log("Produtos recebidos:", produtos); // Debug
+          setProdutosCategoria(produtos);
+        } else {
+          console.error("Erro ao carregar produtos.");
+        }
       } else {
         const errorData = await response.json();
         console.error("Erro do servidor ao abrir comanda:", errorData);
@@ -217,21 +228,32 @@ const IniciarVenda = () => {
       {selectedMesa && comandas[selectedMesa.id] && (
         <div>
           <h2>Comanda Mesa {selectedMesa.numero}</h2>
-          <p className="select-mesa">Nome: {clienteInfo.nome}</p>
-          <p className="select-mesa">CPF: {clienteInfo.cpf}</p>
-          <div>
-            {produtosCategoria.map((produto) => (
-              <div key={produto.id}>
-                <p>{produto.nome}</p>
-                <p>R$ {produto.preco.toFixed(2)}</p>
-                <button
-                  onClick={() => console.log("Produto adicionado:", produto)}
-                >
-                  Adicionar
-                </button>
-              </div>
-            ))}
+          <p className="select-mesa">Nome: {clienteInfo?.nome}</p>
+          <p className="select-mesa">CPF: {clienteInfo?.cpf}</p>
+
+          <h3>Produtos Disponíveis</h3>
+          <div className="produtos-container">
+            {produtosCategoria.map((produto) => {
+              const preco = parseFloat(produto.preco); // Converte para número
+              if (isNaN(preco)) {
+                console.error("Preço inválido para o produto:", produto);
+                return null; // Ignora produtos com preço inválido
+              }
+
+              return (
+                <div key={produto.id} className="produto-item">
+                  <p>{produto.nome}</p>
+                  <p>R$ {preco.toFixed(2)}</p>
+                  <button
+                    onClick={() => console.log("Produto adicionado:", produto)}
+                  >
+                    Adicionar
+                  </button>
+                </div>
+              );
+            })}
           </div>
+
           <button onClick={handleFecharComandaClick}>Fechar Comanda</button>
           <button onClick={() => setSelectedMesa(null)}>Voltar</button>
         </div>
