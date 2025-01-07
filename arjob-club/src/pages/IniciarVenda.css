@@ -1,6 +1,6 @@
 /* Estilo global */
 body {
-  font-family: 'Arial', sans-serif;
+  font-family: "Arial", sans-serif;
   margin: 0;
   padding: 0;
   background-color: #f8f9fa;
@@ -286,53 +286,72 @@ input {
 .produtos-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 15px;
-  justify-content: space-between;
-  margin-top: 20px;
+  gap: 16px;
+  margin-top: 16px;
+  justify-content: flex-start; /* Alinha os itens à esquerda */
 }
 
-.produto-item {
+.produtos-item {
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 150px; /* Define uma largura fixa */
+  text-align: center;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  width: calc(25% - 15px); /* Para caber 4 produtos por linha */
-  padding: 15px;
-  background-color: #333;
-  color: rgb(255, 255, 255);
-  font-weight: bold;
-  font-size: 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: transform 0.3s ease, background-color 0.3s ease;
-  position: relative;
 }
 
 .produto-item:hover {
-  background-color: #726f6f;
+  background-color: #f5f0f0;
   transform: scale(1.05);
 }
 
 .produto-item p {
-  margin: 5px 0;
+  margin: 8px 0;
   font-size: 14px;
-  text-align: center;
 }
 
 .produto-item button {
-  margin-top: 10px;
-  padding: 8px 15px;
-  font-size: 14px;
-  border: none;
-  border-radius: 8px;
-  background-color: #2ecc71;
+  background-color: #22c55e;
   color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  font-size: 14px;
 }
 
 .produto-item button:hover {
-  background-color: #27ae60;
+  background-color: #16a34a;
+}
+
+.categorias-container {
+  position: relative;
+  z-index: 10;
+  width: 500px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.categorias-container ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.categorias-container li {
+  padding: 8px 0;
+  cursor: pointer;
+}
+
+.categorias-container li:hover {
+  color: #007bff;
+  font-weight: bold;
 }
 
 /* Responsividade para produtos */

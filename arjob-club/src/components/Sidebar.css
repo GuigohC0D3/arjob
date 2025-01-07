@@ -1,40 +1,82 @@
+/* Sidebar Container */
 .sidebar {
-  width: 250px;
-  height: 100vh;
   position: fixed;
   top: 0;
   left: 0;
-  background-color: #2c3e50;
-  padding-top: 20px;
+  height: 100vh;
+  width: 250px; /* Largura da sidebar */
+  background-color: #1f2937; /* Fundo escuro */
   color: white;
-  font-family: Arial, sans-serif;
+  transform: translateX(-100%); /* Esconde a sidebar */
+  transition: transform 0.3s ease-in-out; /* Transição suave ao abrir/fechar */
+  z-index: 1000; /* Para aparecer acima de outros elementos */
 }
 
+.sidebar.open {
+  transform: translateX(0); /* Mostra a sidebar */
+}
+
+/* Sidebar Header */
 .sidebar-header {
   font-size: 1.5rem;
+  font-weight: bold;
   text-align: center;
-  margin-bottom: 30px;
+  padding: 16px;
+  background-color: #111827; /* Fundo mais escuro no cabeçalho */
+  border-bottom: 1px solid #374151;
+  position: relative;
 }
 
+/* Menu */
 .menu ul {
-  list-style-type: none;
+  list-style: none;
   padding: 0;
+  margin: 0;
 }
 
 .menu li {
-  margin: 20px 0;
+  padding: 12px 16px;
 }
 
 .menu li a {
-  color: white;
   text-decoration: none;
-  font-size: 1.1rem;
-  display: block;
-  padding: 10px 20px;
-  border-radius: 5px;
-  transition: background-color 0.3s;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .menu li a:hover {
-  background-color: #34495e;
+  background-color: #374151; /* Fundo claro ao passar o mouse */
+  border-radius: 4px;
+}
+
+/* Botão Hambúrguer */
+.hamburger-btn {
+  position: relative;
+  top: 16px;
+  width: 50px;
+  left: 16px;
+  background-color: #ffffff; /* Mesmo fundo da sidebar */
+  color: rgb(0, 0, 0);
+  border: none;
+  border-radius: 4px;
+  padding: 10px;
+  cursor: pointer;
+  font-size: 24px;
+  z-index: 1100; /* Para aparecer acima da sidebar */
+}
+
+.hamburger-btn.open {
+  left: 250px; /* Move o botão quando a sidebar está aberta */
+  transition: left 0.3s ease-in-out;
+}
+
+.hamburger-btn i {
+  font-size: 35px; /* Tamanho do ícone */
+}
+
+.hamburger-btn:hover {
+  background-color: transparent;
+  color: #6e6e6e; /* Cor ao passar o mouse */
 }

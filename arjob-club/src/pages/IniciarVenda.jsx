@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import SearchBar from "../components/Searchbar";
+import FilterBar from "../components/FilterBar"; // Certifique-se de ter o FilterBar implementado
 import "./IniciarVenda.css";
 
 const IniciarVenda = () => {
@@ -11,9 +12,13 @@ const IniciarVenda = () => {
   const [selectedMesa, setSelectedMesa] = useState(null);
   const [comandas, setComandas] = useState({});
   const [produtosCategoria, setProdutosCategoria] = useState([]);
+  const [produtosCategoriaOriginal, setProdutosCategoriaOriginal] = useState([]);
+  const [categorias, setCategorias] = useState([]);
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState(null);
   const [historicoComandas, setHistoricoComandas] = useState([]);
 
   // Estados auxiliares
+  const [mostrarFiltro, setMostrarFiltro] = useState(false);
   const [mostrarFecharComanda, setMostrarFecharComanda] = useState(false);
   const [comandaDetalhes, setComandaDetalhes] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -110,6 +115,11 @@ const IniciarVenda = () => {
         if (produtosResponse.ok) {
           const produtos = await produtosResponse.json();
           setProdutosCategoria(produtos);
+          setProdutosCategoriaOriginal(produtos);
+          const categoriasUnicas = [
+            ...new Set(produtos.map((produto) => produto.categoria)),
+          ];
+          setCategorias(categoriasUnicas);
         } else {
           console.error("Erro ao carregar produtos.");
         }
@@ -124,9 +134,27 @@ const IniciarVenda = () => {
     }
   };
 
+  // Filtrar produtos por categoria
+  const handleFilterByCategory = (categoria) => {
+    if (!categoria) {
+      setProdutosCategoria(produtosCategoriaOriginal); // Restaura a lista original
+      return;
+    }
+
+    const filteredProducts = produtosCategoriaOriginal.filter(
+      (produto) => produto.categoria === categoria
+    );
+    setProdutosCategoria(filteredProducts);
+  };
+
+  // Filtrar produtos pelo nome digitado
   const handleSearch = (query) => {
-    // Filtrar produtos com base no termo de busca
-    const filteredProducts = produtosCategoria.filter((produto) =>
+    if (!query) {
+      setProdutosCategoria(produtosCategoriaOriginal); // Restaura a lista original
+      return;
+    }
+
+    const filteredProducts = produtosCategoriaOriginal.filter((produto) =>
       produto.nome.toLowerCase().includes(query.toLowerCase())
     );
     setProdutosCategoria(filteredProducts);
@@ -142,15 +170,20 @@ const IniciarVenda = () => {
     setLoading(true);
     try {
       const comandaId = comandas[selectedMesa.id];
-      const response = await fetch(`http://127.0.0.1:5000/comandas/${comandaId}/fechar`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await fetch(
+        `http://127.0.0.1:5000/comandas/${comandaId}/fechar`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
 
       if (response.ok) {
         setMesas((prev) =>
           prev.map((mesa) =>
-            mesa.id === selectedMesa.id ? { ...mesa, status: "disponivel" } : mesa
+            mesa.id === selectedMesa.id
+              ? { ...mesa, status: "disponivel" }
+              : mesa
           )
         );
         setHistoricoComandas((prev) => [
@@ -178,7 +211,9 @@ const IniciarVenda = () => {
           {mesas.map((mesa) => (
             <button
               key={mesa.id}
-              className={`mesa ${mesa.status === "ocupada" ? "ocupada" : "disponivel"}`}
+              className={`mesa ${
+                mesa.status === "ocupada" ? "ocupada" : "disponivel"
+              }`}
               onClick={() => handleMesaClick(mesa)}
             >
               Mesa {mesa.numero}
@@ -205,8 +240,12 @@ const IniciarVenda = () => {
 
           <div className="cliente-info">
             <h3>Informações do Cliente</h3>
-            <p className="info-user">Nome: {clienteInfo?.nome || "Não encontrado"}</p>
-            <p className="info-user">CPF: {clienteInfo?.cpf || "Não encontrado"}</p>
+            <p className="info-user">
+              Nome: {clienteInfo?.nome || "Não encontrado"}
+            </p>
+            <p className="info-user">
+              CPF: {clienteInfo?.cpf || "Não encontrado"}
+            </p>
           </div>
 
           <button onClick={handleAbrirComanda}>Gerar e Abrir Comanda</button>
@@ -219,7 +258,17 @@ const IniciarVenda = () => {
           <p className="info-user">CPF: {clienteInfo?.cpf}</p>
 
           <h3>Produtos Disponíveis</h3>
-          <SearchBar onSearch={handleSearch} />
+          <SearchBar
+            onSearch={handleSearch}
+            onFilterClick={() => setMostrarFiltro(!mostrarFiltro)}
+          />
+          {/* Exibe o filtro de categorias se "mostrarFiltro" for true */}
+          {mostrarFiltro && (
+            <FilterBar
+              categorias={categorias}
+              onFilter={handleFilterByCategory}
+            />
+          )}
           <div className="produtos-container">
             {produtosCategoria.map((produto) => {
               const preco = parseFloat(produto.preco);
@@ -232,7 +281,9 @@ const IniciarVenda = () => {
                 <div key={produto.id} className="produto-item">
                   <p>{produto.nome}</p>
                   <p>R$ {preco.toFixed(2)}</p>
-                  <button onClick={() => console.log("Produto adicionado:", produto)}>
+                  <button
+                    onClick={() => console.log("Produto adicionado:", produto)}
+                  >
                     Adicionar
                   </button>
                 </div>
@@ -271,7 +322,9 @@ const IniciarVenda = () => {
             ))}
           </ul>
           <button onClick={handleFecharComandaClick}>Confirmar</button>
-          <button onClick={() => setMostrarFecharComanda(false)}>Cancelar</button>
+          <button onClick={() => setMostrarFecharComanda(false)}>
+            Cancelar
+          </button>
         </div>
       )}
     </div>
