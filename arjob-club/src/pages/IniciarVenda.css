@@ -285,33 +285,31 @@ input {
 /* Estilo para os produtos */
 .produtos-container {
   display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 16px;
-  justify-content: flex-start; /* Alinha os itens à esquerda */
+  flex-wrap: wrap; /* Permite que os itens "quebrem" para a próxima linha */
+  gap: 16px; /* Espaçamento entre os itens */
+  justify-content: center; /* Centraliza os itens horizontalmente */
+  padding: 16px;
 }
 
-.produtos-item {
-  background-color: #f5f5f5;
+.produto-item {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
   border-radius: 8px;
-  padding: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  width: 150px; /* Define uma largura fixa */
-  text-align: center;
+  width: 200px; /* Define uma largura fixa para todos os cards */
+  height: 250px; /* Define uma altura fixa */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-}
-
-.produto-item:hover {
-  background-color: #f5f0f0;
-  transform: scale(1.05);
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .produto-item p {
   margin: 8px 0;
-  font-size: 14px;
+  font-size: 16px;
+  color: #333;
 }
 
 .produto-item button {
