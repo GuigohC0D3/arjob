@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import SearchBar from "../components/Searchbar"; // Certifique-se que a importação está correta
+import SearchBar from "../components/Searchbar";
 import "./IniciarVenda.css";
 
 const IniciarVenda = () => {
@@ -19,12 +19,6 @@ const IniciarVenda = () => {
   const [loading, setLoading] = useState(false);
   const [cpfCliente, setCpfCliente] = useState("");
   const [clienteInfo, setClienteInfo] = useState(null);
-
-  // Função que vai ser passada para o SearchBar
-  const handleSearchResults = (results) => {
-    console.log("Resultados da pesquisa:", results);
-    // Aqui você pode manipular os resultados, como atualizar o estado ou fazer outra ação
-  };
 
   // Carregar mesas ao montar o componente
   useEffect(() => {
@@ -63,9 +57,7 @@ const IniciarVenda = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(
-        `http://127.0.0.1:5000/clientes/${cpfLimpo.trim()}`
-      );
+      const response = await fetch(`http://127.0.0.1:5000/clientes/${cpfLimpo.trim()}`);
       if (response.ok) {
         const data = await response.json();
         if (Array.isArray(data) && data.length > 0) {
@@ -117,7 +109,6 @@ const IniciarVenda = () => {
         const produtosResponse = await fetch("http://127.0.0.1:5000/produtos");
         if (produtosResponse.ok) {
           const produtos = await produtosResponse.json();
-          console.log("Produtos recebidos:", produtos); // Debug
           setProdutosCategoria(produtos);
         } else {
           console.error("Erro ao carregar produtos.");
@@ -133,6 +124,14 @@ const IniciarVenda = () => {
     }
   };
 
+  const handleSearch = (query) => {
+    // Filtrar produtos com base no termo de busca
+    const filteredProducts = produtosCategoria.filter((produto) =>
+      produto.nome.toLowerCase().includes(query.toLowerCase())
+    );
+    setProdutosCategoria(filteredProducts);
+  };
+
   // Fechar comanda
   const handleFecharComandaClick = async () => {
     if (!selectedMesa || !comandas[selectedMesa.id]) {
@@ -143,20 +142,15 @@ const IniciarVenda = () => {
     setLoading(true);
     try {
       const comandaId = comandas[selectedMesa.id];
-      const response = await fetch(
-        `http://127.0.0.1:5000/comandas/${comandaId}/fechar`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      const response = await fetch(`http://127.0.0.1:5000/comandas/${comandaId}/fechar`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+      });
 
       if (response.ok) {
         setMesas((prev) =>
           prev.map((mesa) =>
-            mesa.id === selectedMesa.id
-              ? { ...mesa, status: "disponivel" }
-              : mesa
+            mesa.id === selectedMesa.id ? { ...mesa, status: "disponivel" } : mesa
           )
         );
         setHistoricoComandas((prev) => [
@@ -179,23 +173,19 @@ const IniciarVenda = () => {
     <div>
       {loading && <p>Carregando...</p>}
 
-      {!selectedMesa && (
+      {!selectedMesa ? (
         <div className="mesas-container">
           {mesas.map((mesa) => (
             <button
               key={mesa.id}
-              className={`mesa ${
-                mesa.status === "ocupada" ? "ocupada" : "disponivel"
-              }`}
+              className={`mesa ${mesa.status === "ocupada" ? "ocupada" : "disponivel"}`}
               onClick={() => handleMesaClick(mesa)}
             >
               Mesa {mesa.numero}
             </button>
           ))}
         </div>
-      )}
-
-      {selectedMesa && !comandas[selectedMesa.id] && (
+      ) : !comandas[selectedMesa.id] ? (
         <div className="nova-comanda">
           <h2>Abrir Comanda</h2>
           <p>Mesa: {selectedMesa.numero}</p>
@@ -213,48 +203,36 @@ const IniciarVenda = () => {
             <button onClick={handleBuscarCliente}>Buscar Cliente</button>
           </div>
 
-          {clienteInfo ? (
-            <div className="cliente-info">
-              <h3>Informações do Cliente</h3>
-              <p>Nome: {clienteInfo.nome || "Não encontrado"}</p>
-              <p>CPF: {clienteInfo.cpf || "Não encontrado"}</p>
-            </div>
-          ) : (
-            <div className="cliente-info">
-              <h3>Informações do Cliente</h3>
-              <p>Nome: Nome não encontrado</p>
-              <p>CPF: CPF não encontrado</p>
-            </div>
-          )}
+          <div className="cliente-info">
+            <h3>Informações do Cliente</h3>
+            <p className="info-user">Nome: {clienteInfo?.nome || "Não encontrado"}</p>
+            <p className="info-user">CPF: {clienteInfo?.cpf || "Não encontrado"}</p>
+          </div>
 
           <button onClick={handleAbrirComanda}>Gerar e Abrir Comanda</button>
           <button onClick={() => setSelectedMesa(null)}>Voltar</button>
         </div>
-      )}
-
-      {selectedMesa && comandas[selectedMesa.id] && (
+      ) : (
         <div>
           <h2>Comanda Mesa {selectedMesa.numero}</h2>
-          <p className="select-mesa">Nome: {clienteInfo?.nome}</p>
-          <p className="select-mesa">CPF: {clienteInfo?.cpf}</p>
+          <p className="info-user">Nome: {clienteInfo?.nome}</p>
+          <p className="info-user">CPF: {clienteInfo?.cpf}</p>
 
           <h3>Produtos Disponíveis</h3>
-          <SearchBar onResults={handleSearchResults} />
+          <SearchBar onSearch={handleSearch} />
           <div className="produtos-container">
             {produtosCategoria.map((produto) => {
-              const preco = parseFloat(produto.preco); // Converte para número
+              const preco = parseFloat(produto.preco);
               if (isNaN(preco)) {
                 console.error("Preço inválido para o produto:", produto);
-                return null; // Ignora produtos com preço inválido
+                return null;
               }
 
               return (
                 <div key={produto.id} className="produto-item">
                   <p>{produto.nome}</p>
                   <p>R$ {preco.toFixed(2)}</p>
-                  <button
-                    onClick={() => console.log("Produto adicionado:", produto)}
-                  >
+                  <button onClick={() => console.log("Produto adicionado:", produto)}>
                     Adicionar
                   </button>
                 </div>
@@ -277,6 +255,23 @@ const IniciarVenda = () => {
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {mostrarFecharComanda && (
+        <div className="modal">
+          <h2>Fechar Comanda</h2>
+          <p>Mesa: {comandaDetalhes?.mesa}</p>
+          <p>Total: R$ {comandaDetalhes?.total?.toFixed(2)}</p>
+          <ul>
+            {comandaDetalhes?.itens.map((item) => (
+              <li key={item.id}>
+                {item.nome} - R$ {item.preco.toFixed(2)}
+              </li>
+            ))}
+          </ul>
+          <button onClick={handleFecharComandaClick}>Confirmar</button>
+          <button onClick={() => setMostrarFecharComanda(false)}>Cancelar</button>
         </div>
       )}
     </div>

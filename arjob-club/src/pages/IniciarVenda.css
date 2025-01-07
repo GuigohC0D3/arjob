@@ -104,6 +104,12 @@ input {
   white-space: nowrap;
 }
 
+.info-user {
+  font-weight: bold;
+  display: flex;
+  padding: 5px;
+}
+
 .select-mesa {
   font-weight: bold;
 }
