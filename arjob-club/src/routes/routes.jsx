@@ -9,6 +9,7 @@ import CadastroCliente from "../pages/CadastroCliente";
 import FluxoDeCaixa from "../pages/FluxoDeCaixa";
 import Login from "../pages/Login"
 import Preloading from "../pages/Preloading";
+import RegisterUser from "../pages/RegisterUser";
 const AppRoutes = () => {
   return (
     <Router>
@@ -21,6 +22,7 @@ const AppRoutes = () => {
         <Route path="/Importar" element={<ImportarFinanceiros/>} />
         <Route path="/Cliente" element={<CadastroCliente/>} />
         <Route path="/Fluxo" element={<FluxoDeCaixa/>} />
+        <Route path="/Register" element={<RegisterUser/>} />
       </Routes>
     </Router>
   );

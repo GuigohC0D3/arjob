@@ -1,6 +1,8 @@
 /* Global Reset */
 /* Container Principal */
 .login-container {
+  margin: 50px;
+  margin-left: 37%;
   width: 300px; /* Largura do formulário */
   background: rgba(255, 255, 255, 0.9); /* Fundo semi-transparente */
   padding: 20px;

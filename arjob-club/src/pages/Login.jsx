@@ -18,6 +18,10 @@ const Login = () => {
     }
   };
 
+  const handleRegister = (e) => {
+    navigate("/Register")
+  }
+
   return (
     <div className="login-container">
       <h2>Entrada no Sistema</h2>
@@ -46,6 +50,7 @@ const Login = () => {
           />
         </div>
         <button type="submit" className="login-button">Entrar</button>
+        <button className="login-button" onClick={handleRegister}>Registrar</button>
       </form>
     </div>
   );
