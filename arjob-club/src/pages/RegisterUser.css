@@ -52,15 +52,16 @@ h2 {
 
 .progress-bar-container {
     height: 8px;
-    background: #ddd; /* Cor do fundo da barra */
-    border-radius: 4px; /* Bordas arredondadas */
-    overflow: hidden; /* Garante que a barra não ultrapasse o contêiner */
-    position: relative; /* Necessário para alinhar a barra interna */
+    background: #ddd; 
+    border-radius: 4px; 
+    overflow: hidden; 
+    position: relative; 
+    margin: 3px;
 }
 
 .progress-bar {
-    height: 100%; /* Preenche toda a altura do contêiner */
-    transition: width 0.3s ease; /* Animação suave ao alterar a largura */
+    height: 100%; 
+    transition: width 0.3s ease; 
 }
 
 .progress-bar.fraca {
@@ -82,6 +83,22 @@ h2 {
     width: 100%; /* 100% da largura para senhas muito fortes */
     background: green;
 }
+
+.password-strength-text.fraca {
+    color: red;
+  }
+  
+  .password-strength-text.média {
+    color: orange;
+  }
+  
+  .password-strength-text.forte {
+    color: rgb(22, 245, 1);
+  }
+  
+  .password-strength-text.muito-forte {
+    color: green;
+  }
 
 .password-strength-text {
     margin-top: 5px;
