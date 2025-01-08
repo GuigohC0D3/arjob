@@ -64,7 +64,7 @@ h2 {
 }
 
 .progress-bar.fraca {
-    width: 25%; /* 25% da largura para senhas fracas */
+    width: 5%; /* 25% da largura para senhas fracas */
     background: red;
 }
 
@@ -75,7 +75,7 @@ h2 {
 
 .progress-bar.forte {
     width: 75%; /* 75% da largura para senhas fortes */
-    background: yellowgreen;
+    background: rgb(22, 245, 1);
 }
 
 .progress-bar.muito-forte {
