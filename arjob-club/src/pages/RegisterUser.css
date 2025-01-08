@@ -86,3 +86,27 @@
 .login-button:hover {
   background-color: #0056b3;
 }
+
+.password-wrapper {
+    position: relative;
+  }
+  
+  .password-wrapper input {
+    width: 100%;
+    padding-right: 40px; /* Espaço para o ícone */
+  }
+  
+  .password-wrapper i {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 18px;
+    color: #888;
+  }
+  
+  .password-wrapper i:hover {
+    color: #000;
+  }
+  

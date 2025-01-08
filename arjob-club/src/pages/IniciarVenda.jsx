@@ -47,6 +47,16 @@ const IniciarVenda = () => {
     fetchMesas();
   }, []);
 
+  const handleCpfChange = (e) => {
+    const value = e.target.value.replace(/\D/g, ""); // Remove caracteres não numéricos
+    const formattedCPF = value
+      .replace(/^(\d{3})(\d)/, "$1.$2")
+      .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d)/, ".$1-$2")
+      .slice(0, 14); // Limita o CPF a 14 caracteres no formato 123.456.789-00
+    setCpfCliente(formattedCPF);
+  };
+
   // Selecionar mesa
   const handleMesaClick = (mesa) => {
     setSelectedMesa(mesa);
@@ -226,15 +236,15 @@ const IniciarVenda = () => {
           <p>Mesa: {selectedMesa.numero}</p>
 
           <div className="cpf-container">
-            <label>
+          <label>
               CPF do Cliente:
               <input
                 type="text"
                 value={cpfCliente}
-                onChange={(e) => setCpfCliente(e.target.value)}
-                placeholder="Digite o CPF"
+                onChange={handleCpfChange}
+                placeholder="Digite o CPF (123.456.789-00)"
               />
-            </label>
+            </label>  
             <button onClick={handleBuscarCliente}>Buscar Cliente</button>
           </div>
 

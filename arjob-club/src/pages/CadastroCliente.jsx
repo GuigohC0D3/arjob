@@ -3,7 +3,6 @@ import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
 import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
-import InputMask from "react-input-mask"; // Biblioteca para máscaras de entrada
 import "primeicons/primeicons.css";
 import "primeflex/primeflex.css";
 import "primereact/resources/primereact.min.css";
@@ -46,6 +45,21 @@ const CadastroCliente = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
+    // Formatação do CPF
+    if (name === "cpf") {
+      const cleanedValue = value.replace(/\D/g, ""); // Remove caracteres que não são números
+      const formattedCPF = cleanedValue
+        .replace(/^(\d{3})(\d)/, "$1.$2")
+        .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+        .replace(/\.(\d{3})(\d)/, ".$1-$2")
+        .slice(0, 14); // Limita a 14 caracteres
+      setCliente((prevCliente) => ({
+        ...prevCliente,
+        cpf: formattedCPF,
+      }));
+      return;
+    }
 
     // Restringir entrada para números no campo "Filial"
     if (name === "filial" && !/^\d*$/.test(value)) return;
@@ -180,12 +194,13 @@ const CadastroCliente = () => {
             </div>
             <div className="input-group">
               <label htmlFor="cpf">CPF:</label>
-              <InputMask
-                mask="999.999.999-99"
+              <input
+                type="text"
                 id="cpf"
                 name="cpf"
                 value={cliente.cpf}
                 onChange={handleInputChange}
+                placeholder="Digite o CPF (123.456.789-00)"
                 required
               />
             </div>
@@ -205,12 +220,13 @@ const CadastroCliente = () => {
           <div className="input-group-row">
             <div className="input-group">
               <label htmlFor="telefone">Telefone:</label>
-              <InputMask
-                mask="(99) 99999-9999"
+              <input
+                type="text"
                 id="telefone"
                 name="telefone"
                 value={cliente.telefone}
                 onChange={handleInputChange}
+                placeholder="(99) 99999-9999"
                 required
               />
             </div>
