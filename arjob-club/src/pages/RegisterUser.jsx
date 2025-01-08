@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { cpf } from "cpf-cnpj-validator"; // Importa a biblioteca
 import "primereact/resources/themes/lara-light-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
@@ -16,6 +17,7 @@ const RegisterUser = () => {
   const [passwordStrength, setPasswordStrength] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errors, setErrors] = useState({}); // Estado para erros de validação
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -39,56 +41,55 @@ const RegisterUser = () => {
   };
 
   const evaluatePasswordStrength = (password) => {
-    const hasUppercase = /[A-Z]/.test(password); // Contém letra maiúscula
-    const hasNumbers = /\d/.test(password); // Contém número
-    const hasSpecialChar = /[^a-zA-Z0-9]/.test(password); // Contém caractere especial
-    const length = password.length; // Comprimento da senha
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChar = /[^a-zA-Z0-9]/.test(password);
+    const length = password.length;
 
-    // Muito Forte: Pelo menos 12 caracteres + todos os requisitos
     if (length >= 12 && hasUppercase && hasNumbers && hasSpecialChar) {
       return "muito-forte";
     }
 
-    // Forte: Pelo menos 8 caracteres + todos os requisitos
     if (length >= 8 && hasUppercase && hasNumbers && hasSpecialChar) {
       return "forte";
     }
 
-    // Média: Pelo menos 6 caracteres + números e letras maiúsculas
     if (length >= 6 && hasUppercase && hasNumbers) {
       return "média";
     }
 
-    // Fraca: Não atende aos critérios acima
     return "fraca";
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const { nome, cpf, email, senha, confirmarSenha } = formData;
+    const { nome, cpf: cpfValue, email, senha, confirmarSenha } = formData;
+    const newErrors = {};
 
-    if (!nome || !cpf || !email || !senha || !confirmarSenha) {
-      alert("Por favor, preencha todos os campos.");
-      return;
+    if (!nome) {
+      newErrors.nome = "Por favor, preencha seu nome.";
     }
 
-    if (cpf.length !== 14) {
-      alert("CPF inválido. Certifique-se de usar o formato 123.456.789-00.");
-      return;
+    if (!cpfValue || !cpf.isValid(cpfValue.replace(/\D/g, ""))) {
+      newErrors.cpf = "CPF inválido. Certifique-se de que está no formato correto.";
     }
 
-    if (!email.includes("@")) {
-      alert("E-mail inválido.");
-      return;
+    if (!email || !email.includes("@")) {
+      newErrors.email = "E-mail inválido.";
+    }
+
+    if (!senha) {
+      newErrors.senha = "A senha é obrigatória.";
+    } else if (senha.length < 8) {
+      newErrors.senha = "A senha deve ter pelo menos 8 caracteres.";
     }
 
     if (senha !== confirmarSenha) {
-      alert("As senhas não coincidem.");
-      return;
+      newErrors.confirmarSenha = "As senhas não coincidem.";
     }
 
-    if (senha.length < 8) {
-      alert("A senha deve ter pelo menos 8 caracteres.");
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
@@ -115,6 +116,7 @@ const RegisterUser = () => {
               required
             />
           </div>
+          {errors.nome && <p className="error-text">{errors.nome}</p>}
         </div>
 
         <div className="form-group">
@@ -131,6 +133,7 @@ const RegisterUser = () => {
               required
             />
           </div>
+          {errors.cpf && <p className="error-text">{errors.cpf}</p>}
         </div>
 
         <div className="form-group">
@@ -147,6 +150,7 @@ const RegisterUser = () => {
               required
             />
           </div>
+          {errors.email && <p className="error-text">{errors.email}</p>}
         </div>
 
         <div className="form-group password-group">
@@ -179,6 +183,7 @@ const RegisterUser = () => {
               ? "Senha forte"
               : "Senha muito forte"}
           </p>
+          {errors.senha && <p className="error-text">{errors.senha}</p>}
         </div>
 
         <div className="form-group password-group">
@@ -201,6 +206,7 @@ const RegisterUser = () => {
               title={showConfirmPassword ? "Ocultar senha" : "Mostrar senha"}
             ></i>
           </div>
+          {errors.confirmarSenha && <p className="error-text">{errors.confirmarSenha}</p>}
         </div>
 
         <button type="submit" className="login-button">
