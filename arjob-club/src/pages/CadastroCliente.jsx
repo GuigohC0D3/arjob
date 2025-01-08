@@ -200,7 +200,7 @@ const CadastroCliente = () => {
                 name="cpf"
                 value={cliente.cpf}
                 onChange={handleInputChange}
-                placeholder="Digite o CPF (123.456.789-00)"
+                placeholder="Digite o CPF"
                 required
               />
             </div>
