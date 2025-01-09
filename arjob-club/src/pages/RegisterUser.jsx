@@ -13,6 +13,7 @@ const RegisterUser = () => {
     email: "",
     senha: "",
     confirmarSenha: "",
+    cargo: "", // Adicionado o campo de cargo
   });
   const [passwordStrength, setPasswordStrength] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -63,7 +64,7 @@ const RegisterUser = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const { nome, cpf: cpfValue, email, senha, confirmarSenha } = formData;
+    const { nome, cpf: cpfValue, email, senha, confirmarSenha, cargo } = formData;
     const newErrors = {};
 
     if (!nome) {
@@ -86,6 +87,10 @@ const RegisterUser = () => {
 
     if (senha !== confirmarSenha) {
       newErrors.confirmarSenha = "As senhas não coincidem.";
+    }
+
+    if (!cargo) {
+      newErrors.cargo = "Por favor, selecione um cargo.";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -134,6 +139,26 @@ const RegisterUser = () => {
             />
           </div>
           {errors.cpf && <p className="error-text">{errors.cpf}</p>}
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="cargo">Cargo*</label>
+          <div className="input-with-icon">
+            <i className="pi pi-briefcase"></i>
+            <select
+              id="cargo"
+              name="cargo"
+              value={formData.cargo}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Selecione seu cargo</option>
+              <option value="administrador">Administrador</option>
+              <option value="usuario">Usuário</option>
+              <option value="gerente">Gerente</option>
+            </select>
+          </div>
+          {errors.cargo && <p className="error-text">{errors.cargo}</p>}
         </div>
 
         <div className="form-group">
