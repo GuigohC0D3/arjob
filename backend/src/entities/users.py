@@ -1,9 +1,9 @@
 import psycopg2
 from flask import jsonify
-from ..connection.config import connect_db  # Certifique-se de que o caminho está correto
-from src.utils import hash_utils  # Certifique-se de que o módulo utils existe e está acessível
+from ..connection.config import connect_db 
+from src.utils import hash_utils 
+from src.utils import cryptography_utils
 
-# Função para listar usuários
 def get_usuarios():
     conn = connect_db()
     if conn:
@@ -32,6 +32,7 @@ def create_user(nome, cpf, email, senha, cargo):
 
         # Criptografar a senha antes de salvar
         senha_hashed = hash_utils.hash_password(senha)
+        cpf_encrypted  = cryptography_utils.encrypt_data(cpf)
 
         # Log dos dados recebidos (opcional, para depuração)
         print(f"Dados recebidos para inserção: Nome={nome}, CPF={cpf}, Email={email}, Cargo={cargo}")
@@ -96,50 +97,100 @@ def get_user_by_cpf_and_password(cpf, senha):
         return None
 
 
-def corrigir_senhas():
-    conn = connect_db()
-    if not conn:
-        print("Erro ao conectar ao banco de dados.")
-        return
+# def corrigir_senhas():
+#     conn = connect_db()
+#     if not conn:
+#         print("Erro ao conectar ao banco de dados.")
+#         return
 
-    try:
-        cur = conn.cursor()
+#     try:
+#         cur = conn.cursor()
 
-        # Buscar usuários com senhas não criptografadas
-        cur.execute("""
-            SELECT id, senha
-            FROM usuarios
-            WHERE LENGTH(senha) < 60
-        """)
-        usuarios = cur.fetchall()
+#         # Buscar usuários com senhas não criptografadas
+#         cur.execute("""
+#             SELECT id, senha
+#             FROM usuarios
+#             WHERE LENGTH(senha) < 60
+#         """)
+#         usuarios = cur.fetchall()
 
-        if not usuarios:
-            print("Nenhuma senha para corrigir.")
-            return
+#         if not usuarios:
+#             print("Nenhuma senha para corrigir.")
+#             return
 
-        print(f"Encontrados {len(usuarios)} usuários com senhas não criptografadas.")
+#         print(f"Encontrados {len(usuarios)} usuários com senhas não criptografadas.")
 
-        # Atualizar cada senha
-        for usuario in usuarios:
-            user_id, senha = usuario
+#         # Atualizar cada senha
+#         for usuario in usuarios:
+#             user_id, senha = usuario
 
-            # Gerar hash da senha
-            senha_hashed = hash_utils.hash_password(senha)
+#             # Gerar hash da senha
+#             senha_hashed = hash_utils.hash_password(senha)
 
-            # Atualizar no banco de dados
-            cur.execute("""
-                UPDATE usuarios
-                SET senha = %s
-                WHERE id = %s
-            """, (senha_hashed, user_id))
+#             # Atualizar no banco de dados
+#             cur.execute("""
+#                 UPDATE usuarios
+#                 SET senha = %s
+#                 WHERE id = %s
+#             """, (senha_hashed, user_id))
 
-        conn.commit()
-        print("Senhas corrigidas com sucesso.")
-    except psycopg2.Error as e:
-        conn.rollback()
-        print(f"Erro ao corrigir senhas: {e}")
-    finally:
-        conn.close()
+#         conn.commit()
+#         print("Senhas corrigidas com sucesso.")
+#     except psycopg2.Error as e:
+#         conn.rollback()
+#         print(f"Erro ao corrigir senhas: {e}")
+#     finally:
+#         conn.close()
 
-# Executar a função
-corrigir_senhas()
+# # Executar a função
+# corrigir_senhas()
+
+
+# # Função para corrigir CPFs não criptografados
+# def corrigir_cpfs():
+#     conn = connect_db()
+#     if not conn:
+#         print("Erro ao conectar ao banco de dados.")
+#         return
+
+#     try:
+#         cur = conn.cursor()
+
+#         # Buscar CPFs não criptografados (supondo que CPFs criptografados sejam mais longos)
+#         cur.execute("""
+#             SELECT id, cpf
+#             FROM usuarios
+#             WHERE LENGTH(cpf) <= 14  -- CPF puro tem no máximo 11 dígitos
+#         """)
+#         usuarios = cur.fetchall()
+
+#         if not usuarios:
+#             print("Nenhum CPF para corrigir.")
+#             return
+
+#         print(f"Encontrados {len(usuarios)} usuários com CPFs não criptografados.")
+
+#         # Atualizar cada CPF
+#         for usuario in usuarios:
+#             user_id, cpf = usuario
+
+#             # Criptografar o CPF
+#             cpf_encrypted = cryptography_utils.encrypt_data(cpf)
+
+#             # Atualizar no banco de dados
+#             cur.execute("""
+#                 UPDATE usuarios
+#                 SET cpf = %s
+#                 WHERE id = %s
+#             """, (cpf_encrypted, user_id))
+
+#         conn.commit()
+#         print("CPFs corrigidos com sucesso.")
+#     except psycopg2.Error as e:
+#         conn.rollback()
+#         print(f"Erro ao corrigir CPFs: {e}")
+#     finally:
+#         conn.close()
+
+# # Exemplo de execução
+# corrigir_cpfs()

@@ -7,7 +7,7 @@ from ..controllers import clientes_controller, departamento_cliente_controller, 
 from ..entities import comandas
 from ..entities.clientes import get_clientes 
 from ..entities import movimentacao_caixa
-from ..entities.users import corrigir_senhas 
+# from ..entities.users import corrigir_senhas, corrigir_cpfs
 from ..connection.config import connect_db 
 import os
 main_bp = Blueprint('main', __name__)
@@ -146,7 +146,12 @@ def login_user():
         return jsonify({"error": "Erro interno no servidor"}), 500
 
 
-@main_bp.route('/corrigir-senhas', methods=['POST'])
-def corrigir_senhas_route():
-    corrigir_senhas()
-    return {"message": "Senhas corrigidas com sucesso"}, 200
+# @main_bp.route('/corrigir-senhas', methods=['POST'])
+# def corrigir_senhas_route():
+#     corrigir_senhas()
+#     return {"message": "Senhas corrigidas com sucesso"}, 200
+
+# @main_bp.route('/corrigir-cpf', methods=['POST'])
+# def corrigir_cpf_route():
+#     corrigir_cpfs()
+#     return {"message": "CPFS corrigidos com sucesso"}, 200
