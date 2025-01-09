@@ -115,3 +115,21 @@ def listar_produtos():
 def buscar_produtos_route():
     return buscar_produtos_controller.buscar_produtos()
 
+
+@main_bp.route('/usuarios', methods=['POST'])
+def addCliente():
+    try:
+        print("Dados recebidos no backend:", request.json)  # Log dos dados recebidos
+        return clientes_controller.add_client(**request.json)
+    except Exception as e:
+        print("Erro no endpoint /clientes:", e)  # Log do erro no terminal
+        return jsonify({"error": "Erro interno no servidor"}), 500
+    
+@main_bp.route('/usuarios', methods=['GET'])
+def get_clientes_endpoint():
+    try:
+        result, status_code = get_clientes()
+        return jsonify(result), status_code
+    except Exception as e:
+        print(f"Erro no endpoint /clientes: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
