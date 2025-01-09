@@ -7,7 +7,7 @@ from ..controllers import clientes_controller, departamento_cliente_controller, 
 from ..entities import comandas
 from ..entities.clientes import get_clientes 
 from ..entities import movimentacao_caixa
-from ..entities import users
+from ..entities.users import corrigir_senhas 
 from ..connection.config import connect_db 
 import os
 main_bp = Blueprint('main', __name__)
@@ -144,3 +144,9 @@ def login_user():
     except Exception as e:
         print(f"Erro no endpoint /login: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
+
+
+@main_bp.route('/corrigir-senhas', methods=['POST'])
+def corrigir_senhas_route():
+    corrigir_senhas()
+    return {"message": "Senhas corrigidas com sucesso"}, 200
