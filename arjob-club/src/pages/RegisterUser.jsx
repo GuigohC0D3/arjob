@@ -94,7 +94,7 @@ const RegisterUser = () => {
     }
 
     console.log("Usuário registrado:", formData);
-    navigate("/home");
+    navigate("/Login");
   };
 
   return (
