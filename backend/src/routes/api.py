@@ -123,3 +123,24 @@ def register_user():
     except Exception as e:
         print("Erro no endpoint /users:", e)
         return jsonify({"error": "Erro interno no servidor"}), 500
+    
+@main_bp.route('/login', methods=['POST'])
+def login_user():
+    """
+    Endpoint para autenticar um usuário.
+    """
+    try:
+        data = request.json
+        cpf = data.get('cpf')
+        senha = data.get('senha')
+
+        if not cpf or not senha:
+            return jsonify({'error': 'CPF e senha são obrigatórios'}), 400
+
+        # Chama o controlador para autenticar o usuário
+        from ..controllers import users_controller
+        response, status_code = users_controller.authenticate_user(cpf, senha)
+        return jsonify(response), status_code
+    except Exception as e:
+        print(f"Erro no endpoint /login: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500

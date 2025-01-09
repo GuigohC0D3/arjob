@@ -47,4 +47,35 @@ def create_user(nome, cpf, email, senha, cargo):
         conn.rollback()
         print(f"Erro ao registrar usuário: {e}")
         return {"error": f"Erro ao registrar usuário: {str(e)}", "status": 500}
+    
+def get_user_by_cpf_and_password(cpf, senha):
+    conn = connect_db()
+    if not conn:
+        print("Erro ao conectar ao banco de dados")
+        return None
+
+    try:
+        cur = conn.cursor()
+
+        # Busca o usuário com base no CPF e senha
+        cur.execute("""
+            SELECT id, nome, cpf, email, cargo
+            FROM usuarios
+            WHERE cpf = %s AND senha = %s
+        """, (cpf, senha))
+
+        user = cur.fetchone()
+        cur.close()
+        conn.close()
+
+        if user:
+            # Mapeia os resultados para um dicionário
+            columns = ['id', 'nome', 'cpf', 'email', 'cargo']
+            return dict(zip(columns, user))
+
+        return None  # Retorna None se o usuário não for encontrado
+    except Exception as e:
+        print(f"Erro ao buscar usuário no banco de dados: {e}")
+        return None
+
 
