@@ -117,7 +117,7 @@ def buscar_produtos_route():
 
 
 @main_bp.route('/usuarios', methods=['POST'])
-def addCliente():
+def addUsuario():
     try:
         print("Dados recebidos no backend:", request.json)  # Log dos dados recebidos
         return clientes_controller.add_client(**request.json)
@@ -126,7 +126,7 @@ def addCliente():
         return jsonify({"error": "Erro interno no servidor"}), 500
     
 @main_bp.route('/usuarios', methods=['GET'])
-def get_clientes_endpoint():
+def get_usuarios_endpoint():
     try:
         result, status_code = get_clientes()
         return jsonify(result), status_code
