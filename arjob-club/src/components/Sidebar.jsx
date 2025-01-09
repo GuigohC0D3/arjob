@@ -58,7 +58,7 @@ const Sidebar = () => {
               </Link>
             </li>
             <li>
-              <Link to="/supervisor">
+              <Link to="/">
                 <i className="bi bi-briefcase"></i> Sair
               </Link>
             </li>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios"; // Importa o axios
 import "./Login.css"; // Adicione estilos personalizados, se necessário.
 
 const Login = () => {
@@ -8,19 +9,38 @@ const Login = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleCpfChange = (e) => {
+    const value = e.target.value;
+    const cleanedValue = value.replace(/\D/g, ""); // Remove caracteres não numéricos
+    const formattedCPF = cleanedValue
+      .replace(/^(\d{3})(\d)/, "$1.$2")
+      .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d)/, ".$1-$2")
+      .slice(0, 14); // Limita o comprimento ao padrão de CPF
+    setCpf(formattedCPF); // Atualiza o estado com o CPF formatado
+  };
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    
-    if (cpf === "12345678900" && senha === "admin") {
-      navigate("/home"); // Redireciona para a página principal
-    } else {
-      setError("CPF ou senha inválidos.");
+    try {
+      const response = await axios.post("http://localhost:5000/login", {
+        cpf,
+        senha,
+      });
+
+      if (response.data) {
+        console.log("Login bem-sucedido:", response.data);
+        navigate("/home"); // Redireciona para a página principal
+      }
+    } catch (err) {
+      console.error("Erro ao autenticar usuário:", err.response?.data || err.message);
+      setError(err.response?.data?.error || "Erro ao autenticar.");
     }
   };
 
-  const handleRegister = (e) => {
-    navigate("/Register")
-  }
+  const handleRegister = () => {
+    navigate("/Register");
+  };
 
   return (
     <div className="login-container">
@@ -33,7 +53,7 @@ const Login = () => {
             type="text"
             id="cpf"
             value={cpf}
-            onChange={(e) => setCpf(e.target.value)}
+            onChange={handleCpfChange} // Adiciona a formatação no evento onChange
             placeholder="Digite seu CPF"
             required
           />
@@ -49,8 +69,16 @@ const Login = () => {
             required
           />
         </div>
-        <button type="submit" className="login-button">Entrar</button>
-        <button className="login-button" onClick={handleRegister}>Registrar</button>
+        <button type="submit" className="login-button">
+          Entrar
+        </button>
+        <button
+          type="button"
+          className="login-button"
+          onClick={handleRegister}
+        >
+          Registrar
+        </button>
       </form>
     </div>
   );

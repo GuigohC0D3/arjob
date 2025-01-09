@@ -109,7 +109,7 @@ const RegisterUser = () => {
 
       if (response.data) {
         console.log("Usuário registrado com sucesso:", response.data);
-        navigate("/Login");
+        navigate("/");
       }
     } catch (error) {
       console.error("Erro ao registrar usuário:", error.response?.data || error.message);
