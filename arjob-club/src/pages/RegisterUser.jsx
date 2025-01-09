@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { cpf } from "cpf-cnpj-validator"; // Importa a biblioteca
+import axios from "axios";
 import "primereact/resources/themes/lara-light-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
@@ -13,12 +13,12 @@ const RegisterUser = () => {
     email: "",
     senha: "",
     confirmarSenha: "",
-    cargo: "", // Adicionado o campo de cargo
+    cargo: "",
   });
   const [passwordStrength, setPasswordStrength] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [errors, setErrors] = useState({}); // Estado para erros de validação
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -62,16 +62,16 @@ const RegisterUser = () => {
     return "fraca";
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const { nome, cpf: cpfValue, email, senha, confirmarSenha, cargo } = formData;
+    const { nome, cpf, email, senha, confirmarSenha, cargo } = formData;
     const newErrors = {};
 
     if (!nome) {
       newErrors.nome = "Por favor, preencha seu nome.";
     }
 
-    if (!cpfValue || !cpf.isValid(cpfValue.replace(/\D/g, ""))) {
+    if (!cpf) {
       newErrors.cpf = "CPF inválido. Certifique-se de que está no formato correto.";
     }
 
@@ -98,8 +98,25 @@ const RegisterUser = () => {
       return;
     }
 
-    console.log("Usuário registrado:", formData);
-    navigate("/Login");
+    try {
+      const response = await axios.post("http://localhost:5000/users", {
+        nome,
+        cpf,
+        email,
+        senha,
+        cargo,
+      });
+
+      if (response.data) {
+        console.log("Usuário registrado com sucesso:", response.data);
+        navigate("/Login");
+      }
+    } catch (error) {
+      console.error("Erro ao registrar usuário:", error.response?.data || error.message);
+      if (error.response?.data?.error) {
+        setErrors({ api: error.response.data.error });
+      }
+    }
   };
 
   return (
