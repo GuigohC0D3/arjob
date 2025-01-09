@@ -3,14 +3,6 @@ import './MainContent.css'
 const MainContent = () => {
   return (
     <>
-      {/* Cabeçalho */}
-      <header className="header">
-        <p className="subtitle">
-          Pressione <strong>F2</strong> para iniciar a comanda ou <br />
-          Pressione <strong>CTRL + F</strong> para fechar a comanda
-        </p>
-      </header>
-
       {/* Conteúdo principal */}
       <main className="main">
         <div className="logo">ARJOB</div>

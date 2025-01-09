@@ -59,7 +59,7 @@ const Sidebar = () => {
             </li>
             <li>
               <Link to="/">
-                <i className="bi bi-briefcase"></i> Sair
+              <i className="bi bi-arrow-bar-left"></i> Sair
               </Link>
             </li>
           </ul>
