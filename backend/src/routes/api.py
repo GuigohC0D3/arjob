@@ -3,7 +3,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from flask_cors import cross_origin, CORS
 from math import ceil
 from datetime import datetime
-from ..controllers import clientes_controller, departamento_cliente_controller, departamentos_controller,  mesas_controller, comandas_controller, produtos_controller, buscar_produtos_controller
+from ..controllers import clientes_controller, departamento_cliente_controller, departamentos_controller,  mesas_controller, comandas_controller, produtos_controller, buscar_produtos_controller, users_controller
 from ..entities import comandas
 from ..entities.clientes import get_clientes 
 from ..entities import movimentacao_caixa
@@ -116,20 +116,10 @@ def buscar_produtos_route():
     return buscar_produtos_controller.buscar_produtos()
 
 
-@main_bp.route('/usuarios', methods=['POST'])
-def addUsuario():
+@main_bp.route('/users', methods=['POST'])
+def register_user():
     try:
-        print("Dados recebidos no backend:", request.json)  # Log dos dados recebidos
-        return clientes_controller.add_client(**request.json)
+        return users_controller.register_user(**request.json)
     except Exception as e:
-        print("Erro no endpoint /clientes:", e)  # Log do erro no terminal
-        return jsonify({"error": "Erro interno no servidor"}), 500
-    
-@main_bp.route('/usuarios', methods=['GET'])
-def get_usuarios_endpoint():
-    try:
-        result, status_code = get_clientes()
-        return jsonify(result), status_code
-    except Exception as e:
-        print(f"Erro no endpoint /clientes: {e}")
+        print("Erro no endpoint /users:", e)
         return jsonify({"error": "Erro interno no servidor"}), 500
