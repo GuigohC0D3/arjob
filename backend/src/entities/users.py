@@ -19,30 +19,32 @@ def get_usuarios():
     else:
         return jsonify({'error': 'Erro ao conectar ao banco de dados'}), 500
 
-def add_usuario(nome, cpf, email, senha_hash, cargo):
+def create_user(nome, cpf, email, senha, cargo):
     conn = connect_db()
-    if conn:
-        try:
-            with conn.cursor() as cur:
-                # Inserir o usuário e retornar o ID
-                cur.execute(
-                    """
-                    INSERT INTO usuarios (nome, cpf, email, senha_hash, cargo)
-                    VALUES (%s, %s, %s, %s, %s) RETURNING id
-                    """,
-                    (nome, cpf, email, senha_hash, cargo)
-                )
-                usuario_id = cur.fetchone()[0]
-
-                # Confirmar as alterações
-                conn.commit()
-
-            return {"message": "Usuário cadastrado com sucesso!", "usuario_id": usuario_id}, 201
-        except Exception as e:
-            conn.rollback()
-            print(f"Erro ao cadastrar usuário: {e}")
-            return {"error": "Erro ao cadastrar usuário"}, 500
-        finally:
-            conn.close()
-    else:
+    if not conn:
         return {"error": "Erro ao conectar ao banco de dados"}, 500
+
+    try:
+        cur = conn.cursor()
+
+        # Log dos dados recebidos
+        print(f"Dados recebidos para inserção: Nome={nome}, CPF={cpf}, Email={email}, Cargo={cargo}")
+
+        cur.execute("""
+            INSERT INTO usuarios (nome, cpf, email, senha, cargo)
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING id
+        """, (nome, cpf, email, senha, cargo))
+
+        user_id = cur.fetchone()[0]
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        print(f"Usuário inserido com sucesso: ID={user_id}")
+        return {"data": {"user_id": user_id, "message": "Usuário registrado com sucesso!"}, "status": 201}
+    except psycopg2.Error as e:
+        conn.rollback()
+        print(f"Erro ao registrar usuário: {e}")
+        return {"error": f"Erro ao registrar usuário: {str(e)}", "status": 500}
+
