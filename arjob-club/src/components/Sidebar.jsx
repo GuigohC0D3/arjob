@@ -54,7 +54,7 @@ const Sidebar = () => {
             </li>
             <li>
               <Link to="/troca">
-                <i className="bi bi-arrow-repeat"></i> Suporte
+                <i className="pi pi-headphones"></i> Suporte
               </Link>
             </li>
             <li>

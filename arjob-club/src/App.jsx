@@ -16,6 +16,7 @@ import FluxoDeCaixa from "./pages/FluxoDeCaixa";
 import Login from "./pages/Login";
 import Preloading from "./pages/Preloading";
 import RegisterUser from "./pages/RegisterUser";
+import ComandaAberta from "./pages/ComandaAberta";
 
 const PrivateRoute = () => {
   const authToken = sessionStorage.getItem("authToken");
@@ -47,6 +48,7 @@ const AppContent = () => {
           <Route element={<PrivateRoute />}>
             <Route path="/Home" element={<MainContent />} />
             <Route path="/iniciar-venda" element={<IniciarVenda />} />
+            <Route path="/comanda/:id" element={<ComandaAberta />} />
             <Route path="/Listagem" element={<ListagemComandas />} />
             <Route path="/Importar" element={<ImportarFinanceiros />} />
             <Route path="/Cliente" element={<CadastroCliente />} />
