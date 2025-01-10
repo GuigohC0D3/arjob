@@ -27,16 +27,25 @@ const Login = () => {
         cpf,
         senha,
       });
-
+  
       if (response.data) {
         console.log("Login bem-sucedido:", response.data);
-        navigate("/home"); // Redireciona para a página principal
+  
+        // Salva o token de autenticação
+        sessionStorage.setItem("authToken", response.data.token || "loggedIn");
+  
+        // Redireciona para a Home
+        navigate("/Home");
       }
     } catch (err) {
-      console.error("Erro ao autenticar usuário:", err.response?.data || err.message);
+      console.error(
+        "Erro ao autenticar usuário:",
+        err.response?.data || err.message
+      );
       setError(err.response?.data?.error || "Erro ao autenticar.");
     }
   };
+  
 
   const handleRegister = () => {
     navigate("/Register");
@@ -48,7 +57,7 @@ const Login = () => {
       {error && <p className="error-message">{error}</p>}
       <form onSubmit={handleLogin}>
         <div className="input-group">
-          <label htmlFor="cpf">CPF:</label>
+          <label htmlFor="cpf">CPF*</label>
           <input
             type="text"
             id="cpf"
@@ -59,7 +68,7 @@ const Login = () => {
           />
         </div>
         <div className="input-group">
-          <label htmlFor="senha">Senha:</label>
+          <label htmlFor="senha">Senha*</label>
           <input
             type="password"
             id="senha"
@@ -72,11 +81,7 @@ const Login = () => {
         <button type="submit" className="login-button">
           Entrar
         </button>
-        <button
-          type="button"
-          className="login-button"
-          onClick={handleRegister}
-        >
+        <button type="button" className="login-button" onClick={handleRegister}>
           Registrar
         </button>
       </form>

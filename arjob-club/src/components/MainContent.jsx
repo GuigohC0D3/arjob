@@ -3,6 +3,7 @@ import './MainContent.css'
 const MainContent = () => {
   return (
     <>
+    
       {/* Conteúdo principal */}
       <main className="main">
         <div className="logo">ARJOB</div>
