@@ -78,6 +78,13 @@ def criar_mesa():
 def atualizar_status_mesa(mesa_id):
     return mesas_controller.atualizar_status_mesa(mesa_id)
 
+@main_bp.route('/mesas/<int:id>', methods=['GET'])
+def get_mesa(id):
+    # Substitua pela lógica para buscar a mesa pelo ID
+    mesa = {"id": id, "numero": 2, "status": "disponível"}
+    return jsonify(mesa), 200
+
+
 @main_bp.route("/mesas/<int:mesa_id>", methods=["DELETE"])
 def excluir_mesa(mesa_id):
     return mesas_controller.excluir_mesa(mesa_id)
