@@ -108,6 +108,16 @@ def fechar_comanda(comanda_id):
     except Exception as e:
         print(f"Erro no endpoint /comandas/{comanda_id}/fechar: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
+    
+@main_bp.route("/comandas/fechadas", methods=["GET"])
+def listar_comandas_fechadas():
+    try:
+        comandas_fechadas = comandas.listar_comandas_fechadas()
+        return jsonify(comandas_fechadas), 200
+    except Exception as e:
+        print(f"Erro no endpoint /comandas/fechadas: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
+
 
 @main_bp.route("/comandas", methods=["GET"])
 def listar_comandas():

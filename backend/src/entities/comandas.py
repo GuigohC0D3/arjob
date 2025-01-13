@@ -130,6 +130,44 @@ def listar_comandas():
             return None
     return None
 
+
+def listar_comandas_fechadas():
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT c.id, c.numero, c.mesa_id, c.status, c.total, c.data_fechamento,
+                       m.numero AS mesa_numero
+                FROM comandas c
+                JOIN mesas m ON c.mesa_id = m.id
+                WHERE c.status = 'fechada'
+                ORDER BY c.data_fechamento DESC
+            """)
+            comandas = cur.fetchall()
+            cur.close()
+            conn.close()
+
+            return [
+                {
+                    "id": c[0],
+                    "numero": c[1],
+                    "mesa_id": c[2],
+                    "status": c[3],
+                    "total": c[4],
+                    "data_fechamento": c[5].isoformat() if c[5] else None,
+                    "mesa_numero": c[6],
+                }
+                for c in comandas
+            ]
+        except Exception as e:
+            print(f"Erro ao listar comandas fechadas: {e}")
+            return []
+    else:
+        print("Erro ao conectar ao banco de dados")
+        return []
+
+
 def obter_comanda_por_mesa(mesa_id):
     if not isinstance(mesa_id, int) or mesa_id <= 0:
         print("ID inválido para a mesa")
