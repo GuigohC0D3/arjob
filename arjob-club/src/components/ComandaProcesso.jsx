@@ -6,6 +6,7 @@ import FilterBar from "./FilterBar";
 const ComandaProcesso = ({
   selectedMesa,
   clienteInfo,
+  cpfInfo,
   produtosCategoria,
   categorias,
   setProdutosCategoria,
@@ -31,7 +32,7 @@ const ComandaProcesso = ({
 
   const atualizarTotal = (itens) => {
     const novoTotal = itens.reduce(
-      (acc, item) => acc + item.preco * item.quantidade,
+      (acc, item) => acc + parseFloat(item.preco) * item.quantidade,
       0
     );
     setTotal(novoTotal);
@@ -73,7 +74,8 @@ const ComandaProcesso = ({
   const handleFecharComanda = () => {
     const comanda = {
       mesa: selectedMesa.numero,
-      cliente: clienteInfo.nome,
+      cliente: clienteInfo?.nome,
+      cpf: cpfInfo?.cpf,
       itens: comandaItens,
       total,
     };
@@ -84,9 +86,11 @@ const ComandaProcesso = ({
   };
 
   return (
-    <div>
+    <div className="p-4">
       <h2>Comanda Mesa {selectedMesa.numero}</h2>
-      <p>Nome: {clienteInfo?.nome}</p>
+      <p>Nome: {clienteInfo?.nome || "Desconhecido"}</p>
+      <p>CPF: {cpfInfo?.cpf || "Não informado"}</p>
+
       <h3>Produtos Disponíveis</h3>
       <SearchBar
         onSearch={handleSearch}
@@ -94,38 +98,100 @@ const ComandaProcesso = ({
       />
       {mostrarFiltro && <FilterBar categorias={categorias} />}
       <div className="produtos-container">
-        {produtosCategoria.map((produto) => (
-          <div key={produto.id} className="produto-item">
-            <p>{produto.nome}</p>
-            <p>R$ {produto.preco.toFixed(2)}</p>
-            <button onClick={() => handleAdicionarProduto(produto)}>
-              Adicionar
-            </button>
-          </div>
-        ))}
+        {produtosCategoria.map((produto) => {
+          const preco = parseFloat(produto.preco);
+          if (isNaN(preco)) {
+            console.error("Preço inválido para o produto:", produto);
+            return null;
+          }
+
+          return (
+            <div key={produto.id} className="produto-item">
+              <p>{produto.nome}</p>
+              <p>R$ {preco.toFixed(2)}</p>
+              <button onClick={() => handleAdicionarProduto(produto)}>
+                Adicionar
+              </button>
+            </div>
+          );
+        })}
       </div>
 
-      <h3>Itens na Comanda</h3>
-      {comandaItens.length > 0 ? (
-        <div className="comanda-itens">
-          {comandaItens.map((item) => (
-            <div key={item.id} className="comanda-item">
-              <p>{item.nome}</p>
-              <p>
-                R$ {item.preco.toFixed(2)} x {item.quantidade}
-              </p>
-              <button onClick={() => handleAdicionarProduto(item)}>+</button>
-              <button onClick={() => handleRemoverProduto(item.id)}>-</button>
-            </div>
-          ))}
-          <p><strong>Total:</strong> R$ {total.toFixed(2)}</p>
-        </div>
-      ) : (
-        <p>Nenhum item adicionado.</p>
-      )}
+      {/* Itens na Comanda */}
+      <div className="mt-8">
+        <h3 className="text-lg font-semibold mb-4 text-center">
+          Itens na Comanda
+        </h3>
+        {comandaItens.length > 0 ? (
+          <div className="bg-gray-100 rounded-lg shadow-lg">
+            {/* Área de Itens com Scroll */}
+            <div className="max-h-64 overflow-y-auto p-4 space-y-4">
+              {comandaItens.map((item) => {
+                const preco = parseFloat(item.preco);
+                if (isNaN(preco)) {
+                  console.error("Preço inválido para o item:", item);
+                  return null;
+                }
 
-      <button onClick={handleFecharComanda}>Fechar Comanda</button>
-      <button onClick={onBack}>Voltar</button>
+                return (
+                  <div
+                    key={item.id}
+                    className="flex justify-between items-center border-b border-gray-300 pb-2 last:border-b-0"
+                  >
+                    <div className="flex-1">
+                      <p className="text-lg font-bold">{item.nome}</p>
+                      <p className="text-sm text-gray-600 font-bold">
+                        R$ {preco.toFixed(2)} x {item.quantidade}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      {" "}
+                      {/* Espaçamento maior entre botões e texto */}
+                      <button
+                        className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition duration-300"
+                        onClick={() => handleAdicionarProduto(item)}
+                      >
+                        +
+                      </button>
+                      <button
+                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition duration-300"
+                        onClick={() => handleRemoverProduto(item.id)}
+                      >
+                        -
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Área do Total */}
+            <div className="bg-gray-200 p-4 rounded-b-lg">
+              <p className="text-xl font-bold text-right">
+                Total: R$ {total.toFixed(2)}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <p className="text-gray-500 text-center">Nenhum item adicionado.</p>
+        )}
+      </div>
+
+      {/* Botões de ação */}
+      <div className="mt-6 flex justify-between">
+        <button
+          className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 transition duration-300"
+          onClick={handleFecharComanda}
+        >
+          Fechar Comanda
+        </button>
+        <button
+          className="bg-gray-500 text-white px-6 py-3 rounded hover:bg-gray-600 transition duration-300"
+          onClick={onBack}
+        >
+          Voltar
+        </button>
+      </div>
     </div>
   );
 };
@@ -137,13 +203,16 @@ ComandaProcesso.propTypes = {
   }).isRequired,
   clienteInfo: PropTypes.shape({
     nome: PropTypes.string,
+  }).isRequired,
+  cpfInfo: PropTypes.shape({
     cpf: PropTypes.string,
-  }),
+  }).isRequired,
   produtosCategoria: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.number.isRequired,
       nome: PropTypes.string.isRequired,
-      preco: PropTypes.number.isRequired,
+      preco: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
+        .isRequired,
     })
   ).isRequired,
   categorias: PropTypes.arrayOf(PropTypes.string).isRequired,

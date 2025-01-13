@@ -352,6 +352,15 @@ input {
   font-weight: bold;
 }
 
+.plus-btn {
+  background-color: red;
+  width: 5%;
+}
+
+.minus-btn {
+  width: 5%;
+}
+
 /* Responsividade para produtos */
 @media (max-width: 768px) {
   .produto-item {
