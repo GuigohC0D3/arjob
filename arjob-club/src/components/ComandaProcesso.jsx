@@ -30,6 +30,17 @@ const ComandaProcesso = ({
     setProdutosCategoria(filteredProducts);
   };
 
+  const handleFilter = (categoria) => {
+    if (!categoria) {
+      setProdutosCategoria(produtosCategoriaOriginal);
+      return;
+    }
+    const filteredProducts = produtosCategoriaOriginal.filter(
+      (produto) => produto.categoria === categoria
+    );
+    setProdutosCategoria(filteredProducts);
+  };
+
   const atualizarTotal = (itens) => {
     const novoTotal = itens.reduce(
       (acc, item) => acc + parseFloat(item.preco) * item.quantidade,
@@ -96,7 +107,12 @@ const ComandaProcesso = ({
         onSearch={handleSearch}
         onFilterClick={() => setMostrarFiltro(!mostrarFiltro)}
       />
-      {mostrarFiltro && <FilterBar categorias={categorias} />}
+      {mostrarFiltro && (
+        <FilterBar
+          categorias={categorias}
+          onFilter={handleFilter} // Passando a função de filtro
+        />
+      )}
       <div className="produtos-container">
         {produtosCategoria.map((produto) => {
           const preco = parseFloat(produto.preco);
