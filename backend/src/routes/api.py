@@ -17,7 +17,7 @@ login_manager = LoginManager()
 login_manager.init_app(main_bp)
 login_manager.login_view = 'login'  # Redireciona para a rota de login quando não autenticado
 
-CORS(main_bp, methods=['GET', 'POST', 'DELETE', 'PUT'])
+CORS(main_bp, methods=['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'])
 
 @main_bp.route('/clientes', methods=['POST'])
 def addCliente():
@@ -93,22 +93,33 @@ def excluir_mesa(mesa_id):
 @main_bp.route("/comandas", methods=["POST"])
 def criar_comanda():
     return comandas_controller.criar_comanda()
-
-@main_bp.route('/comandas/<int:comanda_id>/fechar', methods=['PUT'])
-def fechar_comanda(comanda_id):
+@main_bp.route('/comandas/<string:numero_comanda>/fechar', methods=['PUT', 'OPTIONS'])
+@cross_origin(origins="http://localhost:5173")
+def fechar_comanda(numero_comanda):
+    if request.method == "OPTIONS":
+        return '', 204  # Resposta para a pré-verificação CORS
+    
+    # Sua lógica de fechamento da comanda
     try:
-        # Chama o controlador para fechar a comanda
-        response, status_code = comandas_controller.fechar_comanda(comanda_id)
-        
-        # Retorna um JSON serializável
-        if isinstance(response, dict):
-            return jsonify(response), status_code
-        else:
-            return jsonify({"error": "Resposta inesperada do servidor"}), 500
+        response, status_code = comandas_controller.fechar_comanda_por_numero(numero_comanda)
+        return jsonify(response), status_code
     except Exception as e:
-        print(f"Erro no endpoint /comandas/{comanda_id}/fechar: {e}")
+        print(f"Erro ao fechar comanda pelo número: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
     
+@main_bp.route('/comandas/mesa/<int:mesa_id>', methods=['GET'])
+def obter_comanda_por_mesa(mesa_id):
+    try:
+        comanda = comandas.obter_comanda_por_mesa(mesa_id)
+        if comanda:
+            return jsonify(comanda), 200
+        else:
+            return jsonify({"error": "Nenhuma comanda aberta encontrada para esta mesa"}), 404
+    except Exception as e:
+        print(f"Erro ao obter comanda por mesa: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
+
+
 @main_bp.route("/comandas/fechadas", methods=["GET"])
 def listar_comandas_fechadas():
     try:
@@ -131,7 +142,6 @@ def listar_produtos():
 @main_bp.route("/produtos/buscar", methods=["GET"])
 def buscar_produtos_route():
     return buscar_produtos_controller.buscar_produtos()
-
 
 @main_bp.route('/users', methods=['POST'])
 def register_user():
