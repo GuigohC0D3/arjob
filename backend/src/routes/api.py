@@ -40,12 +40,17 @@ def get_clientes_endpoint():
 @main_bp.route('/clientes/<cpf>', methods=['GET'])
 def get_cliente_por_cpf(cpf):
     try:
+        # Valide o formato do CPF
+        if len(cpf) != 14 or not cpf.replace(".", "").replace("-", "").isdigit():
+            return jsonify({"error": "Formato de CPF inválido"}), 400
+
+        print(f"CPF recebido no backend: {cpf}")
+        
         cliente, status_code = clientes_controller.buscar_cliente_por_cpf(cpf)
         return jsonify(cliente), status_code
     except Exception as e:
         print(f"Erro no endpoint /clientes/{cpf}: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
-
 
 @main_bp.route('/departamentos', methods=['GET'])
 def listar_departamentos():
@@ -90,9 +95,23 @@ def excluir_mesa(mesa_id):
     return mesas_controller.excluir_mesa(mesa_id)
 
 
-@main_bp.route("/comandas", methods=["POST"])
+@main_bp.route('/comandas', methods=['POST'])
 def criar_comanda():
-    return comandas_controller.criar_comanda()
+    try:
+        dados = request.json
+        mesa_id = dados.get("mesa_id")
+        cliente_cpf = dados.get("cliente_cpf")
+
+        if not mesa_id or not cliente_cpf:
+            return jsonify({"error": "Dados insuficientes para criar a comanda"}), 400
+
+        # Chama o controller para processar a criação
+        response, status_code = comandas_controller.abrir_comanda(mesa_id, cliente_cpf)
+        return jsonify(response), status_code
+    except Exception as e:
+        print(f"Erro no endpoint /comandas: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
+
 @main_bp.route('/comandas/<string:numero_comanda>/fechar', methods=['PUT', 'OPTIONS'])
 @cross_origin(origins="http://localhost:5173")
 def fechar_comanda(numero_comanda):

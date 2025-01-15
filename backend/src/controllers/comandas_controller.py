@@ -1,24 +1,29 @@
 from flask import jsonify, request
-from ..entities import comandas, mesas
+from ..entities import comandas, mesas, clientes
 from ..entities.comandas import atualizar_status_comanda
 
-def abrir_comanda(mesa_id, numero_comanda=None):
+def abrir_comanda(mesa_id, cliente_cpf):
+    """
+    Lógica para abrir uma comanda, associando cliente e mesa.
+    """
     try:
-        # Verificar se já existe uma comanda ativa para a mesa
+        # Busca o cliente pelo CPF
+        cliente, status_code = clientes.buscar_cliente_por_cpf(cliente_cpf)
+        if status_code != 200:
+            return cliente, status_code
+
+        cliente_id = cliente.get("id")
+
+        # Verifica se já existe uma comanda ativa na mesa
         comanda_existente = comandas.obter_comanda_por_mesa(mesa_id)
         if comanda_existente:
-            return True, comanda_existente["numero"]
+            return {"error": "Já existe uma comanda ativa para esta mesa."}, 400
 
-        # Criar nova comanda se não existir nenhuma ativa
-        sucesso = comandas.criar_comanda(mesa_id, numero_comanda)
-        if sucesso:
-            mesas.atualizar_status_mesa(mesa_id, "ocupada")
-            return True, numero_comanda
-        else:
-            return False, "Erro ao criar comanda no banco de dados"
+        # Cria uma nova comanda com o cliente_id
+        return comandas.criar_comanda(mesa_id, cliente_id)
     except Exception as e:
-        print(f"Erro ao abrir comanda: {e}")
-        return False, "Erro interno no servidor"
+        print(f"Erro ao abrir comanda no controlador: {e}")
+        return {"error": "Erro interno no servidor"}, 500
 
 def criar_comanda():
     try:

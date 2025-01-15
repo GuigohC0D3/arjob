@@ -31,9 +31,6 @@ def get_clientes():
 
 
 def add_cliente(nome, cpf, email, telefone, filial, convenio, departamento_id):
-    """
-    Adiciona um cliente e cria a associação com um departamento.
-    """
     conn = connect_db()
     if conn:
         try:
@@ -81,37 +78,21 @@ def add_cliente(nome, cpf, email, telefone, filial, convenio, departamento_id):
 
 
 def buscar_cliente_por_cpf(cpf):
-    """
-    Busca cliente pelo CPF.
-    """
-    conn = connect_db()
-    if conn:
-        try:
+    try:
+        conn = connect_db()
+        if conn:
             cur = conn.cursor()
-            # Remover pontuação para normalizar o CPF
-            cpf = cpf.replace('.', '').replace('-', '')
-            cur.execute("""
-                SELECT nome, cpf, email, telefone, filial, convenio
-                FROM clientes
-                WHERE REPLACE(REPLACE(REPLACE(cpf, '.', ''), '-', ''), '/', '') = %s
-            """, (cpf,))
+            cur.execute("SELECT id, nome, cpf FROM clientes WHERE cpf = %s", (cpf,))
             cliente = cur.fetchone()
             cur.close()
             conn.close()
 
             if cliente:
-                return {
-                    "nome": cliente[0],
-                    "cpf": cliente[1],
-                    "email": cliente[2],
-                    "telefone": cliente[3],
-                    "filial": cliente[4],
-                    "convenio": cliente[5]
-                }, 200
+                return {"id": cliente[0], "nome": cliente[1], "cpf": cliente[2]}, 200
             else:
                 return {"error": "Cliente não encontrado"}, 404
-        except Exception as e:
-            print(f"Erro ao buscar cliente no banco de dados: {e}")
-            return {"error": "Erro interno no servidor"}, 500
-    else:
-        return {"error": "Erro ao conectar ao banco de dados"}, 500
+    except Exception as e:
+        print(f"Erro ao buscar cliente por CPF: {e}")
+        return {"error": "Erro interno no servidor"}, 500
+
+

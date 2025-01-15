@@ -21,25 +21,34 @@ def gerar_numero_comanda():
     else:
         raise Exception("Erro ao conectar ao banco de dados")
 
-def criar_comanda(mesa_id, numero_comanda):
+def criar_comanda(mesa_id, cliente_id):
+    """
+    Cria uma nova comanda associada a uma mesa e a um cliente.
+    """
     conn = connect_db()
     if conn:
         try:
+            numero_comanda = gerar_numero_comanda()  # Função para gerar número único
             cur = conn.cursor()
             cur.execute(
-                "INSERT INTO comandas (numero, mesa_id, status) VALUES (%s, %s, %s)",
-                (numero_comanda, mesa_id, 'aberta'),
+                """
+                INSERT INTO comandas (numero, mesa_id, cliente_id, status)
+                VALUES (%s, %s, %s, %s)
+                """,
+                (numero_comanda, mesa_id, cliente_id, 'aberta'),
             )
             conn.commit()
             cur.close()
             conn.close()
-            return True
+            return {"id": numero_comanda}, 201
         except Exception as e:
+            conn.rollback()
             print(f"Erro ao criar comanda: {e}")
-            return False
+            return {"error": "Erro ao criar comanda"}, 500
     else:
-        print("Erro ao conectar ao banco de dados")
-        return False
+        return {"error": "Erro ao conectar ao banco de dados"}, 500
+
+
 
 def abrir_comanda(mesa_id):
     try:
@@ -171,6 +180,9 @@ def listar_comandas_fechadas():
 
 
 def obter_comanda_por_mesa(mesa_id):
+    """
+    Retorna a comanda ativa para uma mesa, se existir.
+    """
     conn = connect_db()
     if conn:
         try:
@@ -181,6 +193,9 @@ def obter_comanda_por_mesa(mesa_id):
                 WHERE mesa_id = %s AND status = 'aberta'
             """, (mesa_id,))
             comanda = cur.fetchone()
+            cur.close()
+            conn.close()
+
             if comanda:
                 return {
                     "id": comanda[0],
@@ -190,14 +205,12 @@ def obter_comanda_por_mesa(mesa_id):
                 }
             return None
         except Exception as e:
-            print(f"Erro ao obter comanda por mesa: {e}")
+            print(f"Erro ao buscar comanda por mesa: {e}")
             return None
-        finally:
-            cur.close()
-            conn.close()
     else:
         print("Erro ao conectar ao banco de dados")
         return None
+
 
 
 
