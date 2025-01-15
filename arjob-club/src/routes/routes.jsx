@@ -19,7 +19,7 @@ const AppRoutes = () => {
         <Route path='/Preloading' element={<Preloading/>} />
         <Route path="/Home" element={<MainContent />} />
         <Route path="/iniciar-venda" element={<IniciarVenda />} />
-        <Route path="/Listagem" element={<ComandasListagem />} />
+        <Route path="/listagem" element={<ComandasListagem />} />
         <Route path="/Importar" element={<ImportarFinanceiros/>} />
         <Route path="/Cliente" element={<CadastroCliente/>} />
         <Route path="/Fluxo" element={<FluxoDeCaixa/>} />

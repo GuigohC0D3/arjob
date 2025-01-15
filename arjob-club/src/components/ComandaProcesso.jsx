@@ -14,32 +14,12 @@ const ComandaProcesso = ({
   mostrarFiltro,
   setMostrarFiltro,
   onFecharComanda,
+  onAtualizarMesas,
+  comandaId,
   onBack,
 }) => {
   const [comandaItens, setComandaItens] = useState([]);
   const [total, setTotal] = useState(0);
-
-  const handleSearch = (query) => {
-    if (!query) {
-      setProdutosCategoria(produtosCategoriaOriginal);
-      return;
-    }
-    const filteredProducts = produtosCategoriaOriginal.filter((produto) =>
-      produto.nome.toLowerCase().includes(query.toLowerCase())
-    );
-    setProdutosCategoria(filteredProducts);
-  };
-
-  const handleFilter = (categoria) => {
-    if (!categoria) {
-      setProdutosCategoria(produtosCategoriaOriginal);
-      return;
-    }
-    const filteredProducts = produtosCategoriaOriginal.filter(
-      (produto) => produto.categoria === categoria
-    );
-    setProdutosCategoria(filteredProducts);
-  };
 
   const atualizarTotal = (itens) => {
     const novoTotal = itens.reduce(
@@ -82,18 +62,76 @@ const ComandaProcesso = ({
     });
   };
 
-  const handleFecharComanda = () => {
+  const handleFecharComanda = async () => {
+    console.log("Comanda ID recebido:", comandaId); // Adicione este log para validar o ID
+
+    if (!comandaId || typeof comandaId !== "string") {
+      alert("ID da comanda inválido ou ausente.");
+      return;
+    }
+
     const comanda = {
       mesa: selectedMesa.numero,
-      cliente: clienteInfo?.nome,
-      cpf: cpfInfo?.cpf,
+      cliente: clienteInfo?.nome || "Desconhecido",
+      cpf: cpfInfo?.cpf || "Não informado",
       itens: comandaItens,
       total,
     };
-    console.log("Fechando comanda:", comanda);
 
-    // Redirecionar para o histórico
-    onFecharComanda(comanda);
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:5000/comandas/${encodeURIComponent(
+          comandaId
+        )}/fechar`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(comanda),
+        }
+      );
+
+      if (response.ok) {
+        alert("Comanda fechada com sucesso!");
+        onAtualizarMesas((prevMesas) =>
+          prevMesas.map((mesa) =>
+            mesa.id === selectedMesa.id
+              ? { ...mesa, status: "disponivel" }
+              : mesa
+          )
+        );
+        onFecharComanda();
+      } else {
+        const errorResponse = await response.json();
+        console.error("Erro ao fechar comanda:", errorResponse);
+        alert(
+          `Erro ao fechar comanda: ${errorResponse.error || "Desconhecido"}`
+        );
+      }
+    } catch (error) {
+      console.error("Erro ao fechar a comanda:", error);
+      alert("Erro ao fechar a comanda. Tente novamente mais tarde.");
+    }
+  
+  };
+
+  const handleSearch = (query) => {
+    setProdutosCategoria(
+      query
+        ? produtosCategoriaOriginal.filter((produto) =>
+            produto.nome.toLowerCase().includes(query.toLowerCase())
+          )
+        : produtosCategoriaOriginal
+    );
+  };
+
+  const handleFilter = (categoria) => {
+    setProdutosCategoria(
+      categoria
+        ? produtosCategoriaOriginal.filter(
+            (produto) => produto.categoria === categoria
+          )
+        : produtosCategoriaOriginal
+    );
   };
 
   return (
@@ -108,80 +146,56 @@ const ComandaProcesso = ({
         onFilterClick={() => setMostrarFiltro(!mostrarFiltro)}
       />
       {mostrarFiltro && (
-        <FilterBar
-          categorias={categorias}
-          onFilter={handleFilter} // Passando a função de filtro
-        />
+        <FilterBar categorias={categorias} onFilter={handleFilter} />
       )}
-      <div className="produtos-container">
-        {produtosCategoria.map((produto) => {
-          const preco = parseFloat(produto.preco);
-          if (isNaN(preco)) {
-            console.error("Preço inválido para o produto:", produto);
-            return null;
-          }
 
-          return (
-            <div key={produto.id} className="produto-item">
-              <p>{produto.nome}</p>
-              <p>R$ {preco.toFixed(2)}</p>
-              <button onClick={() => handleAdicionarProduto(produto)}>
-                Adicionar
-              </button>
-            </div>
-          );
-        })}
+      <div className="produtos-container">
+        {produtosCategoria.map((produto) => (
+          <div key={produto.id} className="produto-item">
+            <p>{produto.nome}</p>
+            <p>R$ {parseFloat(produto.preco).toFixed(2)}</p>
+            <button onClick={() => handleAdicionarProduto(produto)}>
+              Adicionar
+            </button>
+          </div>
+        ))}
       </div>
 
-      {/* Itens na Comanda */}
       <div className="mt-8">
         <h3 className="text-lg font-semibold mb-4 text-center">
           Itens na Comanda
         </h3>
         {comandaItens.length > 0 ? (
           <div className="bg-gray-100 rounded-lg shadow-lg">
-            {/* Área de Itens com Scroll */}
             <div className="max-h-64 overflow-y-auto p-4 space-y-4">
-              {comandaItens.map((item) => {
-                const preco = parseFloat(item.preco);
-                if (isNaN(preco)) {
-                  console.error("Preço inválido para o item:", item);
-                  return null;
-                }
-
-                return (
-                  <div
-                    key={item.id}
-                    className="flex justify-between items-center border-b border-gray-300 pb-2 last:border-b-0"
-                  >
-                    <div className="flex-1">
-                      <p className="text-lg font-bold">{item.nome}</p>
-                      <p className="text-sm text-gray-600 font-bold">
-                        R$ {preco.toFixed(2)} x {item.quantidade}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      {" "}
-                      {/* Espaçamento maior entre botões e texto */}
-                      <button
-                        className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition duration-300"
-                        onClick={() => handleAdicionarProduto(item)}
-                      >
-                        +
-                      </button>
-                      <button
-                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition duration-300"
-                        onClick={() => handleRemoverProduto(item.id)}
-                      >
-                        -
-                      </button>
-                    </div>
+              {comandaItens.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex justify-between items-center border-b border-gray-300 pb-2 last:border-b-0"
+                >
+                  <div className="flex-1">
+                    <p className="text-lg font-bold">{item.nome}</p>
+                    <p className="text-sm text-gray-600 font-bold">
+                      R$ {parseFloat(item.preco).toFixed(2)} x {item.quantidade}
+                    </p>
                   </div>
-                );
-              })}
+                  <div className="flex items-center gap-4">
+                    <button
+                      className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition duration-300"
+                      onClick={() => handleAdicionarProduto(item)}
+                    >
+                      +
+                    </button>
+                    <button
+                      className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition duration-300"
+                      onClick={() => handleRemoverProduto(item.id)}
+                    >
+                      -
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-
-            {/* Área do Total */}
             <div className="bg-gray-200 p-4 rounded-b-lg">
               <p className="text-xl font-bold text-right">
                 Total: R$ {total.toFixed(2)}
@@ -193,7 +207,6 @@ const ComandaProcesso = ({
         )}
       </div>
 
-      {/* Botões de ação */}
       <div className="mt-6 flex justify-between">
         <button
           className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 transition duration-300"
@@ -237,6 +250,8 @@ ComandaProcesso.propTypes = {
   mostrarFiltro: PropTypes.bool.isRequired,
   setMostrarFiltro: PropTypes.func.isRequired,
   onFecharComanda: PropTypes.func.isRequired,
+  onAtualizarMesas: PropTypes.func.isRequired,
+  comandaId: PropTypes.string,
   onBack: PropTypes.func.isRequired,
 };
 

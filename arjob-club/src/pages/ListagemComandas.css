@@ -9,6 +9,13 @@ header h1 {
   font-weight: bold;
 }
 
+.nothing-comanda {
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .main {
   display: flex;
   flex-direction: row; /* Garante que os cards fiquem em linha */

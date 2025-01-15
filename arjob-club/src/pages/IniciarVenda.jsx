@@ -1,48 +1,41 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import NovaComanda from "../components/NovaComanda";
 import ComandaProcesso from "../components/ComandaProcesso";
 import "./IniciarVenda.css";
 
 const IniciarVenda = () => {
-  const navigate = useNavigate();
-
-  // Estados principais
   const [mesas, setMesas] = useState([]);
   const [selectedMesa, setSelectedMesa] = useState(null);
   const [cpfCliente, setCpfCliente] = useState("");
   const [clienteInfo, setClienteInfo] = useState(null);
   const [produtosCategoria, setProdutosCategoria] = useState([]);
-  const [produtosCategoriaOriginal, setProdutosCategoriaOriginal] = useState([]);
+  const [produtosCategoriaOriginal, setProdutosCategoriaOriginal] = useState(
+    []
+  );
   const [categorias, setCategorias] = useState([]);
   const [mostrarFiltro, setMostrarFiltro] = useState(false);
-
-  const [loading, setLoading] = useState(false);
-  const [comandaAberta, setComandaAberta] = useState(null);
+  const [comandaId, setComandaId] = useState(null);
 
   // Carregar mesas ao montar o componente
   useEffect(() => {
     const fetchMesas = async () => {
-      setLoading(true);
       try {
         const response = await fetch("http://127.0.0.1:5000/mesas");
         if (response.ok) {
-          const data = await response.json();
-          setMesas(data);
+          const mesasData = await response.json();
+          const mesasOrdenadas = mesasData.sort((a, b) => a.numero - b.numero);
+          setMesas(mesasOrdenadas);
         } else {
           console.error("Erro ao carregar mesas.");
         }
       } catch (error) {
         console.error("Erro ao conectar ao servidor:", error);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchMesas();
   }, []);
 
-  // Abrir nova comanda
   const handleAbrirComanda = async () => {
     if (!selectedMesa || !selectedMesa.id) {
       alert("Selecione uma mesa para abrir a comanda.");
@@ -54,7 +47,6 @@ const IniciarVenda = () => {
       return;
     }
 
-    setLoading(true);
     try {
       const response = await fetch("http://127.0.0.1:5000/comandas", {
         method: "POST",
@@ -67,7 +59,42 @@ const IniciarVenda = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setComandaAberta(data);
+        setComandaId(data.id); // Certifique-se de armazenar o ID retornado pelo backend
+
+        // Atualizar o status da mesa para "ocupada"
+        setMesas((prevMesas) =>
+          prevMesas.map((mesa) =>
+            mesa.id === selectedMesa.id ? { ...mesa, status: "ocupada" } : mesa
+          )
+        );
+
+        const produtosResponse = await fetch("http://127.0.0.1:5000/produtos");
+        if (produtosResponse.ok) {
+          const produtos = await produtosResponse.json();
+          setProdutosCategoria(produtos);
+          setProdutosCategoriaOriginal(produtos);
+          const categoriasUnicas = [
+            ...new Set(produtos.map((p) => p.categoria)),
+          ];
+          setCategorias(categoriasUnicas);
+        }
+      } else {
+        console.error("Erro ao abrir comanda:", await response.json());
+      }
+    } catch (error) {
+      console.error("Erro ao abrir comanda:", error);
+    }
+  };
+
+  const acessarComandaOcupada = async (mesa) => {
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:5000/comandas/mesa/${mesa.id}`
+      );
+      if (response.ok) {
+        const comandaData = await response.json();
+        setComandaId(comandaData.id);
+        setSelectedMesa(mesa);
 
         // Carregar produtos disponíveis
         const produtosResponse = await fetch("http://127.0.0.1:5000/produtos");
@@ -76,35 +103,24 @@ const IniciarVenda = () => {
           setProdutosCategoria(produtos);
           setProdutosCategoriaOriginal(produtos);
 
-          // Organizar categorias únicas
           const categoriasUnicas = [
             ...new Set(produtos.map((produto) => produto.categoria)),
           ];
           setCategorias(categoriasUnicas);
-        } else {
-          console.error("Erro ao carregar produtos.");
         }
       } else {
         const errorData = await response.json();
-        console.error("Erro do servidor ao abrir comanda:", errorData);
+        console.error("Erro ao acessar comanda ocupada:", errorData);
+        alert(errorData.error || "Erro ao acessar comanda.");
       }
     } catch (error) {
-      console.error("Erro ao abrir comanda:", error);
-    } finally {
-      setLoading(false);
+      console.error("Erro ao acessar comanda ocupada:", error);
+      alert("Erro ao acessar comanda. Verifique sua conexão.");
     }
-  };
-
-  // Fechar comanda e redirecionar para o histórico
-  const handleFecharComanda = (comanda) => {
-    console.log("Comanda fechada:", comanda);
-    navigate("/historico", { state: { comanda } });
   };
 
   return (
     <div>
-      {loading && <p>Carregando...</p>}
-
       {!selectedMesa ? (
         <div className="mesas-container">
           {mesas.map((mesa) => (
@@ -113,13 +129,17 @@ const IniciarVenda = () => {
               className={`mesa ${
                 mesa.status === "ocupada" ? "ocupada" : "disponivel"
               }`}
-              onClick={() => setSelectedMesa(mesa)}
+              onClick={() =>
+                mesa.status === "ocupada"
+                  ? acessarComandaOcupada(mesa)
+                  : setSelectedMesa(mesa)
+              }
             >
               Mesa {mesa.numero}
             </button>
           ))}
         </div>
-      ) : !comandaAberta ? (
+      ) : produtosCategoria.length === 0 ? (
         <NovaComanda
           selectedMesa={selectedMesa}
           cpfCliente={cpfCliente}
@@ -133,15 +153,17 @@ const IniciarVenda = () => {
         <ComandaProcesso
           selectedMesa={selectedMesa}
           clienteInfo={clienteInfo}
-          cpfInfo={{ cpf: cpfCliente }} // CPF sendo passado como objeto
+          comandaId={String(comandaId)}
+          cpfInfo={{ cpf: cpfCliente }}
           produtosCategoria={produtosCategoria}
           categorias={categorias}
           setProdutosCategoria={setProdutosCategoria}
           produtosCategoriaOriginal={produtosCategoriaOriginal}
           mostrarFiltro={mostrarFiltro}
           setMostrarFiltro={setMostrarFiltro}
-          onFecharComanda={handleFecharComanda}
-          onBack={() => setComandaAberta(null)}
+          onFecharComanda={() => setSelectedMesa(null)}
+          onAtualizarMesas={setMesas}
+          onBack={() => setSelectedMesa(null)}
         />
       )}
     </div>
