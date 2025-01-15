@@ -36,6 +36,8 @@ const IniciarVenda = () => {
     fetchMesas();
   }, []);
 
+  
+
   const handleAbrirComanda = async () => {
     if (!selectedMesa || !selectedMesa.id) {
       alert("Selecione uma mesa para abrir a comanda.");

@@ -111,7 +111,7 @@ const ComandaProcesso = ({
       console.error("Erro ao fechar a comanda:", error);
       alert("Erro ao fechar a comanda. Tente novamente mais tarde.");
     }
-  
+    
   };
 
   const handleSearch = (query) => {

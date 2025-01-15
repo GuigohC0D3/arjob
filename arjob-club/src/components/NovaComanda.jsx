@@ -23,33 +23,35 @@ const NovaComanda = ({
   };
 
   const handleBuscarCliente = async () => {
-    const cpfLimpo = cpfCliente.replace(/\D/g, ""); // Remove formatações
-    if (!cpfLimpo) {
-      alert("Por favor, insira um CPF válido.");
+    if (!cpfCliente || !/^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(cpfCliente)) {
+      alert("Digite um CPF válido no formato XXX.XXX.XXX-XX.");
       return;
     }
-
-    setLoading(true);
+  
     try {
-      const response = await fetch(`http://127.0.0.1:5000/clientes/${cpfLimpo.trim()}`);
+      const response = await fetch(
+        `http://127.0.0.1:5000/clientes/${cpfCliente}`
+      );
       if (response.ok) {
-        const data = await response.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setClienteInfo(data[0]); // Pegamos o primeiro item do array
+        const cliente = await response.json();
+  
+        // Verifica se o backend retorna um array e extrai o primeiro elemento
+        if (Array.isArray(cliente)) {
+          setClienteInfo(cliente[0]); // Assume que o cliente está no índice 0
         } else {
-          setClienteInfo(null);
-          alert("Cliente não encontrado. Verifique o CPF.");
+          setClienteInfo(cliente); // Caso o backend retorne diretamente um objeto
+          alert(`Cliente encontrado: ${cliente?.nome}`);
         }
       } else {
-        setClienteInfo(null);
-        alert("Cliente não encontrado. Verifique o CPF.");
+        const errorData = await response.json();
+        setClienteInfo(null); // Limpa as informações do cliente
+        alert(errorData.error || "Cliente não encontrado.");
       }
     } catch (error) {
       console.error("Erro ao buscar cliente:", error);
-    } finally {
-      setLoading(false);
+      alert("Erro ao buscar cliente. Verifique sua conexão com o servidor.");
     }
-  };
+  };  
 
   return (
     <div className="nova-comanda">
@@ -59,28 +61,45 @@ const NovaComanda = ({
       <p>Mesa: {selectedMesa.numero}</p>
 
       <div className="cpf-container">
-        <label>
+        <label htmlFor="cpf-input">
           CPF do Cliente:
           <input
+            id="cpf-input"
             type="text"
             value={cpfCliente}
             onChange={handleCpfChange}
             placeholder="Digite o CPF (123.456.789-00)"
           />
         </label>
-        <button onClick={handleBuscarCliente}>Buscar Cliente</button>
+        <button onClick={handleBuscarCliente} disabled={loading}>
+          Buscar Cliente
+        </button>
       </div>
 
       <div className="cliente-info">
         <h3>Informações do Cliente</h3>
-        <p className="info-user">Nome: {clienteInfo?.nome || "Não encontrado"}</p>
-        <p className="info-user">CPF: {clienteInfo?.cpf || "Não encontrado"}</p>
+        {clienteInfo ? (
+          <>
+            <p>Nome: {clienteInfo.nome}</p>
+            <p>CPF: {clienteInfo.cpf}</p>
+          </>
+        ) : (
+          <p className="info-user">Nenhum cliente encontrado.</p>
+        )}
       </div>
 
-      <button onClick={onAbrirComanda} disabled={!clienteInfo}>
-        Gerar e Abrir Comanda
-      </button>
-      <button onClick={onBack}>Voltar</button>
+      <div className="actions">
+        <button
+          onClick={onAbrirComanda}
+          disabled={!clienteInfo || loading}
+          className="primary"
+        >
+          Gerar e Abrir Comanda
+        </button>
+        <button onClick={onBack} className="secondary">
+          Voltar
+        </button>
+      </div>
     </div>
   );
 };
@@ -94,11 +113,12 @@ NovaComanda.propTypes = {
   clienteInfo: PropTypes.shape({
     nome: PropTypes.string,
     cpf: PropTypes.string,
-  }),
+  }), // Garante que é um objeto
   setCpfCliente: PropTypes.func.isRequired,
   setClienteInfo: PropTypes.func.isRequired,
   onAbrirComanda: PropTypes.func.isRequired,
   onBack: PropTypes.func.isRequired,
 };
+
 
 export default NovaComanda;
