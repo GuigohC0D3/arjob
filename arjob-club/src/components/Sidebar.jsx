@@ -32,16 +32,16 @@ const Sidebar = () => {
                 <i className="bi bi-list-ul"></i> Histórico
               </Link>
             </li>
-            <li>
+            {/* <li>
               <Link to="/importar">
                 <i className="bi bi-upload"></i> Exportar
               </Link>
-            </li>
-            <li>
+            </li> */}
+            {/* <li>
               <Link to="/Fluxo">
                 <i className="bi bi-credit-card"></i> Receber Parcelas
               </Link>
-            </li>
+            </li> */}
             <li>
               <Link to="/Cliente">
                 <i className="bi bi-person"></i> Clientes
@@ -55,6 +55,11 @@ const Sidebar = () => {
             <li>
               <Link to="/troca">
                 <i className="pi pi-headphones"></i> Suporte
+              </Link>
+            </li>
+            <li>
+              <Link to="/admin">
+              <i className="bi bi-person-vcard"></i> Painel Admnistrador
               </Link>
             </li>
             <li>

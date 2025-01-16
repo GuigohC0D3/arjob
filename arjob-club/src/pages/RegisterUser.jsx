@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "primereact/resources/themes/lara-light-blue/theme.css";
@@ -19,7 +19,26 @@ const RegisterUser = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [cargos, setCargos] = useState([]);
   const navigate = useNavigate();
+
+  // Buscar cargos no backend
+  useEffect(() => {
+    const fetchCargos = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/cargos");
+        setCargos(response.data); // Assumindo que retorna [{ id, nome }]
+      } catch (error) {
+        console.error("Erro ao buscar cargos:", error);
+        setErrors((prev) => ({
+          ...prev,
+          api: "Erro ao carregar cargos. Verifique o backend.",
+        }));
+      }
+    };
+
+    fetchCargos();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -67,31 +86,13 @@ const RegisterUser = () => {
     const { nome, cpf, email, senha, confirmarSenha, cargo } = formData;
     const newErrors = {};
 
-    if (!nome) {
-      newErrors.nome = "Por favor, preencha seu nome.";
-    }
-
-    if (!cpf) {
-      newErrors.cpf = "CPF inválido. Certifique-se de que está no formato correto.";
-    }
-
-    if (!email || !email.includes("@")) {
-      newErrors.email = "E-mail inválido.";
-    }
-
-    if (!senha) {
-      newErrors.senha = "A senha é obrigatória.";
-    } else if (senha.length < 8) {
-      newErrors.senha = "A senha deve ter pelo menos 8 caracteres.";
-    }
-
-    if (senha !== confirmarSenha) {
-      newErrors.confirmarSenha = "As senhas não coincidem.";
-    }
-
-    if (!cargo) {
-      newErrors.cargo = "Por favor, selecione um cargo.";
-    }
+    if (!nome) newErrors.nome = "Por favor, preencha seu nome.";
+    if (!cpf) newErrors.cpf = "CPF inválido. Certifique-se de que está no formato correto.";
+    if (!email || !email.includes("@")) newErrors.email = "E-mail inválido.";
+    if (!senha) newErrors.senha = "A senha é obrigatória.";
+    if (senha.length < 8) newErrors.senha = "A senha deve ter pelo menos 8 caracteres.";
+    if (senha !== confirmarSenha) newErrors.confirmarSenha = "As senhas não coincidem.";
+    if (!cargo) newErrors.cargo = "Por favor, selecione um cargo.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -104,12 +105,12 @@ const RegisterUser = () => {
         cpf,
         email,
         senha,
-        cargo,
+        cargoId: cargo, // Envia o ID do cargo ao backend
       });
 
       if (response.data) {
         console.log("Usuário registrado com sucesso:", response.data);
-        navigate("/");
+        navigate("/"); // Redirecionar após o sucesso
       }
     } catch (error) {
       console.error("Erro ao registrar usuário:", error.response?.data || error.message);
@@ -170,9 +171,11 @@ const RegisterUser = () => {
               required
             >
               <option value="">Selecione seu cargo</option>
-              <option value="administrador">Administrador</option>
-              <option value="usuario">Usuário</option>
-              <option value="gerente">Gerente</option>
+              {cargos.map((cargo) => (
+                <option key={cargo.id} value={cargo.id}>
+                  {cargo.nome}
+                </option>
+              ))}
             </select>
           </div>
           {errors.cargo && <p className="error-text">{errors.cargo}</p>}
@@ -248,8 +251,12 @@ const RegisterUser = () => {
               title={showConfirmPassword ? "Ocultar senha" : "Mostrar senha"}
             ></i>
           </div>
-          {errors.confirmarSenha && <p className="error-text">{errors.confirmarSenha}</p>}
+          {errors.confirmarSenha && (
+            <p className="error-text">{errors.confirmarSenha}</p>
+          )}
         </div>
+
+        {errors.api && <p className="error-text api-error">{errors.api}</p>}
 
         <button type="submit" className="login-button">
           Registrar
