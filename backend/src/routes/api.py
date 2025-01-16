@@ -7,7 +7,7 @@ from ..controllers import clientes_controller, departamento_cliente_controller, 
 from ..entities import comandas
 from ..entities.clientes import get_clientes 
 from ..entities import movimentacao_caixa
-# from ..entities.users import corrigir_senhas, corrigir_cpfs
+from ..entities.users import corrigir_senhas
 from ..connection.config import connect_db 
 import os
 main_bp = Blueprint('main', __name__)
@@ -170,11 +170,19 @@ def register_user():
         print("Erro no endpoint /users:", e)
         return jsonify({"error": "Erro interno no servidor"}), 500
     
+@main_bp.route('/cargos', methods=['GET'])
+def listar_cargos():
+    try:
+        from ..entities.cargos import listar_cargos
+        cargos = listar_cargos()
+        return jsonify(cargos), 200
+    except Exception as e:
+        print(f"Erro ao listar cargos: {e}")
+        return jsonify({"error": "Erro ao listar cargos"}), 500
+
+    
 @main_bp.route('/login', methods=['POST'])
 def login_user():
-    """
-    Endpoint para autenticar um usuário.
-    """
     try:
         data = request.json
         cpf = data.get('cpf')
@@ -192,12 +200,58 @@ def login_user():
         return jsonify({"error": "Erro interno no servidor"}), 500
 
 
-# @main_bp.route('/corrigir-senhas', methods=['POST'])
-# def corrigir_senhas_route():
-#     corrigir_senhas()
-#     return {"message": "Senhas corrigidas com sucesso"}, 200
+@main_bp.route('/corrigir-senhas', methods=['POST'])
+def corrigir_senhas_route():
+    corrigir_senhas()
+    return {"message": "Senhas corrigidas com sucesso"}, 200
 
 # @main_bp.route('/corrigir-cpf', methods=['POST'])
 # def corrigir_cpf_route():
 #     corrigir_cpfs()
 #     return {"message": "CPFS corrigidos com sucesso"}, 200
+
+from ..controllers import usuarios_controller, permissoes_controller
+
+# Listar usuários com permissões
+@main_bp.route('/admin/usuarios', methods=['GET'])
+def listar_usuarios_com_permissoes():
+    try:
+        usuarios, status_code = usuarios_controller.listar_usuarios_com_permissoes()
+        return jsonify(usuarios), status_code
+    except Exception as e:
+        print(f"Erro no endpoint /admin/usuarios: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
+
+# Atualizar permissões de um usuário
+@main_bp.route('/admin/usuarios/<int:usuario_id>/permissoes', methods=['PUT'])
+def atualizar_permissoes_usuario(usuario_id):
+    try:
+        permissoes = request.json.get("permissoes")
+        if not permissoes:
+            return jsonify({"error": "Nenhuma permissão fornecida"}), 400
+        
+        response, status_code = permissoes_controller.atualizar_permissoes_usuario(usuario_id, permissoes)
+        return jsonify(response), status_code
+    except Exception as e:
+        print(f"Erro no endpoint /admin/usuarios/{usuario_id}/permissoes: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
+
+# Listar clientes
+@main_bp.route('/admin/clientes', methods=['GET'])
+def listar_clientes_painel():
+    try:
+        clientes, status_code = clientes_controller.listar_clientes()
+        return jsonify(clientes), status_code
+    except Exception as e:
+        print(f"Erro no endpoint /admin/clientes: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
+
+# Remover cliente
+@main_bp.route('/admin/clientes/<int:cliente_id>', methods=['DELETE'])
+def remover_cliente_painel(cliente_id):
+    try:
+        response, status_code = clientes_controller.remover_cliente(cliente_id)
+        return jsonify(response), status_code
+    except Exception as e:
+        print(f"Erro no endpoint /admin/clientes/{cliente_id}: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500

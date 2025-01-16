@@ -1,7 +1,8 @@
 import psycopg2
 from flask import jsonify
 from ..connection.config import connect_db 
-from src.utils import hash_utils 
+from src.utils import hash_utils
+from src.utils.hash_utils import bcrypt
 from src.utils import cryptography_utils
 
 def get_usuarios():
@@ -22,128 +23,186 @@ def get_usuarios():
         return jsonify({'error': 'Erro ao conectar ao banco de dados'}), 500
 
 # Função para criar um usuário
-def create_user(nome, cpf, email, senha, cargo):
+def create_user(nome, cpf, email, senha, cargo_id):
     conn = connect_db()
-    if not conn:
+    if conn:
+        try:
+            # Hash da senha
+            senha_hash = bcrypt.hashpw(senha.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+            cur = conn.cursor()
+
+            # Inserir o usuário na tabela `usuarios`
+            cur.execute(
+                """
+                INSERT INTO usuarios (nome, cpf, email, senha, ativo, criado_em)
+                VALUES (%s, %s, %s, %s, %s, NOW())
+                RETURNING id
+                """,
+                (nome, cpf, email, senha_hash, True),
+            )
+            usuario_id = cur.fetchone()[0]
+
+            # Associar o usuário ao cargo na tabela `cargo_usuario`
+            cur.execute(
+                """
+                INSERT INTO cargo_usuario (usuario_id, cargo_id, criado_em)
+                VALUES (%s, %s, NOW())
+                """,
+                (usuario_id, cargo_id),
+            )
+
+            conn.commit()
+            cur.close()
+            conn.close()
+
+            return {"message": "Usuário registrado com sucesso!", "id": usuario_id}, 201
+        except Exception as e:
+            conn.rollback()
+            print(f"Erro ao registrar usuário: {e}")
+            return {"error": "Erro ao registrar usuário"}, 500
+    else:
         return {"error": "Erro ao conectar ao banco de dados"}, 500
 
-    try:
-        cur = conn.cursor()
-
-        # Criptografar a senha antes de salvar
-        senha_hashed = hash_utils.hash_password(senha)
-        cpf_encrypted  = cryptography_utils.encrypt_data(cpf)
-
-        # Log dos dados recebidos (opcional, para depuração)
-        print(f"Dados recebidos para inserção: Nome={nome}, CPF={cpf}, Email={email}, Cargo={cargo}")
-
-        cur.execute("""
-            INSERT INTO usuarios (nome, cpf, email, senha, cargo)
-            VALUES (%s, %s, %s, %s, %s)
-            RETURNING id
-        """, (nome, cpf, email, senha_hashed, cargo))
-
-        user_id = cur.fetchone()[0]
-        conn.commit()
-        cur.close()
-        conn.close()
-
-        print(f"Usuário inserido com sucesso: ID={user_id}")
-        return {"data": {"user_id": user_id, "message": "Usuário registrado com sucesso!"}, "status": 201}
-    except psycopg2.Error as e:
-        conn.rollback()
-        print(f"Erro ao registrar usuário: {e}")
-        return {"error": f"Erro ao registrar usuário: {str(e)}", "status": 500}
+def listar_usuarios():
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT u.id, u.nome, u.email, u.cpf, u.criado_em, c.nome AS cargo
+                FROM usuarios u
+                LEFT JOIN cargo_usuario cu ON u.id = cu.usuario_id
+                LEFT JOIN cargos c ON cu.cargo_id = c.id
+            """)
+            usuarios_lista = cur.fetchall()
+            cur.close()
+            conn.close()
+            return [
+                {
+                    "id": u[0],
+                    "nome": u[1],
+                    "email": u[2],
+                    "cpf": u[3],
+                    "criado_em": u[4],
+                    "cargo": u[5]
+                }
+                for u in usuarios_lista
+            ]
+        except Exception as e:
+            print(f"Erro ao listar usuários: {e}")
+            return []
+    else:
+        print("Erro ao conectar ao banco de dados")
+        return []
 
 # Função para verificar usuário pelo CPF e senha
 def get_user_by_cpf_and_password(cpf, senha):
     conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT u.id, u.nome, u.cpf, u.email, u.senha, c.nome AS cargo
+                FROM usuarios u
+                JOIN cargo_usuario cu ON u.id = cu.usuario_id
+                JOIN cargos c ON cu.cargo_id = c.id
+                WHERE u.cpf = %s
+            """, (cpf,))
+            user = cur.fetchone()
+            cur.close()
+            conn.close()
+
+            if user and bcrypt.checkpw(senha.encode("utf-8"), user[4].encode("utf-8")):
+                return {
+                    "id": user[0],
+                    "nome": user[1],
+                    "cpf": user[2],
+                    "email": user[3],
+                    "cargo": user[5],
+                }
+            return None
+        except Exception as e:
+            print(f"Erro ao buscar usuário no banco de dados: {e}")
+            return None
+    return None
+
+def corrigir_senhas():
+    conn = connect_db()
     if not conn:
-        print("Erro ao conectar ao banco de dados")
-        return None
+        print("Erro ao conectar ao banco de dados.")
+        return
 
     try:
         cur = conn.cursor()
 
-        # Busca o usuário com base no CPF
+        # Buscar usuários com senhas não criptografadas
         cur.execute("""
-            SELECT id, nome, cpf, email, cargo, senha
+            SELECT id, senha
             FROM usuarios
-            WHERE cpf = %s
-        """, (cpf,))
+            WHERE LENGTH(senha) < 60
+        """)
+        usuarios = cur.fetchall()
 
-        user = cur.fetchone()
-        cur.close()
+        if not usuarios:
+            print("Nenhuma senha para corrigir.")
+            return
+
+        print(f"Encontrados {len(usuarios)} usuários com senhas não criptografadas.")
+
+        # Atualizar cada senha
+        for usuario in usuarios:
+            user_id, senha = usuario
+
+            # Gerar hash da senha
+            senha_hashed = hash_utils.hash_password(senha)
+
+            # Atualizar no banco de dados
+            cur.execute("""
+                UPDATE usuarios
+                SET senha = %s
+                WHERE id = %s
+            """, (senha_hashed, user_id))
+
+        conn.commit()
+        print("Senhas corrigidas com sucesso.")
+    except psycopg2.Error as e:
+        conn.rollback()
+        print(f"Erro ao corrigir senhas: {e}")
+    finally:
         conn.close()
 
-        if user:
-            # Mapeia os resultados para um dicionário
-            columns = ['id', 'nome', 'cpf', 'email', 'cargo', 'senha']
-            user_data = dict(zip(columns, user))
+# Executar a função
+corrigir_senhas()
 
-            # Verifica a senha
-            if hash_utils.verify_password(senha, user_data['senha']):
-                # Remove o hash da senha antes de retornar
-                del user_data['senha']
-                return user_data
-            else:
-                print("Senha incorreta")
-                return None
+def get_user_cargo(usuario_id):
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT c.nome
+                FROM cargos c
+                INNER JOIN cargo_usuario cu ON c.id = cu.cargo_id
+                WHERE cu.usuario_id = %s
+                """,
+                (usuario_id,),
+            )
+            cargo = cur.fetchone()
+            cur.close()
+            conn.close()
 
-        print("Usuário não encontrado")
+            if cargo:
+                return cargo[0]  # Retorna o nome do cargo
+            return None
+        except Exception as e:
+            print(f"Erro ao buscar cargo do usuário no banco de dados: {e}")
+            return None
+    else:
+        print("Erro ao conectar ao banco de dados")
         return None
-    except Exception as e:
-        print(f"Erro ao buscar usuário no banco de dados: {e}")
-        return None
 
-
-# def corrigir_senhas():
-#     conn = connect_db()
-#     if not conn:
-#         print("Erro ao conectar ao banco de dados.")
-#         return
-
-#     try:
-#         cur = conn.cursor()
-
-#         # Buscar usuários com senhas não criptografadas
-#         cur.execute("""
-#             SELECT id, senha
-#             FROM usuarios
-#             WHERE LENGTH(senha) < 60
-#         """)
-#         usuarios = cur.fetchall()
-
-#         if not usuarios:
-#             print("Nenhuma senha para corrigir.")
-#             return
-
-#         print(f"Encontrados {len(usuarios)} usuários com senhas não criptografadas.")
-
-#         # Atualizar cada senha
-#         for usuario in usuarios:
-#             user_id, senha = usuario
-
-#             # Gerar hash da senha
-#             senha_hashed = hash_utils.hash_password(senha)
-
-#             # Atualizar no banco de dados
-#             cur.execute("""
-#                 UPDATE usuarios
-#                 SET senha = %s
-#                 WHERE id = %s
-#             """, (senha_hashed, user_id))
-
-#         conn.commit()
-#         print("Senhas corrigidas com sucesso.")
-#     except psycopg2.Error as e:
-#         conn.rollback()
-#         print(f"Erro ao corrigir senhas: {e}")
-#     finally:
-#         conn.close()
-
-# # Executar a função
-# corrigir_senhas()
 
 
 # # Função para corrigir CPFs não criptografados
