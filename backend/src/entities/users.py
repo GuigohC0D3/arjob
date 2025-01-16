@@ -266,25 +266,22 @@ def get_user_permissions(user_id):
     if conn:
         try:
             cur = conn.cursor()
-            # Supondo que há uma tabela `permissoes_usuarios` com `user_id` e `permissao`
             cur.execute("""
-                SELECT permissao
-                FROM permissoes_usuario
-                WHERE usuario_id = %s
+                SELECT p.nome
+                FROM permissoes_usuarios pu
+                JOIN permissoes p ON pu.permissao_id = p.id
+                WHERE pu.usuario_id = %s
             """, (user_id,))
-            permissoes = cur.fetchall()
+            permissoes = [row[0] for row in cur.fetchall()]
             cur.close()
             conn.close()
-
-            # Retorna a lista de permissões
-            return [p[0] for p in permissoes]
+            return permissoes
         except Exception as e:
-            print(f"Erro ao buscar permissões do usuário: {e}")
-            return None
+            print(f"Erro ao buscar permissões no banco de dados: {e}")
+            return []
     else:
         print("Erro ao conectar ao banco de dados")
-        return None
-
+        return []
 
 
 # # Função para corrigir CPFs não criptografados

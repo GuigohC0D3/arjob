@@ -77,3 +77,11 @@ def listar_usuarios_com_permissoes():
     except Exception as e:
         print(f"Erro ao listar usuários com permissões: {e}")
         return {"error": "Erro ao listar usuários"}, 500
+
+def get_user_permissions(user_id):
+    try:
+        permissoes = users.get_user_permissions(user_id)  # Chama a função da entidade
+        return {"permissoes": permissoes}, 200
+    except Exception as e:
+        print(f"Erro ao buscar permissões do usuário: {e}")
+        return {"error": "Erro ao buscar permissões"}, 500

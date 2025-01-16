@@ -253,3 +253,4 @@ def remover_cliente_painel(cliente_id):
     except Exception as e:
         print(f"Erro no endpoint /admin/clientes/{cliente_id}: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
+        
