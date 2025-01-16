@@ -95,4 +95,34 @@ def buscar_cliente_por_cpf(cpf):
         print(f"Erro ao buscar cliente por CPF: {e}")
         return {"error": "Erro interno no servidor"}, 500
 
+def remover_cliente(cliente_id):
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("DELETE FROM clientes WHERE id = %s", (cliente_id,))
+            conn.commit()
+            cur.close()
+            conn.close()
+        except Exception as e:
+            conn.rollback()
+            print(f"Erro ao remover cliente: {e}")
+    else:
+        print("Erro ao conectar ao banco de dados")
 
+def listar_clientes():
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT id, nome, cpf FROM clientes")
+            clientes = cur.fetchall()
+            cur.close()
+            conn.close()
+            return [{"id": c[0], "nome": c[1], "cpf": c[2]} for c in clientes]
+        except Exception as e:
+            print(f"Erro ao buscar clientes no banco de dados: {e}")
+            return []
+    else:
+        print("Erro ao conectar ao banco de dados")
+        return []

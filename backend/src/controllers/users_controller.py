@@ -2,31 +2,34 @@ from ..entities import users
 from ..connection.config import connect_db
 import json
 
-def register_user(nome=None, cpf=None, email=None, senha=None, cargo=None):
+def register_user(nome=None, cpf=None, email=None, senha=None, cargoId=None):
     try:
         # Validar campos obrigatórios
-        if not all([nome, cpf, email, senha, cargo]):
+        if not all([nome, cpf, email, senha, cargoId]):
             return json.dumps({"error": "Todos os campos são obrigatórios."}), 400
 
-        # Buscar o ID do cargo pelo nome
-        conn = connect_db()
-        cur = conn.cursor()
-        cur.execute("SELECT id FROM cargos WHERE nome = %s", (cargo,))
-        cargo_row = cur.fetchone()
-        cur.close()
-        conn.close()
+        # Usar o cargoId diretamente
+        response, status_code = users.create_user(nome, cpf, email, senha, cargoId)
 
-        if not cargo_row:
-            return json.dumps({"error": "Cargo não encontrado."}), 400
+        # Verificar se o cargo é "usuario" para atribuir permissões padrão
+        if status_code == 201:
+            # Buscar o nome do cargo associado
+            conn = connect_db()
+            cur = conn.cursor()
+            cur.execute("SELECT nome FROM cargos WHERE id = %s", (cargoId,))
+            cargo_nome = cur.fetchone()
+            cur.close()
+            conn.close()
 
-        cargo_id = cargo_row[0]  # ID do cargo encontrado
+            if cargo_nome and cargo_nome[0].lower() == "usuario":
+                permissoes_padrao = ["iniciar_venda", "historico", "produtos"]
+                users.definir_permissoes(response["id"], permissoes_padrao)
 
-        # Chamar a entidade para criar o usuário
-        response, status_code = users.create_user(nome, cpf, email, senha, cargo_id)
         return json.dumps(response), status_code
     except Exception as e:
         print(f"Erro no controlador register_user: {e}")
         return json.dumps({"error": "Erro ao processar o registro de usuário."}), 500
+
 
 
 def authenticate_user(cpf, senha):
@@ -35,10 +38,10 @@ def authenticate_user(cpf, senha):
         if not user:
             return {"error": "CPF ou senha inválidos"}, 401
 
-        # Buscar o cargo do usuário
-        cargo = users.get_user_cargo(user["id"])
-        if not cargo:
-            return {"error": "Cargo do usuário não encontrado"}, 404
+        # Buscar permissões do usuário
+        permissoes = users.get_user_permissions(user["id"])
+        if permissoes is None:
+            return {"error": "Erro ao buscar permissões do usuário"}, 500
 
         return {
             "message": "Login bem-sucedido",
@@ -47,7 +50,8 @@ def authenticate_user(cpf, senha):
                 "nome": user["nome"],
                 "cpf": user["cpf"],
                 "email": user["email"],
-                "cargo": cargo,
+                "cargo": user["cargo"],
+                "permissoes": permissoes,
             },
         }, 200
     except Exception as e:
@@ -64,3 +68,12 @@ def listar_usuarios():
     except Exception as e:
         print(f"Erro no controlador listar_usuarios: {e}")
         return json.dumps({"error": "Erro ao listar usuários"}), 500
+
+
+def listar_usuarios_com_permissoes():
+    try:
+        usuarios = users.listar_usuarios_com_permissoes()
+        return usuarios, 200
+    except Exception as e:
+        print(f"Erro ao listar usuários com permissões: {e}")
+        return {"error": "Erro ao listar usuários"}, 500

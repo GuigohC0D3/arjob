@@ -96,6 +96,64 @@ def listar_usuarios():
         print("Erro ao conectar ao banco de dados")
         return []
 
+def listar_usuarios_com_permissoes():
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT u.id, u.nome, u.email, u.cpf,
+                       json_agg(p.permissao) AS permissoes
+                FROM usuarios u
+                LEFT JOIN permissoes_usuario p ON u.id = p.usuario_id
+                GROUP BY u.id
+            """)
+            usuarios = cur.fetchall()
+            cur.close()
+            conn.close()
+            return [
+                {
+                    "id": usuario[0],
+                    "nome": usuario[1],
+                    "email": usuario[2],
+                    "cpf": usuario[3],
+                    "permissoes": usuario[4] or []
+                }
+                for usuario in usuarios
+            ]
+        except Exception as e:
+            print(f"Erro ao listar usuários com permissões: {e}")
+            return []
+    else:
+        print("Erro ao conectar ao banco de dados")
+        return []
+
+def definir_permissoes(usuario_id, permissoes):
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            for permissao in permissoes:
+                cur.execute(
+                    """
+                    INSERT INTO permissoes_usuario (usuario_id, permissao)
+                    VALUES (%s, %s)
+                    """,
+                    (usuario_id, permissao),
+                )
+            conn.commit()
+            cur.close()
+            conn.close()
+            return True
+        except Exception as e:
+            conn.rollback()
+            print(f"Erro ao definir permissões: {e}")
+            return False
+    else:
+        print("Erro ao conectar ao banco de dados.")
+        return False
+
+
 # Função para verificar usuário pelo CPF e senha
 def get_user_by_cpf_and_password(cpf, senha):
     conn = connect_db()
@@ -127,53 +185,53 @@ def get_user_by_cpf_and_password(cpf, senha):
             return None
     return None
 
-def corrigir_senhas():
-    conn = connect_db()
-    if not conn:
-        print("Erro ao conectar ao banco de dados.")
-        return
+# def corrigir_senhas():
+#     conn = connect_db()
+#     if not conn:
+#         print("Erro ao conectar ao banco de dados.")
+#         return
 
-    try:
-        cur = conn.cursor()
+#     try:
+#         cur = conn.cursor()
 
-        # Buscar usuários com senhas não criptografadas
-        cur.execute("""
-            SELECT id, senha
-            FROM usuarios
-            WHERE LENGTH(senha) < 60
-        """)
-        usuarios = cur.fetchall()
+#         # Buscar usuários com senhas não criptografadas
+#         cur.execute("""
+#             SELECT id, senha
+#             FROM usuarios
+#             WHERE LENGTH(senha) < 60
+#         """)
+#         usuarios = cur.fetchall()
 
-        if not usuarios:
-            print("Nenhuma senha para corrigir.")
-            return
+#         if not usuarios:
+#             print("Nenhuma senha para corrigir.")
+#             return
 
-        print(f"Encontrados {len(usuarios)} usuários com senhas não criptografadas.")
+#         print(f"Encontrados {len(usuarios)} usuários com senhas não criptografadas.")
 
-        # Atualizar cada senha
-        for usuario in usuarios:
-            user_id, senha = usuario
+#         # Atualizar cada senha
+#         for usuario in usuarios:
+#             user_id, senha = usuario
 
-            # Gerar hash da senha
-            senha_hashed = hash_utils.hash_password(senha)
+#             # Gerar hash da senha
+#             senha_hashed = hash_utils.hash_password(senha)
 
-            # Atualizar no banco de dados
-            cur.execute("""
-                UPDATE usuarios
-                SET senha = %s
-                WHERE id = %s
-            """, (senha_hashed, user_id))
+#             # Atualizar no banco de dados
+#             cur.execute("""
+#                 UPDATE usuarios
+#                 SET senha = %s
+#                 WHERE id = %s
+#             """, (senha_hashed, user_id))
 
-        conn.commit()
-        print("Senhas corrigidas com sucesso.")
-    except psycopg2.Error as e:
-        conn.rollback()
-        print(f"Erro ao corrigir senhas: {e}")
-    finally:
-        conn.close()
+#         conn.commit()
+#         print("Senhas corrigidas com sucesso.")
+#     except psycopg2.Error as e:
+#         conn.rollback()
+#         print(f"Erro ao corrigir senhas: {e}")
+#     finally:
+#         conn.close()
 
-# Executar a função
-corrigir_senhas()
+# # Executar a função
+# corrigir_senhas()
 
 def get_user_cargo(usuario_id):
     conn = connect_db()
@@ -198,6 +256,30 @@ def get_user_cargo(usuario_id):
             return None
         except Exception as e:
             print(f"Erro ao buscar cargo do usuário no banco de dados: {e}")
+            return None
+    else:
+        print("Erro ao conectar ao banco de dados")
+        return None
+
+def get_user_permissions(user_id):
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            # Supondo que há uma tabela `permissoes_usuarios` com `user_id` e `permissao`
+            cur.execute("""
+                SELECT permissao
+                FROM permissoes_usuario
+                WHERE usuario_id = %s
+            """, (user_id,))
+            permissoes = cur.fetchall()
+            cur.close()
+            conn.close()
+
+            # Retorna a lista de permissões
+            return [p[0] for p in permissoes]
+        except Exception as e:
+            print(f"Erro ao buscar permissões do usuário: {e}")
             return None
     else:
         print("Erro ao conectar ao banco de dados")

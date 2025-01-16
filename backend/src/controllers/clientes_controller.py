@@ -26,3 +26,22 @@ def buscar_cliente_por_cpf(cpf):
     except Exception as e:
         print(f"Erro no controlador buscar_cliente_por_cpf: {e}")
         return {"error": "Erro interno no servidor"}, 500
+    
+from ..entities import clientes
+
+def listar_clientes():
+    try:
+        clientes_lista = clientes.listar_clientes()
+        return clientes_lista, 200
+    except Exception as e:
+        print(f"Erro ao listar clientes: {e}")
+        return {"error": "Erro ao listar clientes"}, 500
+
+def remover_cliente(cliente_id):
+    try:
+        clientes.remover_cliente(cliente_id)
+        return {"message": "Cliente removido com sucesso"}, 200
+    except Exception as e:
+        print(f"Erro ao remover cliente: {e}")
+        return {"error": "Erro ao remover cliente"}, 500
+
