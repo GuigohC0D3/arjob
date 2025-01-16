@@ -11,6 +11,7 @@ import Login from "../pages/Login"
 import Preloading from "../pages/Preloading";
 import RegisterUser from "../pages/RegisterUser";
 import ComandaAberta from "../pages/ComandaAberta";
+import AdminPanel from "../components/adminPages/AdminPanel"
 const AppRoutes = () => {
   return (
     <Router>
@@ -25,6 +26,7 @@ const AppRoutes = () => {
         <Route path="/Fluxo" element={<FluxoDeCaixa/>} />
         <Route path="/Register" element={<RegisterUser/>} />
         <Route path="/comandas/:numero" element={<ComandaAberta />} />
+        <Route path="/admin" element={<AdminPanel/>} />
       </Routes>
     </Router>
   );
