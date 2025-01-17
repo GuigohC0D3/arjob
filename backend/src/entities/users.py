@@ -5,6 +5,38 @@ from src.utils import hash_utils
 from src.utils.hash_utils import bcrypt
 from src.utils import cryptography_utils
 
+
+def get_by_id(user_id):
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT
+                    id
+                FROM
+                    usuarios
+                WHERE
+                    id = %s
+                """,
+                (user_id,),
+            )
+            usuario = cur.fetchone()
+            cur.close()
+            conn.close()
+
+            if usuario :
+                return int(usuario[0])
+            return None
+        except Exception as e:
+            print(f"Erro ao buscar usuário no banco de dados: {e}")
+            return None
+    else:
+        print("Erro ao conectar ao banco de dados")
+        return None
+
+
 def get_usuarios():
     conn = connect_db()
     if conn:

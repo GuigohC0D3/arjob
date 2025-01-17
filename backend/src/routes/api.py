@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request, session, render_template, url_for, redirect, send_from_directory
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_login import UserMixin, login_user, login_required, logout_user, current_user
 from flask_cors import cross_origin, CORS
 from math import ceil
 from datetime import datetime
@@ -11,11 +11,9 @@ from ..entities import movimentacao_caixa
 from ..connection.config import connect_db 
 import os
 main_bp = Blueprint('main', __name__)
-main_bp.secret_key = 'b2d79f7202d194fc6de942abc1297eeb44d5f4e5'
+#main_bp.secret_key = 'b2d79f7202d194fc6de942abc1297eeb44d5f4e5'
 
-login_manager = LoginManager()
-login_manager.init_app(main_bp)
-login_manager.login_view = 'login'  # Redireciona para a rota de login quando não autenticado
+
 
 CORS(main_bp, methods=['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'])
 
@@ -254,3 +252,32 @@ def remover_cliente_painel(cliente_id):
         print(f"Erro no endpoint /admin/clientes/{cliente_id}: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
         
+@main_bp.route('/auth/cargo', methods=['GET'])
+@login_required
+def obter_cargo_usuario():
+    try:
+        user_id = current_user.id
+        cargo = users_controller.get_user_cargo(user_id)
+        if cargo:
+            response =  jsonify({"cargo": cargo}), 200
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            return response, 200
+            
+        else:
+            return jsonify({"error": "Cargo não encontrado"}), 404
+    except Exception as e:
+        print(f"Erro no endpoint /auth/cargo: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
+
+
+@main_bp.route('/permissoes', methods=['GET'])
+@login_required
+def listar_permissoes_usuario():
+    try:
+        user_id = current_user.id
+        from ..controllers.permissoes_controller import get_user_permissions
+        permissoes = get_user_permissions(user_id)
+        return jsonify({"permissoes": permissoes}), 200
+    except Exception as e:
+        print(f"Erro ao buscar permissões: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
