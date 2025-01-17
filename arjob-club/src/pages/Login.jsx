@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios"; // Importa o axios
-import "./Login.css"; // Adicione estilos personalizados, se necessário.
+import axios from "axios";
+import "./Login.css";
 
 const Login = () => {
   const [cpf, setCpf] = useState("");
@@ -9,17 +9,19 @@ const Login = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  // Função para formatar o CPF
   const handleCpfChange = (e) => {
     const value = e.target.value;
-    const cleanedValue = value.replace(/\D/g, ""); // Remove caracteres não numéricos
+    const cleanedValue = value.replace(/\D/g, "");
     const formattedCPF = cleanedValue
       .replace(/^(\d{3})(\d)/, "$1.$2")
       .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
       .replace(/\.(\d{3})(\d)/, ".$1-$2")
-      .slice(0, 14); // Limita o comprimento ao padrão de CPF
-    setCpf(formattedCPF); // Atualiza o estado com o CPF formatado
+      .slice(0, 14);
+    setCpf(formattedCPF);
   };
 
+  // Função para autenticar o usuário
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -27,14 +29,16 @@ const Login = () => {
         cpf,
         senha,
       });
-  
+
       if (response.data) {
         console.log("Login bem-sucedido:", response.data);
-  
-        // Salva o token de autenticação
-        sessionStorage.setItem("authToken", response.data.token || "loggedIn");
-  
-        // Redireciona para a Home
+
+        // Armazenar token, cargo e permissões no sessionStorage
+        sessionStorage.setItem("authToken", response.data.token);
+        sessionStorage.setItem("user", JSON.stringify(response.data.user));
+        sessionStorage.setItem("permissions", JSON.stringify(response.data.permissions));
+
+        // Navegar para a página inicial
         navigate("/Home");
       }
     } catch (err) {
@@ -45,8 +49,8 @@ const Login = () => {
       setError(err.response?.data?.error || "Erro ao autenticar.");
     }
   };
-  
 
+  // Redirecionar para a página de registro
   const handleRegister = () => {
     navigate("/Register");
   };
@@ -62,7 +66,7 @@ const Login = () => {
             type="text"
             id="cpf"
             value={cpf}
-            onChange={handleCpfChange} // Adiciona a formatação no evento onChange
+            onChange={handleCpfChange}
             placeholder="Digite seu CPF"
             required
           />
