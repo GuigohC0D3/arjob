@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useFetcher } from "react-router-dom";
+import { Link } from "react-router-dom";
 import axios from "axios";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "./Sidebar.css";
@@ -11,6 +11,7 @@ const Sidebar = () => {
   const [permissoes, setPermissoes] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false); // Novo estado para login
 
+  // Verificar se o usuário está logado
   useEffect(() => {
     const checkLogin = () => {
       const token = sessionStorage.getItem("authToken");
@@ -20,40 +21,67 @@ const Sidebar = () => {
     checkLogin();
   }, []);
 
-  useEffect(() => {
-    if (isLoggedIn) {
-      const fetchPermissoes = async () => {
-        try {
-          const response = await axios.get("http://localhost:5000/permissoes");
-          setPermissoes(response.data.permissoes);
-        } catch (error) {
-          console.error("Erro ao buscar permissões:", error);
-        }
-      };
-
-      fetchPermissoes();
-    }
-  }, [isLoggedIn]);
-
-  useEffect(() => {
-    const fetchCargo = async () => {
+  // Buscar permissões do usuário
+useEffect(() => {
+  if (isLoggedIn) {
+    const fetchPermissoes = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/auth/cargo", {
-          withCredentials: true,
+        const token = sessionStorage.getItem("authToken"); // Obter o token armazenado
+        const response = await axios.get("http://localhost:5000/permissoes", {
+          withCredentials: true, // Inclui cookies ou credenciais
+          headers: {
+            Authorization: `Bearer ${token}`, // Enviar o token no cabeçalho
+            "Content-Type": "application/json",
+          },
         });
-        setCargo(response.data.cargo);
-      } catch (err) {
-        setError(err.response?.data?.error || "Erro ao buscar cargo.");
+        setPermissoes(response.data.permissoes || []);
+      } catch (error) {
+        console.error(
+          "Erro ao buscar permissões:",
+          error.response?.data || error.message
+        );
+        setPermissoes([]); // Garante que o estado fique vazio em caso de erro
       }
     };
 
-    fetchCargo();
-  }, []);
+    fetchPermissoes();
+  }
+}, [isLoggedIn]);
+
+// Buscar cargo do usuário
+useEffect(() => {
+  const fetchCargo = async () => {
+    try {
+      const response = await axios({
+        url: "http://localhost:5000/auth/cargo",
+        method: "GET",
+        withCredentials: true, // Garante o envio de cookies ou tokens
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionStorage.getItem("authToken")}`, // Inclui o token, se necessário
+        },
+      });
+
+      setCargo(response.data.cargo); // Atualiza o estado com o cargo do usuário
+    } catch (error) {
+      console.error(
+        "Erro ao buscar cargo:",
+        error.response?.data || error.message
+      );
+      setError("Erro ao buscar cargo do usuário.");
+    }
+  };
+
+  // Chama a função fetchCargo dentro do useEffect
+  fetchCargo();
+}, [isLoggedIn]); // Dependência: só executa se o estado de login mudar
+
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
   };
 
+  // Itens do menu com base nas permissões
   const menuItems = [
     {
       name: "Iniciar Venda",
@@ -99,13 +127,17 @@ const Sidebar = () => {
     },
   ];
 
+  // Filtrar itens do menu com base nas permissões
   const filteredItems = menuItems.filter((item) =>
     permissoes.includes(item.permissao)
   );
 
   return (
     <>
+      {/* Exibição do cargo */}
       {cargo ? <p>Cargo: {cargo}</p> : <p>{error || "Carregando cargo..."}</p>}
+
+      {/* Botão de menu */}
       <button
         className={`hamburger-btn ${isOpen ? "open" : ""}`}
         onClick={toggleSidebar}
@@ -113,6 +145,7 @@ const Sidebar = () => {
         <i className={`bi ${isOpen ? "bi-x" : "bi-list"}`}></i>
       </button>
 
+      {/* Sidebar */}
       <aside className={`sidebar ${isOpen ? "open" : ""}`}>
         <header className="sidebar-header">ARJOB</header>
         <nav className="menu">
