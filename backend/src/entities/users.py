@@ -300,7 +300,7 @@ def get_user_permissions(user_id):
             cur = conn.cursor()
             cur.execute("""
                 SELECT p.nome
-                FROM permissoes_usuarios pu
+                FROM permissoes_usuario pu
                 JOIN permissoes p ON pu.permissao_id = p.id
                 WHERE pu.usuario_id = %s
             """, (user_id,))
@@ -364,3 +364,37 @@ def get_user_permissions(user_id):
 
 # # Exemplo de execução
 # corrigir_cpfs()
+
+
+def authenticate_user(cpf, senha):
+    conn = connect_db()
+    if not conn:
+        return None
+
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT u.id, u.nome, u.senha, c.nome AS cargo
+            FROM usuarios u
+            LEFT JOIN cargo_usuario cu ON u.id = cu.usuario_id
+            LEFT JOIN cargos c ON cu.cargo_id = c.id
+            WHERE u.cpf = %s;
+        """, (cpf,))
+        user = cur.fetchone()
+        cur.close()
+        conn.close()
+
+        if user:
+            # Verificar se a senha é válida
+            if bcrypt.checkpw(senha.encode('utf-8'), user[2].encode('utf-8')):
+                return {
+                    'id': user[0],
+                    'nome': user[1],
+                    'cargo': user[3]  # Cargo pode ser None se não existir
+                }
+        return None
+    except Exception as e:
+        print(f"Erro ao autenticar usuário: {e}")
+        return None
+
+    

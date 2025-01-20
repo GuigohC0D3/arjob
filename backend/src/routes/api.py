@@ -5,7 +5,14 @@ from math import ceil
 from datetime import datetime
 from ..controllers import clientes_controller, departamento_cliente_controller, departamentos_controller,  mesas_controller, comandas_controller, produtos_controller, buscar_produtos_controller, users_controller, permissoes_controller
 from ..entities import comandas
+from ..classes.user import User
+from ..entities.users import authenticate_user, get_user_permissions
 from ..entities.clientes import get_clientes 
+from flask_mail import Message
+from src.extensions import mail
+from itsdangerous import URLSafeTimedSerializer
+from src.utils.token_utils import generate_token, verify_token  # Importa utilitários de token
+
 from ..entities import movimentacao_caixa
 # from ..entities.users import corrigir_senhas
 from ..connection.config import connect_db 
@@ -180,7 +187,7 @@ def listar_cargos():
 
     
 @main_bp.route('/login', methods=['POST'])
-def login_user():
+def login_user_route():
     try:
         data = request.json
         cpf = data.get('cpf')
@@ -188,13 +195,24 @@ def login_user():
 
         if not cpf or not senha:
             return jsonify({'error': 'CPF e senha são obrigatórios'}), 400
+        
+        user_data = authenticate_user(cpf, senha)
 
-        # Chama o controlador para autenticar o usuário
-        from ..controllers import users_controller
-        response, status_code = users_controller.authenticate_user(cpf, senha)
-        return jsonify(response), status_code
+        if user_data:
+            user = User(id=user_data['id'], nome=user_data['nome'], cargo=user_data['cargo'])
+            login_user(user)
+            return jsonify({
+                'message': 'Login realizado com sucesso!',
+                'user': {
+                    'id': user.id,
+                    'nome': user.nome,
+                    'cargo': user.cargo
+                }
+            }), 200
+        else:
+            return jsonify({'error': 'Usuário ou senha inválidos'}), 401
     except Exception as e:
-        print(f"Erro no endpoint /login: {e}")
+        print(f"Erro no login: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
 
 
@@ -260,7 +278,10 @@ def obter_cargo_usuario():
         cargo = users_controller.get_user_cargo(user_id)
         if cargo:
             response =  jsonify({"cargo": cargo}), 200
+            response.headers["Access-Control-Allow-Origin"] = "http://localhost:5173"
             response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
             return response, 200
             
         else:
@@ -275,9 +296,49 @@ def obter_cargo_usuario():
 def listar_permissoes_usuario():
     try:
         user_id = current_user.id
-        from ..controllers.permissoes_controller import get_user_permissions
         permissoes = get_user_permissions(user_id)
         return jsonify({"permissoes": permissoes}), 200
     except Exception as e:
         print(f"Erro ao buscar permissões: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
+
+@main_bp.route("/enviar-token", methods=["POST"])
+def enviar_token():
+    data = request.json
+    email = data.get("email")
+
+    if not email:
+        return jsonify({"error": "E-mail é obrigatório"}), 400
+
+    # Gerar o token
+    token = generate_token(email)
+
+    # Enviar o token por e-mail
+    try:
+        msg = Message(
+            subject="Seu Token de Acesso",
+            recipients=[email],
+            body=f"Seu token de acesso é: {token}\n\nEste token expira em 1 hora.",
+        )
+        mail.send(msg)
+        return jsonify({"message": "Token enviado com sucesso!"}), 200
+    except Exception as e:
+        print(f"Erro ao enviar e-mail: {e}")
+        return jsonify({"error": "Erro ao enviar e-mail"}), 500
+
+# Exemplo de rota para verificar token
+@main_bp.route("/verificar-token", methods=["POST"])
+def verificar_token_route():
+    data = request.json
+    token = data.get("token")
+
+    if not token:
+        return jsonify({"error": "Token é obrigatório"}), 400
+
+    # Verificar o token
+    email = verify_token(token)
+
+    if email:
+        return jsonify({"message": "Token válido!", "email": email}), 200
+    else:
+        return jsonify({"error": "Token inválido ou expirado"}), 400
