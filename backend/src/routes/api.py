@@ -6,13 +6,14 @@ from datetime import datetime
 from ..controllers import clientes_controller, departamento_cliente_controller, departamentos_controller,  mesas_controller, comandas_controller, produtos_controller, buscar_produtos_controller, users_controller, permissoes_controller
 from ..entities import comandas
 from ..classes.user import User
-from ..entities.users import authenticate_user, get_user_permissions
+from ..entities.users import authenticate_user, get_user_permissions, get_user_cargo
 from ..entities.clientes import get_clientes 
 from flask_mail import Message
 from src.extensions import mail
 from itsdangerous import URLSafeTimedSerializer
 from src.utils.token_utils import generate_token, verify_token  # Importa utilitários de token
-
+from datetime import timedelta
+from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
 from ..entities import movimentacao_caixa
 # from ..entities.users import corrigir_senhas
 from ..connection.config import connect_db 
@@ -195,25 +196,25 @@ def login_user_route():
 
         if not cpf or not senha:
             return jsonify({'error': 'CPF e senha são obrigatórios'}), 400
-        
-        user_data = authenticate_user(cpf, senha)
 
+        user_data = authenticate_user(cpf, senha)
         if user_data:
-            user = User(id=user_data['id'], nome=user_data['nome'], cargo=user_data['cargo'])
-            login_user(user)
+            access_token = create_access_token(identity=str(user_data['id']))
             return jsonify({
-                'message': 'Login realizado com sucesso!',
+                'token': access_token,
                 'user': {
-                    'id': user.id,
-                    'nome': user.nome,
-                    'cargo': user.cargo
-                }
+                    'id': user_data['id'],
+                    'nome': user_data['nome'],
+                    'cargo': user_data['cargo']
+                },
+                'permissions': get_user_permissions(user_data['id'])
             }), 200
         else:
             return jsonify({'error': 'Usuário ou senha inválidos'}), 401
     except Exception as e:
         print(f"Erro no login: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
+
 
 
 # @main_bp.route('/corrigir-senhas', methods=['POST'])
@@ -269,33 +270,44 @@ def remover_cliente_painel(cliente_id):
     except Exception as e:
         print(f"Erro no endpoint /admin/clientes/{cliente_id}: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
-        
+
+@main_bp.route('/auth/cargo', methods=['OPTIONS'])
+def cors_preflight():
+    response = jsonify({"message": "Preflight request handled"})
+    response.headers["Access-Control-Allow-Origin"] = "http://localhost:5173"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    return response, 200
+
 @main_bp.route('/auth/cargo', methods=['GET'])
-@login_required
+@jwt_required()
 def obter_cargo_usuario():
     try:
-        user_id = current_user.id
-        cargo = users_controller.get_user_cargo(user_id)
+        user_id = get_jwt_identity()
+        cargo = get_user_cargo(user_id)
         if cargo:
-            response =  jsonify({"cargo": cargo}), 200
-            response.headers["Access-Control-Allow-Origin"] = "http://localhost:5173"
-            response.headers["Access-Control-Allow-Credentials"] = "true"
-            response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-            response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
-            return response, 200
-            
+            return jsonify({"cargo": cargo}), 200
         else:
             return jsonify({"error": "Cargo não encontrado"}), 404
     except Exception as e:
-        print(f"Erro no endpoint /auth/cargo: {e}")
+        print(f"Erro ao obter cargo do usuário: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
 
+@main_bp.route('/permissoes', methods=['OPTIONS'])
+def permissoes_preflight():
+    response = jsonify({"message": "Preflight request handled"})
+    response.headers["Access-Control-Allow-Origin"] = "http://localhost:5173"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    return response, 200
 
 @main_bp.route('/permissoes', methods=['GET'])
-@login_required
+@jwt_required()
 def listar_permissoes_usuario():
     try:
-        user_id = current_user.id
+        user_id = get_jwt_identity()  # Obtém o ID do usuário a partir do token
         permissoes = get_user_permissions(user_id)
         return jsonify({"permissoes": permissoes}), 200
     except Exception as e:
@@ -310,15 +322,15 @@ def enviar_token():
     if not email:
         return jsonify({"error": "E-mail é obrigatório"}), 400
 
-    # Gerar o token
-    token = generate_token(email)
+    # Gere um token JWT com expiração curta
+    token = create_access_token(identity=email, expires_delta=timedelta(minutes=10))
 
-    # Enviar o token por e-mail
+    # Envie o token por e-mail
     try:
         msg = Message(
             subject="Seu Token de Acesso",
             recipients=[email],
-            body=f"Seu token de acesso é: {token}\n\nEste token expira em 1 hora.",
+            body=f"Seu token de acesso é: {token}\n\nEste token expira em 10 minutos.",
         )
         mail.send(msg)
         return jsonify({"message": "Token enviado com sucesso!"}), 200

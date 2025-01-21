@@ -85,3 +85,4 @@ def get_user_permissions(user_id):
     except Exception as e:
         print(f"Erro ao buscar permissões do usuário: {e}")
         return {"error": "Erro ao buscar permissões"}, 500
+

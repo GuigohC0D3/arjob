@@ -1,10 +1,9 @@
-from flask import Flask, request, render_template, jsonify
-from flask_login import LoginManager
-from dotenv import load_dotenv
+from flask import Flask
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager
+from dotenv import load_dotenv
 from src.routes.api import main_bp
-import src.entities.users as user
-from src.extensions import mail, login_manager  # Certifique-se de usar o login_manager já inicializado
+from src.extensions import mail, login_manager
 import os
 
 def create_app():
@@ -21,15 +20,22 @@ def create_app():
     app.config['MAIL_PASSWORD'] = 'hhbt jzzy xdtj etdg'
     app.config['MAIL_DEFAULT_SENDER'] = 'thundergametm@gmail.com'
 
-    # Inicializar extensões
-    mail.init_app(app)
-    login_manager.init_app(app)
+    # Configurações do Flask-JWT-Extended
+    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'uma_chave_secreta_segura')  # Defina sua chave secreta aqui
+    jwt = JWTManager(app)  # Inicializa o JWTManager com o app
 
     # Configuração do CORS
-    cors = CORS(app, supports_credentials=True, resources={r"/*": {"origins": "*"}})
+    CORS(app, supports_credentials=True, resources={r"/*": {"origins": "http://localhost:5173"}})
 
     # Configuração da chave secreta
     app.secret_key = os.getenv('FLASK_SECRET_KEY', 'b2d79f7202d194fc6de942abc1297eeb44d5f4e5')
+
+    app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+    app.config['SESSION_COOKIE_SECURE'] = True
+
+    # Inicializar extensões
+    mail.init_app(app)
+    login_manager.init_app(app)
 
     # Definir a função de carregamento de usuários
     @login_manager.user_loader

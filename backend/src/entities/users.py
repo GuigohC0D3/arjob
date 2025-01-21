@@ -270,15 +270,12 @@ def get_user_cargo(usuario_id):
     if conn:
         try:
             cur = conn.cursor()
-            cur.execute(
-                """
+            cur.execute("""
                 SELECT c.nome
                 FROM cargos c
                 INNER JOIN cargo_usuario cu ON c.id = cu.cargo_id
                 WHERE cu.usuario_id = %s
-                """,
-                (usuario_id,),
-            )
+            """, (usuario_id,))
             cargo = cur.fetchone()
             cur.close()
             conn.close()
