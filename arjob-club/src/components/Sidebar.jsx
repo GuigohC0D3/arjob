@@ -9,7 +9,7 @@ const Sidebar = () => {
   const [cargo, setCargo] = useState(null);
   const [error, setError] = useState("");
   const [permissoes, setPermissoes] = useState([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Novo estado para login
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Verificar se o usuário está logado
   useEffect(() => {
@@ -17,66 +17,64 @@ const Sidebar = () => {
       const token = sessionStorage.getItem("authToken");
       setIsLoggedIn(!!token); // Atualiza o estado de login com base no token
     };
-
     checkLogin();
   }, []);
 
   // Buscar permissões do usuário
-useEffect(() => {
-  if (isLoggedIn) {
+  useEffect(() => {
     const fetchPermissoes = async () => {
       try {
-        const token = sessionStorage.getItem("authToken"); // Obter o token armazenado
+        const token = sessionStorage.getItem("authToken");
+        if (!token) {
+          throw new Error("Token não encontrado. Faça login novamente.");
+        }
+    
         const response = await axios.get("http://localhost:5000/permissoes", {
-          withCredentials: true, // Inclui cookies ou credenciais
           headers: {
-            Authorization: `Bearer ${token}`, // Enviar o token no cabeçalho
-            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // Inclua o token JWT no cabeçalho
           },
         });
+    
         setPermissoes(response.data.permissoes || []);
       } catch (error) {
-        console.error(
-          "Erro ao buscar permissões:",
-          error.response?.data || error.message
-        );
+        console.error("Erro ao buscar permissões:", error.response?.data || error.message);
         setPermissoes([]); // Garante que o estado fique vazio em caso de erro
       }
     };
-
-    fetchPermissoes();
-  }
-}, [isLoggedIn]);
-
-// Buscar cargo do usuário
-useEffect(() => {
-  const fetchCargo = async () => {
-    try {
-      const response = await axios({
-        url: "http://localhost:5000/auth/cargo",
-        method: "GET",
-        withCredentials: true, // Garante o envio de cookies ou tokens
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionStorage.getItem("authToken")}`, // Inclui o token, se necessário
-        },
-      });
-
-      setCargo(response.data.cargo); // Atualiza o estado com o cargo do usuário
-    } catch (error) {
-      console.error(
-        "Erro ao buscar cargo:",
-        error.response?.data || error.message
-      );
-      setError("Erro ao buscar cargo do usuário.");
+    
+    if (isLoggedIn) {
+      fetchPermissoes();
     }
-  };
+  }, [isLoggedIn]);
 
-  // Chama a função fetchCargo dentro do useEffect
-  fetchCargo();
-}, [isLoggedIn]); // Dependência: só executa se o estado de login mudar
+  // Buscar cargo do usuário
+  useEffect(() => {
+    const fetchCargo = async () => {
+      try {
+        const token = sessionStorage.getItem("authToken");
+        if (!token) {
+          throw new Error("Token não encontrado. Faça login novamente.");
+        }
+    
+        const response = await axios.get("http://localhost:5000/auth/cargo", {
+          headers: {
+            Authorization: `Bearer ${token}`, // Inclua o token JWT no cabeçalho
+          },
+        });
+    
+        setCargo(response.data.cargo); // Atualiza o cargo recebido
+      } catch (error) {
+        console.error("Erro ao buscar cargo:", error.response?.data || error.message);
+        setError(error.response?.data?.error || "Erro ao buscar cargo.");
+      }
+    };
+    
+    if (isLoggedIn) {
+      fetchCargo();
+    }
+  }, [isLoggedIn]);
 
-
+  // Alternar o estado da sidebar
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
   };

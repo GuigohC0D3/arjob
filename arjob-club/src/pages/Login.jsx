@@ -30,16 +30,19 @@ const Login = () => {
         senha,
       });
 
-      if (response.data) {
-        console.log("Login bem-sucedido:", response.data);
-
-        // Armazenar token, cargo e permissões no sessionStorage
+      if (response.data && response.data.token) {
+        // Armazena o token no sessionStorage
         sessionStorage.setItem("authToken", response.data.token);
         sessionStorage.setItem("user", JSON.stringify(response.data.user));
-        sessionStorage.setItem("permissions", JSON.stringify(response.data.permissions));
+        sessionStorage.setItem(
+          "permissions",
+          JSON.stringify(response.data.permissions)
+        );
 
-        // Navegar para a página inicial
-        navigate("/Home");
+        console.log("Token armazenado:", response.data.token);
+        navigate("/Home"); // Redireciona após login bem-sucedido
+      } else {
+        setError("Erro: Token não recebido do servidor.");
       }
     } catch (err) {
       console.error(
