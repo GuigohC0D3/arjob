@@ -135,9 +135,10 @@ def listar_usuarios_com_permissoes():
             cur = conn.cursor()
             cur.execute("""
                 SELECT u.id, u.nome, u.email, u.cpf,
-                       json_agg(p.permissao) AS permissoes
+                       json_agg(p.nome) AS permissoes  -- Use 'p.nome' em vez de 'p.permissao'
                 FROM usuarios u
-                LEFT JOIN permissoes_usuario p ON u.id = p.usuario_id
+                LEFT JOIN permissoes_usuario pu ON u.id = pu.usuario_id
+                LEFT JOIN permissoes p ON pu.permissao_id = p.id
                 GROUP BY u.id
             """)
             usuarios = cur.fetchall()
@@ -152,13 +153,14 @@ def listar_usuarios_com_permissoes():
                     "permissoes": usuario[4] or []
                 }
                 for usuario in usuarios
-            ]
+            ], 200
         except Exception as e:
             print(f"Erro ao listar usuários com permissões: {e}")
-            return []
+            return [], 500
     else:
         print("Erro ao conectar ao banco de dados")
-        return []
+        return [], 500
+
 
 def definir_permissoes(usuario_id, permissoes):
     conn = connect_db()

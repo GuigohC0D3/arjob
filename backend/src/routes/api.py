@@ -251,6 +251,22 @@ def atualizar_permissoes_usuario(usuario_id):
         print(f"Erro no endpoint /admin/usuarios/{usuario_id}/permissoes: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
 
+@main_bp.route('/admin/permissoes', methods=['GET'])
+def listar_permissoes_disponiveis():
+    try:
+        permissoes = [
+            "iniciar_venda",
+            "historico",
+            "gerenciar_clientes",
+            "produtos",
+            "suporte",
+            "painel_admin",
+        ]  # Substitua isso com a busca no banco de dados.
+        return jsonify(permissoes), 200
+    except Exception as e:
+        print(f"Erro ao listar permissões: {e}")
+        return jsonify({"error": "Erro ao listar permissões"}), 500
+
 # Listar clientes
 @main_bp.route('/admin/clientes', methods=['GET'])
 def listar_clientes_painel():

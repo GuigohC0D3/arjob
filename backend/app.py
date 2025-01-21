@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from src.routes.api import main_bp
 from src.extensions import mail, login_manager
 import os
+from datetime import timedelta
 
 def create_app():
     load_dotenv()  # Carregar variáveis de ambiente do arquivo .env
@@ -22,6 +23,8 @@ def create_app():
 
     # Configurações do Flask-JWT-Extended
     app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'uma_chave_secreta_segura')  # Defina sua chave secreta aqui
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=15)  # Access Token válido por 15 minutos
+    app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(hours=8)  # Refresh Token válido por 8 horas
     jwt = JWTManager(app)  # Inicializa o JWTManager com o app
 
     # Configuração do CORS
