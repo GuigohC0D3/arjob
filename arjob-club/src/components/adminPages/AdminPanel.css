@@ -58,42 +58,106 @@
     color: #dc3545;
   }
   
-  .permissions-modal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
+  /* Modal para edição de permissões */
+.permissions-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  background-color: #fff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+  padding: 20px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Cabeçalho do modal */
+.permissions-modal h3 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+/* Contêiner das permissões */
+.permissions-modal div {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+/* Estilo para os checkboxes e labels */
+.permissions-modal label {
+  display: flex;
+  align-items: center;
+  font-size: 1rem;
+  color: #555;
+  cursor: pointer;
+  gap: 10px;
+}
+
+.permissions-modal input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #007bff; /* Cor azul moderna */
+}
+
+/* Ações no modal */
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* Botões do modal */
+.modal-button {
+  flex: 1;
+  padding: 10px 15px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.modal-button.cancel {
+  background-color: #f8f9fa;
+  color: #6c757d;
+}
+
+.modal-button.cancel:hover {
+  background-color: #e2e6ea;
+}
+
+.modal-button.save {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.modal-button.save:hover {
+  background-color: #0056b3;
+  transform: scale(1.02);
+}
+
+/* Efeitos visuais */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -45%);
+  }
+  to {
+    opacity: 1;
     transform: translate(-50%, -50%);
-    background: white;
-    padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    border-radius: 8px;
   }
-  
-  .permissions-modal h3 {
-    margin-bottom: 20px;
-  }
-  
-  .modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-  }
-  
-  .modal-button {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    font-weight: bold;
-    cursor: pointer;
-  }
-  
-  .modal-button.cancel {
-    background: #dc3545;
-    color: white;
-  }
-  
-  .modal-button.save {
-    background: #28a745;
-    color: white;
-  }
-  
+}
+
+/* Tela de fundo quando o modal está ativo */
+.permissions-modal::backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+}

@@ -8,6 +8,7 @@ const AdminPanel = () => {
   const [clientes, setClientes] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [userPermissoes, setUserPermissoes] = useState([]);
+  const [todasPermissoes, setTodasPermissoes] = useState([]); // Todas as permissões do banco
 
   useEffect(() => {
     if (activeTab === "usuarios") {
@@ -17,12 +18,20 @@ const AdminPanel = () => {
     }
   }, [activeTab]);
 
+  useEffect(() => {
+    fetchPermissoes();
+  }, []);
+
   const fetchUsuarios = async () => {
     try {
       const response = await axios.get("http://localhost:5000/admin/usuarios");
-      setUsuarios(response.data);
+      console.log("Usuários recebidos:", response.data);
+      setUsuarios(response.data[0] || []);
     } catch (error) {
-      console.error("Erro ao buscar usuários:", error);
+      console.error(
+        "Erro ao buscar usuários:",
+        error.response?.data || error.message
+      );
     }
   };
 
@@ -32,6 +41,15 @@ const AdminPanel = () => {
       setClientes(response.data);
     } catch (error) {
       console.error("Erro ao buscar clientes:", error);
+    }
+  };
+
+  const fetchPermissoes = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/admin/permissoes");
+      setTodasPermissoes(response.data);
+    } catch (error) {
+      console.error("Erro ao buscar permissões:", error);
     }
   };
 
@@ -51,6 +69,7 @@ const AdminPanel = () => {
       );
       alert("Permissões atualizadas com sucesso");
       setSelectedUser(null);
+      fetchUsuarios(); // Atualiza a lista de usuários após salvar
     } catch (error) {
       console.error("Erro ao atualizar permissões:", error);
     }
@@ -92,13 +111,18 @@ const AdminPanel = () => {
                   <td>
                     <button
                       className="icon-button edit-button"
-                      onClick={() => setSelectedUser(usuario)}
+                      onClick={() => {
+                        setSelectedUser(usuario);
+                        setUserPermissoes(usuario.permissoes || []);
+                      }}
                     >
                       ✏️
                     </button>
                     <button
                       className="icon-button delete-button"
-                      onClick={() => alert("Função de exclusão em desenvolvimento")}
+                      onClick={() =>
+                        alert("Função de exclusão em desenvolvimento")
+                      }
                     >
                       🗑️
                     </button>
@@ -136,7 +160,7 @@ const AdminPanel = () => {
         <div className="permissions-modal">
           <h3>Editar Permissões: {selectedUser.nome}</h3>
           <div>
-            {["gerenciar_usuarios", "gerenciar_clientes", "gerenciar_produtos"].map((perm) => (
+            {todasPermissoes.map((perm) => (
               <label key={perm}>
                 <input
                   type="checkbox"
