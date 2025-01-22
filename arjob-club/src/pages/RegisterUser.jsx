@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../apiConfig";
 import "primereact/resources/themes/lara-light-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
@@ -26,7 +26,7 @@ const RegisterUser = () => {
   useEffect(() => {
     const fetchCargos = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/cargos");
+        const response = await api.get("/cargos");
         setCargos(response.data); // Assumindo que retorna [{ id, nome }]
       } catch (error) {
         console.error("Erro ao buscar cargos:", error);
@@ -100,7 +100,7 @@ const RegisterUser = () => {
     }
 
     try {
-      const response = await axios.post("http://localhost:5000/users", {
+      const response = await api.post("/users", {
         nome,
         cpf,
         email,

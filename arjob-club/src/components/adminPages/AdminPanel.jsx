@@ -1,6 +1,17 @@
+// Importações essenciais
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../apiConfig";
+import { ConfirmDialog } from "primereact/confirmdialog";
+import "primereact/resources/themes/saga-blue/theme.css";
+import "primereact/resources/primereact.min.css";
 import "./AdminPanel.css";
+
+// Importando componentes adicionais
+import Dashboard from "./DashboardAdmin";
+import Logs from "./Filters";
+import Filters from "./LogsAdmin";
+import Notifications from "./Notification";
+import Settings from "./Settings";
 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState("usuarios");
@@ -8,7 +19,10 @@ const AdminPanel = () => {
   const [clientes, setClientes] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [userPermissoes, setUserPermissoes] = useState([]);
-  const [todasPermissoes, setTodasPermissoes] = useState([]); // Todas as permissões do banco
+  const [todasPermissoes, setTodasPermissoes] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({ visible: false, message: "", accept: null });
 
   useEffect(() => {
     if (activeTab === "usuarios") {
@@ -23,33 +37,41 @@ const AdminPanel = () => {
   }, []);
 
   const fetchUsuarios = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const response = await axios.get("http://localhost:5000/admin/usuarios");
-      console.log("Usuários recebidos:", response.data);
+      const response = await api.get("/admin/usuarios");
       setUsuarios(response.data[0] || []);
-    } catch (error) {
-      console.error(
-        "Erro ao buscar usuários:",
-        error.response?.data || error.message
-      );
+    } catch (err) {
+      setError("Erro ao carregar usuários. Tente novamente.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchClientes = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const response = await axios.get("http://localhost:5000/admin/clientes");
+      const response = await api.get("/admin/clientes");
       setClientes(response.data);
-    } catch (error) {
-      console.error("Erro ao buscar clientes:", error);
+    } catch (err) {
+      setError("Erro ao carregar clientes. Tente novamente.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchPermissoes = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const response = await axios.get("http://localhost:5000/admin/permissoes");
+      const response = await api.get("/admin/permissoes");
       setTodasPermissoes(response.data);
-    } catch (error) {
-      console.error("Erro ao buscar permissões:", error);
+    } catch (err) {
+      setError("Erro ao carregar permissões. Tente novamente.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -62,35 +84,87 @@ const AdminPanel = () => {
   };
 
   const updatePermissoes = async () => {
+    if (!selectedUser) return;
+    setLoading(true);
+    setError(null);
     try {
-      await axios.put(
-        `http://localhost:5000/admin/usuarios/${selectedUser.id}/permissoes`,
+      await api.put(
+        `/admin/usuarios/${selectedUser.id}/permissoes`,
         { permissoes: userPermissoes }
       );
       alert("Permissões atualizadas com sucesso");
       setSelectedUser(null);
-      fetchUsuarios(); // Atualiza a lista de usuários após salvar
-    } catch (error) {
-      console.error("Erro ao atualizar permissões:", error);
+      fetchUsuarios();
+    } catch (err) {
+      setError("Erro ao atualizar permissões. Tente novamente.");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const openConfirmDialog = (message, onAccept) => {
+    setConfirmDialog({ visible: true, message, accept: onAccept });
   };
 
   return (
     <div className="admin-panel">
+      <ConfirmDialog
+        visible={confirmDialog.visible}
+        message={confirmDialog.message}
+        onHide={() => setConfirmDialog({ ...confirmDialog, visible: false })}
+        accept={confirmDialog.accept}
+        reject={() => setConfirmDialog({ ...confirmDialog, visible: false })}
+      />
+
       <div className="tabs">
         <button
           className={activeTab === "usuarios" ? "active-tab" : ""}
           onClick={() => setActiveTab("usuarios")}
+          disabled={loading}
         >
           Usuários
         </button>
         <button
           className={activeTab === "clientes" ? "active-tab" : ""}
           onClick={() => setActiveTab("clientes")}
+          disabled={loading}
         >
           Clientes
         </button>
+        <button
+          className={activeTab === "dashboard" ? "active-tab" : ""}
+          onClick={() => setActiveTab("dashboard")}
+        >
+          Dashboard
+        </button>
+        <button
+          className={activeTab === "logs" ? "active-tab" : ""}
+          onClick={() => setActiveTab("logs")}
+        >
+          Logs
+        </button>
+        <button
+          className={activeTab === "filters" ? "active-tab" : ""}
+          onClick={() => setActiveTab("filters")}
+        >
+          Filtros
+        </button>
+        <button
+          className={activeTab === "notifications" ? "active-tab" : ""}
+          onClick={() => setActiveTab("notifications")}
+        >
+          Notificações
+        </button>
+        <button
+          className={activeTab === "settings" ? "active-tab" : ""}
+          onClick={() => setActiveTab("settings")}
+        >
+          Configurações
+        </button>
       </div>
+
+      {loading && <p className="loading">Carregando...</p>}
+      {error && <p className="error">{error}</p>}
 
       {activeTab === "usuarios" && (
         <div>
@@ -121,7 +195,10 @@ const AdminPanel = () => {
                     <button
                       className="icon-button delete-button"
                       onClick={() =>
-                        alert("Função de exclusão em desenvolvimento")
+                        openConfirmDialog(
+                          "Tem certeza que deseja excluir este usuário?",
+                          () => alert("Função de exclusão em desenvolvimento")
+                        )
                       }
                     >
                       🗑️
@@ -178,12 +255,21 @@ const AdminPanel = () => {
             >
               Cancelar
             </button>
-            <button className="modal-button save" onClick={updatePermissoes}>
+            <button
+              className="modal-button save"
+              onClick={updatePermissoes}
+            >
               Salvar
             </button>
           </div>
         </div>
       )}
+
+      {activeTab === "dashboard" && <Dashboard />}
+      {activeTab === "logs" && <Logs />}
+      {activeTab === "filters" && <Filters />}
+      {activeTab === "notifications" && <Notifications />}
+      {activeTab === "settings" && <Settings />}
     </div>
   );
 };
