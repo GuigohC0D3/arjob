@@ -1,7 +1,8 @@
 // Importações essenciais
-import { useState, useEffect } from "react";
-import api from "../apiConfig";
+import { useState, useEffect, useRef } from "react";
+import api from "../../apiConfig";
 import { ConfirmDialog } from "primereact/confirmdialog";
+import { Toast } from "primereact/toast";
 import "primereact/resources/themes/saga-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import "./AdminPanel.css";
@@ -23,6 +24,7 @@ const AdminPanel = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState({ visible: false, message: "", accept: null });
+  const toast = useRef(null);
 
   useEffect(() => {
     if (activeTab === "usuarios") {
@@ -87,16 +89,38 @@ const AdminPanel = () => {
     if (!selectedUser) return;
     setLoading(true);
     setError(null);
+
     try {
-      await api.put(
-        `/admin/usuarios/${selectedUser.id}/permissoes`,
-        { permissoes: userPermissoes }
+      const permissoesFiltradas = userPermissoes.filter(
+        (perm) => perm !== null && perm !== undefined && perm !== ""
       );
-      alert("Permissões atualizadas com sucesso");
+
+      const response = await api.put(
+        `/admin/usuarios/${selectedUser.id}/permissoes`,
+        { permissoes: permissoesFiltradas }
+      );
+
+      toast.current.show({
+        severity: "success",
+        summary: "Sucesso",
+        detail: "Permissões atualizadas com sucesso",
+      });
+
+      setUsuarios((prevUsuarios) =>
+        prevUsuarios.map((usuario) =>
+          usuario.id === selectedUser.id
+            ? { ...usuario, permissoes: permissoesFiltradas }
+            : usuario
+        )
+      );
+
       setSelectedUser(null);
-      fetchUsuarios();
     } catch (err) {
-      setError("Erro ao atualizar permissões. Tente novamente.");
+      toast.current.show({
+        severity: "error",
+        summary: "Erro",
+        detail: "Erro ao atualizar permissões. Tente novamente.",
+      });
     } finally {
       setLoading(false);
     }
@@ -108,6 +132,7 @@ const AdminPanel = () => {
 
   return (
     <div className="admin-panel">
+      <Toast ref={toast} />
       <ConfirmDialog
         visible={confirmDialog.visible}
         message={confirmDialog.message}
@@ -197,7 +222,25 @@ const AdminPanel = () => {
                       onClick={() =>
                         openConfirmDialog(
                           "Tem certeza que deseja excluir este usuário?",
-                          () => alert("Função de exclusão em desenvolvimento")
+                          async () => {
+                            try {
+                              await api.delete(`/admin/usuarios/${usuario.id}`);
+                              setUsuarios((prevUsuarios) =>
+                                prevUsuarios.filter((u) => u.id !== usuario.id)
+                              );
+                              toast.current.show({
+                                severity: "success",
+                                summary: "Usuário Excluído",
+                                detail: "O usuário foi removido com sucesso.",
+                              });
+                            } catch (err) {
+                              toast.current.show({
+                                severity: "error",
+                                summary: "Erro",
+                                detail: "Erro ao excluir o usuário.",
+                              });
+                            }
+                          }
                         )
                       }
                     >

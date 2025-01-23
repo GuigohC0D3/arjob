@@ -12,7 +12,7 @@ const ComandaAberta = () => {
     const fetchComandaDetalhes = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`http://127.0.0.1:5000/comandas/${numero}`);
+        const response = await fetch(`http://10.11.1.67:5000/comandas/${numero}`);
         if (response.ok) {
           const data = await response.json();
           setComandaDetalhes(data);

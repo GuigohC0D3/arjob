@@ -12,7 +12,7 @@ const ListagemComandas = () => {
   useEffect(() => {
     const fetchComandas = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:5000/comandas?status=fechada");
+        const response = await fetch("http://192.168.1.100:5000/comandas?status=fechada");
         if (response.ok) {
           setComandas(await response.json());
         } else {

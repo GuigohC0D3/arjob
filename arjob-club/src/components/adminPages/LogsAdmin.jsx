@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../apiConfig";
 
 const LogsAdmin = () => {
   const [logs, setLogs] = useState([]);
@@ -9,7 +9,7 @@ const LogsAdmin = () => {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/admin/logs");
+        const response = await api.get("/admin/logs");
         setLogs(response.data);
       } catch (err) {
         setError("Erro ao carregar logs. Tente novamente.");

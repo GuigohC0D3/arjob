@@ -27,7 +27,7 @@ const CadastroCliente = () => {
   useEffect(() => {
     const fetchDepartamentos = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:5000/departamentos");
+        const response = await fetch("http://10.11.1.67:5000/departamentos");
         if (response.ok) {
           const data = await response.json();
           setDepartamentos(

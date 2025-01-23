@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Chart } from "primereact/chart";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-import api from "../apiConfig";
+import api from "../../apiConfig";
 
 const Dashboard = () => {
   const [chartData, setChartData] = useState(null);

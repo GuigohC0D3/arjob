@@ -20,7 +20,7 @@ const IniciarVenda = () => {
   useEffect(() => {
     const fetchMesas = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:5000/mesas");
+        const response = await fetch("http://10.11.1.67:5000/mesas");
         if (response.ok) {
           const mesasData = await response.json();
           const mesasOrdenadas = mesasData.sort((a, b) => a.numero - b.numero);
@@ -36,8 +36,6 @@ const IniciarVenda = () => {
     fetchMesas();
   }, []);
 
-  
-
   const handleAbrirComanda = async () => {
     if (!selectedMesa || !selectedMesa.id) {
       alert("Selecione uma mesa para abrir a comanda.");
@@ -50,7 +48,7 @@ const IniciarVenda = () => {
     }
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/comandas", {
+      const response = await fetch("http://10.11.1.67:5000/comandas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -70,7 +68,9 @@ const IniciarVenda = () => {
           )
         );
 
-        const produtosResponse = await fetch("http://127.0.0.1:5000/produtos");
+        const produtosResponse = await fetch(
+          "http://10.11.1.67:5000/produtos"
+        );
         if (produtosResponse.ok) {
           const produtos = await produtosResponse.json();
           setProdutosCategoria(produtos);
@@ -91,7 +91,7 @@ const IniciarVenda = () => {
   const acessarComandaOcupada = async (mesa) => {
     try {
       const response = await fetch(
-        `http://127.0.0.1:5000/comandas/mesa/${mesa.id}`
+        `http://10.11.1.67:5000/comandas/mesa/${mesa.id}`
       );
       if (response.ok) {
         const comandaData = await response.json();
@@ -99,7 +99,9 @@ const IniciarVenda = () => {
         setSelectedMesa(mesa);
 
         // Carregar produtos disponíveis
-        const produtosResponse = await fetch("http://127.0.0.1:5000/produtos");
+        const produtosResponse = await fetch(
+          "http://10.11.1.67:5000/produtos"
+        );
         if (produtosResponse.ok) {
           const produtos = await produtosResponse.json();
           setProdutosCategoria(produtos);

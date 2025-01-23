@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../../apiConfig";
 
 const Filters = () => {
   const [filter, setFilter] = useState("");
@@ -15,8 +15,8 @@ const Filters = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(
-        `http://localhost:5000/admin/search?query=${filter}`
+      const response = await api.get(
+        `/admin/search?query=${filter}`
       );
       setResults(response.data);
     } catch (err) {

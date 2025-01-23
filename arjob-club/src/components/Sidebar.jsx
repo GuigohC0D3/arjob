@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import api from "../apiConfig";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "./Sidebar.css";
 
@@ -29,7 +29,7 @@ const Sidebar = () => {
           throw new Error("Token não encontrado. Faça login novamente.");
         }
     
-        const response = await axios.get("http://localhost:5000/permissoes", {
+        const response = await api.get("/permissoes", {
           headers: {
             Authorization: `Bearer ${token}`, // Inclua o token JWT no cabeçalho
           },
@@ -56,7 +56,7 @@ const Sidebar = () => {
           throw new Error("Token não encontrado. Faça login novamente.");
         }
     
-        const response = await axios.get("http://localhost:5000/auth/cargo", {
+        const response = await api.get("/auth/cargo", {
           headers: {
             Authorization: `Bearer ${token}`, // Inclua o token JWT no cabeçalho
           },

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../apiConfig";
 
 const Settings = () => {
   const [settings, setSettings] = useState({ theme: "Padrão", language: "Português" });
@@ -9,7 +9,7 @@ const Settings = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/admin/settings");
+        const response = await api.get("/admin/settings");
         setSettings(response.data);
       } catch (err) {
         setError("Erro ao carregar configurações. Tente novamente.");

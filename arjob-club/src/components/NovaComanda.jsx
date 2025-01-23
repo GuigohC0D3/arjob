@@ -30,7 +30,7 @@ const NovaComanda = ({
   
     try {
       const response = await fetch(
-        `http://127.0.0.1:5000/clientes/${cpfCliente}`
+        `http://10.11.1.67:5000/clientes/${cpfCliente}`
       );
       if (response.ok) {
         const cliente = await response.json();

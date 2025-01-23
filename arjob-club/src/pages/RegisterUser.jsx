@@ -20,6 +20,7 @@ const RegisterUser = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [cargos, setCargos] = useState([]);
+  const [inputValue, setInputValue] = useState("");
   const navigate = useNavigate();
 
   // Buscar cargos no backend
@@ -27,6 +28,7 @@ const RegisterUser = () => {
     const fetchCargos = async () => {
       try {
         const response = await api.get("/cargos");
+        console.log(response);
         setCargos(response.data); // Assumindo que retorna [{ id, nome }]
       } catch (error) {
         console.error("Erro ao buscar cargos:", error);
@@ -81,17 +83,29 @@ const RegisterUser = () => {
     return "fraca";
   };
 
+  const handleInputName = (e) => {
+    const { value } = e.target;
+
+    const inputValue = value.replace(/[^a-zA-Z]/g, "");
+
+    setInputValue(inputValue);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const { nome, cpf, email, senha, confirmarSenha, cargo } = formData;
     const newErrors = {};
 
     if (!nome) newErrors.nome = "Por favor, preencha seu nome.";
-    if (!cpf) newErrors.cpf = "CPF inválido. Certifique-se de que está no formato correto.";
+    if (!cpf)
+      newErrors.cpf =
+        "CPF inválido. Certifique-se de que está no formato correto.";
     if (!email || !email.includes("@")) newErrors.email = "E-mail inválido.";
     if (!senha) newErrors.senha = "A senha é obrigatória.";
-    if (senha.length < 8) newErrors.senha = "A senha deve ter pelo menos 8 caracteres.";
-    if (senha !== confirmarSenha) newErrors.confirmarSenha = "As senhas não coincidem.";
+    if (senha.length < 8)
+      newErrors.senha = "A senha deve ter pelo menos 8 caracteres.";
+    if (senha !== confirmarSenha)
+      newErrors.confirmarSenha = "As senhas não coincidem.";
     if (!cargo) newErrors.cargo = "Por favor, selecione um cargo.";
 
     if (Object.keys(newErrors).length > 0) {
@@ -113,7 +127,10 @@ const RegisterUser = () => {
         navigate("/"); // Redirecionar após o sucesso
       }
     } catch (error) {
-      console.error("Erro ao registrar usuário:", error.response?.data || error.message);
+      console.error(
+        "Erro ao registrar usuário:",
+        error.response?.data || error.message
+      );
       if (error.response?.data?.error) {
         setErrors({ api: error.response.data.error });
       }
@@ -134,6 +151,8 @@ const RegisterUser = () => {
               id="nome"
               name="nome"
               value={formData.nome}
+              minLength="3"
+              maxLength="80"
               onChange={handleChange}
               placeholder="Digite seu nome"
               required
@@ -157,28 +176,6 @@ const RegisterUser = () => {
             />
           </div>
           {errors.cpf && <p className="error-text">{errors.cpf}</p>}
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="cargo">Cargo*</label>
-          <div className="input-with-icon">
-            <i className="pi pi-briefcase"></i>
-            <select
-              id="cargo"
-              name="cargo"
-              value={formData.cargo}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Selecione seu cargo</option>
-              {cargos.map((cargo) => (
-                <option key={cargo.id} value={cargo.id}>
-                  {cargo.nome}
-                </option>
-              ))}
-            </select>
-          </div>
-          {errors.cargo && <p className="error-text">{errors.cargo}</p>}
         </div>
 
         <div className="form-group">

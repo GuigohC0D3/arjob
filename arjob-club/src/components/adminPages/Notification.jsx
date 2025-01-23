@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../apiConfig";
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
@@ -9,7 +9,7 @@ const Notifications = () => {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/admin/notifications");
+        const response = await api.get("/admin/notifications");
         setNotifications(response.data);
       } catch (err) {
         setError("Erro ao carregar notificações. Tente novamente.");
