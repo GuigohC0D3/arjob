@@ -5,20 +5,57 @@ def atualizar_permissoes_usuario(usuario_id, permissoes_lista):
     if conn:
         try:
             cur = conn.cursor()
-            cur.execute("DELETE FROM permissoes_usuario WHERE usuario_id = %s", (usuario_id,))
+
+            # Debug: Verificar permissões recebidas
+            print(f"Recebido para o usuário {usuario_id}: {permissoes_lista}")
+
+            # Verificar se a lista de permissões contém valores válidos
+            if not permissoes_lista or not all(p is not None for p in permissoes_lista):
+                return {"error": "A lista de permissões contém valores inválidos."}, 400
+
+            # Converter nomes de permissões para IDs
+            permissoes_ids = []
             for permissao in permissoes_lista:
+                if isinstance(permissao, str):  # Se for nome da permissão
+                    cur.execute("""
+                        SELECT id FROM permissoes WHERE nome = %s
+                    """, (permissao,))
+                    result = cur.fetchone()
+                    if result:
+                        permissoes_ids.append(result[0])
+                elif isinstance(permissao, int):  # Se já for ID
+                    permissoes_ids.append(permissao)
+
+            # Debug: Verificar permissões processadas
+            print(f"Permissões processadas para o usuário {usuario_id}: {permissoes_ids}")
+
+            # Verificar se a lista resultante está vazia
+            if not permissoes_ids:
+                return {"error": "Nenhuma permissão válida encontrada."}, 400
+
+            # Remover permissões existentes
+            cur.execute("DELETE FROM permissoes_usuario WHERE usuario_id = %s", (usuario_id,))
+            print(f"Permissões antigas removidas para o usuário {usuario_id}")
+
+            # Inserir as novas permissões
+            for permissao_id in permissoes_ids:
                 cur.execute("""
-                    INSERT INTO permissoes_usuario (usuario_id, permissao)
+                    INSERT INTO permissoes_usuario (usuario_id, permissao_id)
                     VALUES (%s, %s)
-                """, (usuario_id, permissao))
+                """, (usuario_id, permissao_id))
+                print(f"Permissão {permissao_id} inserida para o usuário {usuario_id}")
+
             conn.commit()
             cur.close()
             conn.close()
+            return {"message": "Permissões atualizadas com sucesso"}
         except Exception as e:
             conn.rollback()
             print(f"Erro ao atualizar permissões: {e}")
+            return {"error": "Erro ao atualizar permissões"}, 500
     else:
         print("Erro ao conectar ao banco de dados")
+        return {"error": "Erro ao conectar ao banco de dados"}, 500
 
 def listar_permissoes_usuario(usuario_id):
     try:

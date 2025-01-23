@@ -40,12 +40,6 @@ def create_app():
     mail.init_app(app)
     login_manager.init_app(app)
 
-    # Definir a função de carregamento de usuários
-    @login_manager.user_loader
-    def load_user(user_id):
-        # Retorna o usuário com base no ID armazenado na sessão
-        return user.get_by_id(user_id)
-
     # Registrar blueprints
     app.register_blueprint(main_bp)
 
