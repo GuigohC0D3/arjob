@@ -68,9 +68,7 @@ const IniciarVenda = () => {
           )
         );
 
-        const produtosResponse = await fetch(
-          "http://10.11.1.67:5000/produtos"
-        );
+        const produtosResponse = await fetch("http://10.11.1.67:5000/produtos");
         if (produtosResponse.ok) {
           const produtos = await produtosResponse.json();
           setProdutosCategoria(produtos);
@@ -99,9 +97,7 @@ const IniciarVenda = () => {
         setSelectedMesa(mesa);
 
         // Carregar produtos disponíveis
-        const produtosResponse = await fetch(
-          "http://10.11.1.67:5000/produtos"
-        );
+        const produtosResponse = await fetch("http://10.11.1.67:5000/produtos");
         if (produtosResponse.ok) {
           const produtos = await produtosResponse.json();
           setProdutosCategoria(produtos);
