@@ -295,6 +295,23 @@ def dashboard():
         return jsonify(data), 200
     return jsonify({"error": "Erro ao carregar dashboard"}), 50
 
+@main_bp.route('/users/check', methods=['POST'])
+def check_user():
+    try:
+        data = request.json
+        cpf = data.get('cpf')
+        email = data.get('email')
+
+        if not cpf or not email:
+            return jsonify({"error": "CPF e e-mail são obrigatórios."}), 400
+
+        response, status_code = users_controller.check_user(cpf, email)
+        return jsonify(response), status_code
+    except Exception as e:
+        print(f"Erro no endpoint /users/check: {e}")
+        return jsonify({"error": "Erro interno no servidor."}), 500
+
+
 @main_bp.route('/auth/cargo', methods=['OPTIONS'])
 def cors_preflight():
     response = jsonify({"message": "Preflight request handled"})

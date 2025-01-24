@@ -86,3 +86,11 @@ def get_user_permissions(user_id):
         print(f"Erro ao buscar permissões do usuário: {e}")
         return {"error": "Erro ao buscar permissões"}, 500
 
+def check_user(cpf, email):
+    try:
+        # Verificar duplicidade de CPF ou e-mail
+        response, status_code = users.check_user(cpf, email)
+        return response, status_code
+    except Exception as e:
+        print(f"Erro no controlador check_user: {e}")
+        return {"error": "Erro ao verificar duplicidade."}, 500
