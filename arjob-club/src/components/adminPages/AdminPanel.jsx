@@ -131,7 +131,7 @@ const AdminPanel = () => {
   };
 
   return (
-    <div className="admin-panel">
+    <div className="admin-container">
       <Toast ref={toast} />
       <ConfirmDialog
         visible={confirmDialog.visible}
@@ -188,93 +188,96 @@ const AdminPanel = () => {
         </button>
       </div>
 
-      {loading && <p className="loading">Carregando...</p>}
-      {error && <p className="error">{error}</p>}
+      <div className="admin-panel">
+        {loading && <p className="loading">Carregando...</p>}
+        {error && <p className="error">{error}</p>}
 
-      {activeTab === "usuarios" && (
-        <div>
-          <h2>Gerenciar Usuários</h2>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>Email</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {usuarios.map((usuario) => (
-                <tr key={usuario.id}>
-                  <td>{usuario.nome}</td>
-                  <td>{usuario.email}</td>
-                  <td>
-                    <button
-                      className="icon-button edit-button"
-                      onClick={() => {
-                        setSelectedUser(usuario);
-                        setUserPermissoes(usuario.permissoes || []);
-                      }}
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      className="icon-button delete-button"
-                      onClick={() =>
-                        openConfirmDialog(
-                          "Tem certeza que deseja excluir este usuário?",
-                          async () => {
-                            try {
-                              await api.delete(`/admin/usuarios/${usuario.id}`);
-                              setUsuarios((prevUsuarios) =>
-                                prevUsuarios.filter((u) => u.id !== usuario.id)
-                              );
-                              toast.current.show({
-                                severity: "success",
-                                summary: "Usuário Excluído",
-                                detail: "O usuário foi removido com sucesso.",
-                              });
-                            } catch (err) {
-                              toast.current.show({
-                                severity: "error",
-                                summary: "Erro",
-                                detail: "Erro ao excluir o usuário.",
-                              });
+        {activeTab === "usuarios" && (
+          <div>
+            <h2>Gerenciar Usuários</h2>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Email</th>
+                  <th>Ações</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {usuarios.map((usuario) => (
+                  <tr key={usuario.id}>
+                    <td>{usuario.nome}</td>
+                    <td>{usuario.email}</td>
+                    <td>
+                      <button
+                        className="icon-button edit-button"
+                        onClick={() => {
+                          setSelectedUser(usuario);
+                          setUserPermissoes(usuario.permissoes || []);
+                        }}
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        className="icon-button delete-button"
+                        onClick={() =>
+                          openConfirmDialog(
+                            "Tem certeza que deseja excluir este usuário?",
+                            async () => {
+                              try {
+                                await api.delete(`/admin/usuarios/${usuario.id}`);
+                                setUsuarios((prevUsuarios) =>
+                                  prevUsuarios.filter((u) => u.id !== usuario.id)
+                                );
+                                toast.current.show({
+                                  severity: "success",
+                                  summary: "Usuário Excluído",
+                                  detail: "O usuário foi removido com sucesso.",
+                                });
+                              } catch (err) {
+                                toast.current.show({
+                                  severity: "error",
+                                  summary: "Erro",
+                                  detail: "Erro ao excluir o usuário.",
+                                });
+                              }
                             }
-                          }
-                        )
-                      }
-                    >
-                      🗑️
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+                          )
+                        }
+                      >
+                        🗑️
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-      {activeTab === "clientes" && (
-        <div>
-          <h2>Gerenciar Clientes</h2>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>CPF</th>
-              </tr>
-            </thead>
-            <tbody>
-              {clientes.map((cliente) => (
-                <tr key={cliente.id}>
-                  <td>{cliente.nome}</td>
-                  <td>{cliente.cpf}</td>
+        {activeTab === "clientes" && (
+          <div>
+            <h2>Gerenciar Clientes</h2>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>CPF</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody>
+                {clientes.map((cliente) => (
+                  <tr key={cliente.id}>
+                    <td>{cliente.nome}</td>
+                    <td>{cliente.cpf}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {selectedUser && (
         <div className="permissions-modal">
