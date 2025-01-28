@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import "./MainContent.css";
 
 const MainContent = () => {
   const [user, setUser] = useState(null);
@@ -15,17 +14,17 @@ const MainContent = () => {
   return (
     <>
       {/* Conteúdo principal */}
-      <main className="main">
-        <div className="logo">ARJOB</div>
+      <main className="flex items-center justify-center h-screen bg-gray-100">
+        <div className="text-center">
+          <h1 className="flex items-center text-4xl font-bold text-gray-1000">ARJOB</h1>
+        </div>
       </main>
 
       {/* Rodapé */}
-      <footer className="footer">
-        <p>Operador: {user ? user.nome : "Desconhecido"}</p>
-        <br />
-        <p>Computador: GUILHERME</p>
-        <br />
-        <p>
+      <footer className="w-full bg-gray-800 text-gray-200 text-center py-4">
+        <p className="text-sm">Operador: {user ? user.nome : "Desconhecido"}</p>
+        <p className="text-sm">Computador: GUILHERME</p>
+        <p className="text-sm">
           Servidor: {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}
         </p>
       </footer>

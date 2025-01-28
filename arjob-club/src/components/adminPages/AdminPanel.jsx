@@ -1,11 +1,13 @@
 // Importações essenciais
 import { useState, useEffect, useRef } from "react";
 import api from "../../apiConfig";
-import { ConfirmDialog } from "primereact/confirmdialog";
+import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
 import "primereact/resources/themes/saga-blue/theme.css";
 import "primereact/resources/primereact.min.css";
-import "./AdminPanel.css";
+
+// Importando ícones FontAwesome
+import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 
 // Importando componentes adicionais
 import Dashboard from "./DashboardAdmin";
@@ -18,12 +20,9 @@ const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState("usuarios");
   const [usuarios, setUsuarios] = useState([]);
   const [clientes, setClientes] = useState([]);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [userPermissoes, setUserPermissoes] = useState([]);
-  const [todasPermissoes, setTodasPermissoes] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [confirmDialog, setConfirmDialog] = useState({ visible: false, message: "", accept: null });
   const toast = useRef(null);
 
   useEffect(() => {
@@ -34,15 +33,12 @@ const AdminPanel = () => {
     }
   }, [activeTab]);
 
-  useEffect(() => {
-    fetchPermissoes();
-  }, []);
-
   const fetchUsuarios = async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await api.get("/admin/usuarios");
+      console.log("Resposta da API para usuários:", response.data);
       setUsuarios(response.data[0] || []);
     } catch (err) {
       setError("Erro ao carregar usuários. Tente novamente.");
@@ -56,261 +52,185 @@ const AdminPanel = () => {
     setError(null);
     try {
       const response = await api.get("/admin/clientes");
-      setClientes(response.data);
+      setClientes(response.data || []);
     } catch (err) {
-      setError("Erro ao carregar clientes. Tente novamente.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchPermissoes = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await api.get("/admin/permissoes");
-      setTodasPermissoes(response.data);
-    } catch (err) {
-      setError("Erro ao carregar permissões. Tente novamente.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePermissionChange = (permissao) => {
-    setUserPermissoes((prev) =>
-      prev.includes(permissao)
-        ? prev.filter((p) => p !== permissao)
-        : [...prev, permissao]
-    );
-  };
-
-  const updatePermissoes = async () => {
-    if (!selectedUser) return;
-    setLoading(true);
-    setError(null);
-
-    try {
-      const permissoesFiltradas = userPermissoes.filter(
-        (perm) => perm !== null && perm !== undefined && perm !== ""
-      );
-
-      const response = await api.put(
-        `/admin/usuarios/${selectedUser.id}/permissoes`,
-        { permissoes: permissoesFiltradas }
-      );
-
-      toast.current.show({
-        severity: "success",
-        summary: "Sucesso",
-        detail: "Permissões atualizadas com sucesso",
-      });
-
-      setUsuarios((prevUsuarios) =>
-        prevUsuarios.map((usuario) =>
-          usuario.id === selectedUser.id
-            ? { ...usuario, permissoes: permissoesFiltradas }
-            : usuario
-        )
-      );
-
-      setSelectedUser(null);
-    } catch (err) {
+      setError("Erro ao carregar clientes.");
       toast.current.show({
         severity: "error",
         summary: "Erro",
-        detail: "Erro ao atualizar permissões. Tente novamente.",
+        detail: "Erro ao carregar clientes.",
+        life: 3000,
       });
     } finally {
       setLoading(false);
     }
   };
-
-  const openConfirmDialog = (message, onAccept) => {
-    setConfirmDialog({ visible: true, message, accept: onAccept });
+  
+  const handleDelete = (id, type) => {
+    confirmDialog({
+      message: "Você tem certeza que deseja excluir?",
+      header: "Confirmação",
+      icon: "pi pi-exclamation-triangle",
+      accept: async () => {
+        try {
+          await api.delete(`/admin/${type}/${id}`);
+          toast.current.show({
+            severity: "success",
+            summary: "Sucesso",
+            detail: "Item excluído com sucesso.",
+            life: 3000,
+          });
+          type === "usuarios" ? fetchUsuarios() : fetchClientes();
+        } catch {
+          toast.current.show({
+            severity: "error",
+            summary: "Erro",
+            detail: "Erro ao excluir item.",
+            life: 3000,
+          });
+        }
+      },
+    });
   };
 
+  const handleEdit = (id, type) => {
+    toast.current.show({
+      severity: "info",
+      summary: "Editar",
+      detail: `Editar ${
+        type === "usuarios" ? "Usuário" : "Cliente"
+      } com ID: ${id}`,
+      life: 3000,
+    });
+    // Redirecione para a página de edição ou abra um modal para edição.
+  };
+
+  const handleView = (id, type) => {
+    toast.current.show({
+      severity: "info",
+      summary: "Visualizar",
+      detail: `Visualizar ${
+        type === "usuarios" ? "Usuário" : "Cliente"
+      } com ID: ${id}`,
+      life: 3000,
+    });
+    // Redirecione para a página de detalhes.
+  };
+
+  const dataToDisplay = activeTab === "usuarios" ? usuarios : clientes;
+  const filteredData = dataToDisplay?.filter((item) =>
+    item?.nome?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="admin-container">
+    <div className="max-w-7xl mx-auto p-6 bg-white rounded-lg shadow-md">
       <Toast ref={toast} />
-      <ConfirmDialog
-        visible={confirmDialog.visible}
-        message={confirmDialog.message}
-        onHide={() => setConfirmDialog({ ...confirmDialog, visible: false })}
-        accept={confirmDialog.accept}
-        reject={() => setConfirmDialog({ ...confirmDialog, visible: false })}
-      />
+      <ConfirmDialog />
 
-      <div className="tabs">
-        <button
-          className={activeTab === "usuarios" ? "active-tab" : ""}
-          onClick={() => setActiveTab("usuarios")}
-          disabled={loading}
-        >
-          Usuários
+      {/* Cabeçalho de ações */}
+      <div className="flex justify-between items-center mb-4">
+        <button className="bg-blue-600 text-white px-4 py-2 rounded-md shadow hover:bg-blue-700">
+          + ADD NEW
         </button>
-        <button
-          className={activeTab === "clientes" ? "active-tab" : ""}
-          onClick={() => setActiveTab("clientes")}
-          disabled={loading}
-        >
-          Clientes
+        <button className="bg-gray-200 px-4 py-2 rounded-md shadow hover:bg-gray-300">
+          ⬇ EXPORT
         </button>
-        <button
-          className={activeTab === "dashboard" ? "active-tab" : ""}
-          onClick={() => setActiveTab("dashboard")}
-        >
-          Dashboard
-        </button>
-        <button
-          className={activeTab === "logs" ? "active-tab" : ""}
-          onClick={() => setActiveTab("logs")}
-        >
-          Logs
-        </button>
-        <button
-          className={activeTab === "filters" ? "active-tab" : ""}
-          onClick={() => setActiveTab("filters")}
-        >
-          Filtros
-        </button>
-        <button
-          className={activeTab === "notifications" ? "active-tab" : ""}
-          onClick={() => setActiveTab("notifications")}
-        >
-          Notificações
-        </button>
-        <button
-          className={activeTab === "settings" ? "active-tab" : ""}
-          onClick={() => setActiveTab("settings")}
-        >
-          Configurações
-        </button>
+        <input
+          type="text"
+          placeholder="Search by Name"
+          className="border px-3 py-2 rounded-md shadow w-64"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
       </div>
 
-      <div className="admin-panel">
-        {loading && <p className="loading">Carregando...</p>}
-        {error && <p className="error">{error}</p>}
-
-        {activeTab === "usuarios" && (
-          <div>
-            <h2>Gerenciar Usuários</h2>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>Email</th>
-                  <th>Ações</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {usuarios.map((usuario) => (
-                  <tr key={usuario.id}>
-                    <td>{usuario.nome}</td>
-                    <td>{usuario.email}</td>
-                    <td>
-                      <button
-                        className="icon-button edit-button"
-                        onClick={() => {
-                          setSelectedUser(usuario);
-                          setUserPermissoes(usuario.permissoes || []);
-                        }}
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        className="icon-button delete-button"
-                        onClick={() =>
-                          openConfirmDialog(
-                            "Tem certeza que deseja excluir este usuário?",
-                            async () => {
-                              try {
-                                await api.delete(`/admin/usuarios/${usuario.id}`);
-                                setUsuarios((prevUsuarios) =>
-                                  prevUsuarios.filter((u) => u.id !== usuario.id)
-                                );
-                                toast.current.show({
-                                  severity: "success",
-                                  summary: "Usuário Excluído",
-                                  detail: "O usuário foi removido com sucesso.",
-                                });
-                              } catch (err) {
-                                toast.current.show({
-                                  severity: "error",
-                                  summary: "Erro",
-                                  detail: "Erro ao excluir o usuário.",
-                                });
-                              }
-                            }
-                          )
-                        }
-                      >
-                        🗑️
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {activeTab === "clientes" && (
-          <div>
-            <h2>Gerenciar Clientes</h2>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>CPF</th>
-                </tr>
-              </thead>
-              <tbody>
-                {clientes.map((cliente) => (
-                  <tr key={cliente.id}>
-                    <td>{cliente.nome}</td>
-                    <td>{cliente.cpf}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+      {/* Tabs */}
+      <div className="flex space-x-4 mb-4">
+        {[
+          "usuarios",
+          "clientes",
+          "dashboard",
+          "logs",
+          "filters",
+          "notifications",
+          "settings",
+        ].map((tab) => (
+          <button
+            key={tab}
+            className={`flex-1 py-2 px-4 font-bold text-sm rounded-md transition ${
+              activeTab === tab
+                ? "bg-blue-500 text-white"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+            onClick={() => setActiveTab(tab)}
+            disabled={loading}
+          >
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          </button>
+        ))}
       </div>
 
-      {selectedUser && (
-        <div className="permissions-modal">
-          <h3>Editar Permissões: {selectedUser.nome}</h3>
-          <div>
-            {todasPermissoes.map((perm) => (
-              <label key={perm}>
-                <input
-                  type="checkbox"
-                  checked={userPermissoes.includes(perm)}
-                  onChange={() => handlePermissionChange(perm)}
-                />
-                {perm.replace("_", " ").toUpperCase()}
-              </label>
-            ))}
-          </div>
-          <div className="modal-actions">
-            <button
-              className="modal-button cancel"
-              onClick={() => setSelectedUser(null)}
-            >
-              Cancelar
-            </button>
-            <button
-              className="modal-button save"
-              onClick={updatePermissoes}
-            >
-              Salvar
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Tabela */}
+      <table className="w-full border-collapse shadow-md">
+        <thead>
+          <tr className="bg-black text-white text-left">
+            <th className="py-3 px-4">Nome</th>
+            <th className="py-3 px-4">Criado em</th>
+            <th className="py-3 px-4">Status</th>
+            <th className="py-3 px-4">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredData.map((item) => (
+            <tr key={item.id} className="border-b hover:bg-gray-100">
+              <td className="py-3 px-4">
+                <p className="font-bold text-lg">{item.nome}</p>
+                <p className="text-gray-600 text-sm">{item.email}</p>
+                <p className="text-gray-500 text-xs">CPF: {item.cpf}</p>
+              </td>
+              <td className="py-3 px-4 text-gray-600">{item.criado_em}              </td>
+              <td className="py-3 px-4">
+                <span
+                  className={`px-3 py-1 rounded-full text-white text-xs font-bold ${
+                    item.status === "Ativo" ? "bg-green-500" : "bg-red-500"
+                  }`}
+                >
+                  {item.status}
+                </span>
+              </td>
+              <td className="py-3 px-4 flex space-x-2">
+                <button
+                  className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"
+                  onClick={() => handleView(item.id, activeTab)}
+                >
+                  <FaEye />
+                </button>
+                <button
+                  className="bg-yellow-500 text-white p-2 rounded-md hover:bg-yellow-600"
+                  onClick={() => handleEdit(item.id, activeTab)}
+                >
+                  <FaEdit />
+                </button>
+                <button
+                  className="bg-red-500 text-white p-2 rounded-md hover:bg-red-600"
+                  onClick={() => handleDelete(item.id, activeTab)}
+                >
+                  <FaTrash />
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
+      {/* Paginação */}
+      <div className="flex justify-between items-center mt-4">
+        <p>
+          Results 1 to {filteredData.length} of {dataToDisplay.length}
+        </p>
+      </div>
+
+      {/* Componentes extras */}
       {activeTab === "dashboard" && <Dashboard />}
       {activeTab === "logs" && <Logs />}
       {activeTab === "filters" && <Filters />}

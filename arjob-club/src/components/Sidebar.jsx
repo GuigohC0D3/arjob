@@ -5,7 +5,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import "./Sidebar.css";
 
 const Sidebar = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false); // Estado para abrir/fechar a sidebar
   const [cargo, setCargo] = useState(null);
   const [error, setError] = useState("");
   const [permissoes, setPermissoes] = useState([]);
@@ -13,11 +13,8 @@ const Sidebar = () => {
 
   // Verificar se o usuário está logado
   useEffect(() => {
-    const checkLogin = () => {
-      const token = sessionStorage.getItem("authToken");
-      setIsLoggedIn(!!token); // Atualiza o estado de login com base no token
-    };
-    checkLogin();
+    const token = sessionStorage.getItem("authToken");
+    setIsLoggedIn(!!token);
   }, []);
 
   // Buscar permissões do usuário
@@ -25,26 +22,22 @@ const Sidebar = () => {
     const fetchPermissoes = async () => {
       try {
         const token = sessionStorage.getItem("authToken");
-        if (!token) {
-          throw new Error("Token não encontrado. Faça login novamente.");
-        }
-    
+        if (!token) throw new Error("Token não encontrado. Faça login novamente.");
+
         const response = await api.get("/permissoes", {
           headers: {
-            Authorization: `Bearer ${token}`, // Inclua o token JWT no cabeçalho
+            Authorization: `Bearer ${token}`,
           },
         });
-    
+
         setPermissoes(response.data.permissoes || []);
       } catch (error) {
         console.error("Erro ao buscar permissões:", error.response?.data || error.message);
-        setPermissoes([]); // Garante que o estado fique vazio em caso de erro
+        setPermissoes([]);
       }
     };
-    
-    if (isLoggedIn) {
-      fetchPermissoes();
-    }
+
+    if (isLoggedIn) fetchPermissoes();
   }, [isLoggedIn]);
 
   // Buscar cargo do usuário
@@ -52,29 +45,25 @@ const Sidebar = () => {
     const fetchCargo = async () => {
       try {
         const token = sessionStorage.getItem("authToken");
-        if (!token) {
-          throw new Error("Token não encontrado. Faça login novamente.");
-        }
-    
+        if (!token) throw new Error("Token não encontrado. Faça login novamente.");
+
         const response = await api.get("/auth/cargo", {
           headers: {
-            Authorization: `Bearer ${token}`, // Inclua o token JWT no cabeçalho
+            Authorization: `Bearer ${token}`,
           },
         });
-    
-        setCargo(response.data.cargo); // Atualiza o cargo recebido
+
+        setCargo(response.data.cargo);
       } catch (error) {
         console.error("Erro ao buscar cargo:", error.response?.data || error.message);
         setError(error.response?.data?.error || "Erro ao buscar cargo.");
       }
     };
-    
-    if (isLoggedIn) {
-      fetchCargo();
-    }
+
+    if (isLoggedIn) fetchCargo();
   }, [isLoggedIn]);
 
-  // Alternar o estado da sidebar
+  // Alternar visibilidade da sidebar
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
   };
@@ -132,27 +121,35 @@ const Sidebar = () => {
 
   return (
     <>
-      {/* Exibição do cargo */}
-      {cargo ? <p>Cargo: {cargo}</p> : <p>{error || "Carregando cargo..."}</p>}
-
-      {/* Botão de menu */}
+      {/* Botão de abrir o menu */}
       <button
-        className={`hamburger-btn ${isOpen ? "open" : ""}`}
+        className={`hamburger-btn ${isOpen ? "hidden" : ""}`} // Esconde o botão quando a sidebar está aberta
         onClick={toggleSidebar}
       >
-        <i className={`bi ${isOpen ? "bi-x" : "bi-list"}`}></i>
+        <i className="bi bi-list text-2xl"></i>
       </button>
 
       {/* Sidebar */}
       <aside className={`sidebar ${isOpen ? "open" : ""}`}>
+        {/* Botão de fechar */}
+        <button className="close-btn" onClick={toggleSidebar}>
+          <i className="bi bi-x text-2xl"></i>
+        </button>
+
         <header className="sidebar-header">ARJOB</header>
+
+        <p className="sidebar-cargo">
+          {cargo ? `Cargo: ${cargo}` : error || "Carregando cargo..."}
+        </p>
+
         <nav className="menu">
-          <ul>
+          <ul className="space-y-4">
             {isLoggedIn ? (
-              filteredItems.map((item) => (
-                <li key={item.name}>
-                  <Link to={item.path}>
-                    <i className={item.icon}></i> {item.name}
+              filteredItems.map((item, index) => (
+                <li key={index} className="flex items-center p-3 space-x-4 hover:bg-gray-200 rounded-md">
+                  <i className={`${item.icon} text-lg`}></i>
+                  <Link to={item.path} className="text-gray-800 hover:text-gray-600">
+                    {item.name}
                   </Link>
                 </li>
               ))
