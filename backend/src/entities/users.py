@@ -135,7 +135,7 @@ def listar_usuarios_com_permissoes():
             cur = conn.cursor()
             cur.execute("""
                 SELECT u.id, u.nome, u.email, u.cpf,
-                       json_agg(p.nome) AS permissoes  -- Use 'p.nome' em vez de 'p.permissao'
+                       json_agg(p.nome) AS permissoes, to_char(criado_em, 'DD/MM/YYYY')
                 FROM usuarios u
                 LEFT JOIN permissoes_usuario pu ON u.id = pu.usuario_id
                 LEFT JOIN permissoes p ON pu.permissao_id = p.id
@@ -150,7 +150,8 @@ def listar_usuarios_com_permissoes():
                     "nome": usuario[1],
                     "email": usuario[2],
                     "cpf": usuario[3],
-                    "permissoes": usuario[4] or []
+                    "permissoes": usuario[4] or [],
+                    "criado_em": usuario[5]
                 }
                 for usuario in usuarios
             ], 200
