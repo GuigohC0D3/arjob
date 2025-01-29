@@ -16,14 +16,14 @@ def create_app():
     app.config['MAIL_SERVER'] = 'smtp.gmail.com'
     app.config['MAIL_PORT'] = 587
     app.config['MAIL_USE_TLS'] = True
-    app.config['MAIL_USE_SSL'] = False
     app.config['MAIL_USERNAME'] = 'thundergametm@gmail.com'
-    app.config['MAIL_PASSWORD'] = 'hhbt jzzy xdtj etdg'
+    app.config['MAIL_PASSWORD'] = 'lcrw hhuj ggus sfey'
     app.config['MAIL_DEFAULT_SENDER'] = 'thundergametm@gmail.com'
 
     # Configurações do Flask-JWT-Extended
+    app.config["JWT_SECRET_KEY"] = "e54f3bcb4a6d8ef0b21cd7dfef50c2b28d8578a5f1f8f4671a0b69a1c3f4f0c3"
     app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'uma_chave_secreta_segura')  # Defina sua chave secreta aqui
-    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=15)  # Access Token válido por 15 minutos
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=7)  # Access Token válido por 15 minutos
     app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(hours=8)  # Refresh Token válido por 8 horas
     jwt = JWTManager(app)  # Inicializa o JWTManager com o app
 

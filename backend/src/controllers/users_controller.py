@@ -1,31 +1,24 @@
 from ..entities import users
-from ..connection.config import connect_db
 import json
 
-def register_user(nome=None, cpf=None, email=None, senha=None, cargoId=None):
+def register_user(nome=None, cpf=None, email=None, senha=None):
     try:
         # Validar campos obrigatórios
-        if not all([nome, cpf, email, senha, cargoId]):
+        if not all([nome, cpf, email, senha]):
             return json.dumps({"error": "Todos os campos são obrigatórios."}), 400
 
-        # Usar o cargoId diretamente
-        response, status_code = users.create_user(nome, cpf, email, senha, cargoId)
+        # Criar o usuário no banco (com status "Pendente")
+        response, status_code = users.create_user(nome, cpf, email, senha)
 
-        # Verificar se o cargo é "usuario" para atribuir permissões padrão
         if status_code == 201:
-            # Buscar o nome do cargo associado
-            conn = connect_db()
-            cur = conn.cursor()
-            cur.execute("SELECT nome FROM cargos WHERE id = %s", (cargoId,))
-            cargo_nome = cur.fetchone()
-            cur.close()
-            conn.close()
+            user_id = response["id"]
 
-            if cargo_nome and cargo_nome[0].lower() == "usuario":
-                permissoes_padrao = ["iniciar_venda", "historico", "produtos"]
-                users.definir_permissoes(response["id"], permissoes_padrao)
+
+            # Enviar e-mail de verificação
+            users.send_verification_email(email, user_id)
 
         return json.dumps(response), status_code
+
     except Exception as e:
         print(f"Erro no controlador register_user: {e}")
         return json.dumps({"error": "Erro ao processar o registro de usuário."}), 500
@@ -62,7 +55,7 @@ def authenticate_user(cpf, senha):
 
 def listar_usuarios():
     try:
-        # Buscar a lista de usuários na entidade
+        # Buscar a lista de usuá    rios na entidade
         usuarios_lista = users.listar_usuarios()
         return json.dumps(usuarios_lista), 200
     except Exception as e:

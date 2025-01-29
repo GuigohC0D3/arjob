@@ -4,6 +4,13 @@ from ..connection.config import connect_db
 from src.utils import hash_utils
 from src.utils.hash_utils import bcrypt
 from src.utils import cryptography_utils
+from flask_jwt_extended import create_access_token
+from datetime import timedelta
+from flask_mail import Message
+from src.extensions import mail 
+
+def generate_verification_token(user_id):
+    return create_access_token(identity=str(user_id), expires_delta=timedelta(days=7))
 
 
 def get_by_id(user_id):
@@ -55,40 +62,30 @@ def get_usuarios():
         return jsonify({'error': 'Erro ao conectar ao banco de dados'}), 500
 
 # Função para criar um usuário
-def create_user(nome, cpf, email, senha, cargo_id):
+def create_user(nome, cpf, email, senha):
     conn = connect_db()
     if conn:
         try:
-            # Hash da senha
             senha_hash = bcrypt.hashpw(senha.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
             cur = conn.cursor()
 
-            # Inserir o usuário na tabela `usuarios`
+            # Criar usuário com status "Pendente"
             cur.execute(
                 """
-                INSERT INTO usuarios (nome, cpf, email, senha, ativo, criado_em)
-                VALUES (%s, %s, %s, %s, %s, NOW())
+                INSERT INTO usuarios (nome, cpf, email, senha, ativo, criado_em, status_id)
+                VALUES (%s, %s, %s, %s, %s, NOW(), %s)
                 RETURNING id
                 """,
-                (nome, cpf, email, senha_hash, True),
+                (nome, cpf, email, senha_hash, True, 3),  # 3 = "Pendente"
             )
             usuario_id = cur.fetchone()[0]
-
-            # Associar o usuário ao cargo na tabela `cargo_usuario`
-            cur.execute(
-                """
-                INSERT INTO cargo_usuario (usuario_id, cargo_id, criado_em)
-                VALUES (%s, %s, NOW())
-                """,
-                (usuario_id, cargo_id),
-            )
-
+            
             conn.commit()
             cur.close()
             conn.close()
 
-            return {"message": "Usuário registrado com sucesso!", "id": usuario_id}, 201
+            return {"message": "Usuário registrado! Verifique seu e-mail para ativar a conta.", "id": usuario_id}, 201
         except Exception as e:
             conn.rollback()
             print(f"Erro ao registrar usuário: {e}")
@@ -320,3 +317,26 @@ def check_user(cpf, email):
     except Exception as e:
         print(f"Erro ao verificar duplicidade de usuário: {e}")
         return {"error": "Erro ao verificar duplicidade no banco de dados."}, 500
+
+def send_verification_email(user_email, user_id):
+    try:
+        token = generate_verification_token(user_id)
+        verification_url = f"http://10.11.1.67:5000/auth/verify?token={token}"
+
+        print(f"🔑 Token gerado para {user_email}: {token}")  # DEBUG
+        print(f"📩 Link de ativação enviado: {verification_url}")  # DEBUG
+
+        msg = Message(
+            subject="Confirmação de Cadastro",
+            recipients=[user_email],
+        )
+        
+        # Definir o corpo do e-mail com UTF-8
+        msg.body = f"""Olá! 😊\n\nClique no link para ativar sua conta:\n{verification_url}\n\nEste link expira em 24 horas."""
+        msg.charset = "utf-8"
+
+        mail.send(msg)
+        print(f"✅ E-mail de verificação enviado para {user_email}")
+    
+    except Exception as e:
+        print(f"❌ Erro ao enviar e-mail: {e}")

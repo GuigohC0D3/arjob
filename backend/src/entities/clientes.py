@@ -115,11 +115,11 @@ def listar_clientes():
     if conn:
         try:
             cur = conn.cursor()
-            cur.execute("SELECT id, nome, cpf FROM clientes")
+            cur.execute("SELECT id, nome, cpf, to_char(criado_em, 'DD/MM/YYYY') FROM clientes")
             clientes = cur.fetchall()
             cur.close()
             conn.close()
-            return [{"id": c[0], "nome": c[1], "cpf": c[2]} for c in clientes]
+            return [{"id": c[0], "nome": c[1], "cpf": c[2], "criado_em": c[3]} for c in clientes]
         except Exception as e:
             print(f"Erro ao buscar clientes no banco de dados: {e}")
             return []
