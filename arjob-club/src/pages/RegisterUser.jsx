@@ -1,11 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import "primereact/resources/themes/lara-light-blue/theme.css";
-import "primereact/resources/primereact.min.css";
+import api from "../apiConfig";
 import { Toast } from "primereact/toast";
-import "primeicons/primeicons.css";
-import "./RegisterUser.css";
 import { useRef } from "react";
 
 const RegisterUser = () => {
@@ -15,7 +11,6 @@ const RegisterUser = () => {
     email: "",
     senha: "",
     confirmarSenha: "",
-    cargo: "",
   });
   const [passwordStrength, setPasswordStrength] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -24,9 +19,6 @@ const RegisterUser = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const toast = useRef(null);
-
-  // Configuração da API Base
-  const API_BASE_URL = "http://localhost:5000";
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -75,14 +67,13 @@ const RegisterUser = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("Formulário enviado");
-    const { nome, cpf, email, senha, confirmarSenha, cargo } = formData;
+    const { nome, cpf, email, senha, confirmarSenha } = formData;
     const newErrors = {};
 
     if (!nome) newErrors.nome = "Por favor, preencha seu nome.";
     if (!cpf) newErrors.cpf = "CPF inválido. Certifique-se de que está no formato correto.";
     if (!email || !email.includes("@")) newErrors.email = "E-mail inválido.";
 
-    // Validação de força da senha
     if (passwordStrength === "fraca" || passwordStrength === "média") {
       toast.current.show({
         severity: "warn",
@@ -106,9 +97,8 @@ const RegisterUser = () => {
     setIsSubmitting(true);
 
     try {
-      // Verificação de duplicidade no banco de dados
       console.log("Verificando duplicidade no banco de dados...");
-      const checkResponse = await axios.post(`${API_BASE_URL}/users/check`, { cpf, email });
+      const checkResponse = await api.post(`/users/check`, { cpf, email });
       console.log("Resposta do backend para verificação:", checkResponse.data);
 
       if (checkResponse.data.exists) {
@@ -122,14 +112,12 @@ const RegisterUser = () => {
         return;
       }
 
-      // Criação do usuário
       console.log("Criando usuário...");
-      const response = await axios.post(`${API_BASE_URL}/users`, {
+      const response = await api.post(`/users`, {
         nome,
         cpf,
         email,
-        senha,
-        cargoId: cargo,
+        senha
       });
 
       if (response.data) {
@@ -140,7 +128,7 @@ const RegisterUser = () => {
           detail: "Usuário registrado com sucesso!",
           life: 3000,
         });
-        await axios.post(`${API_BASE_URL}/send-confirmation-email`, { email });
+        await api.post(`/send-confirmation-email`, { email });
         navigate("/");
       }
     } catch (error) {
@@ -158,13 +146,15 @@ const RegisterUser = () => {
   };
 
   return (
-    <div className="register-container">
+    <div className="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-md">
       <Toast ref={toast} />
       <form onSubmit={handleSubmit}>
-        <h2>Registro de Usuário</h2>
+        <h2 className="text-2xl font-bold text-center text-gray-700 mb-6">Registro de Usuário</h2>
 
-        <div className="form-group">
-          <label htmlFor="nome">Nome*</label>
+        <div className="mb-4">
+          <label htmlFor="nome" className="block text-gray-700 font-medium mb-1">
+            Nome*
+          </label>
           <input
             type="text"
             id="nome"
@@ -172,13 +162,15 @@ const RegisterUser = () => {
             value={formData.nome}
             onChange={handleChange}
             placeholder="Digite seu nome"
+            className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
-          {errors.nome && <p className="error-text">{errors.nome}</p>}
+          {errors.nome && <p className="text-sm text-red-600 mt-1">{errors.nome}</p>}
         </div>
-
-        <div className="form-group">
-          <label htmlFor="cpf">CPF*</label>
+        <div className="mb-4">
+          <label htmlFor="cpf" className="block text-gray-700 font-medium mb-1">
+            CPF*
+          </label>
           <input
             type="text"
             id="cpf"
@@ -186,13 +178,16 @@ const RegisterUser = () => {
             value={formData.cpf}
             onChange={handleChange}
             placeholder="Digite seu CPF"
+            className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
-          {errors.cpf && <p className="error-text">{errors.cpf}</p>}
+          {errors.cpf && <p className="text-sm text-red-600 mt-1">{errors.cpf}</p>}
         </div>
 
-        <div className="form-group">
-          <label htmlFor="email">E-mail*</label>
+        <div className="mb-4">
+          <label htmlFor="email" className="block text-gray-700 font-medium mb-1">
+            E-mail*
+          </label>
           <input
             type="email"
             id="email"
@@ -200,14 +195,17 @@ const RegisterUser = () => {
             value={formData.email}
             onChange={handleChange}
             placeholder="Digite seu e-mail"
+            className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
-          {errors.email && <p className="error-text">{errors.email}</p>}
+          {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email}</p>}
         </div>
 
-        <div className="form-group">
-          <label htmlFor="senha">Senha*</label>
-          <div className="password-wrapper">
+        <div className="mb-4">
+          <label htmlFor="senha" className="block text-gray-700 font-medium mb-1">
+            Senha*
+          </label>
+          <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
               id="senha"
@@ -215,32 +213,56 @@ const RegisterUser = () => {
               value={formData.senha}
               onChange={handleChange}
               placeholder="Digite sua senha"
+              className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
             <i
-              className={`pi ${showPassword ? "pi-eye-slash" : "pi-eye"}`}
+              className={`absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500 ${
+                showPassword ? "pi pi-eye-slash" : "pi pi-eye"
+              }`}
               onClick={() => setShowPassword(!showPassword)}
               title={showPassword ? "Ocultar senha" : "Mostrar senha"}
             ></i>
           </div>
-          <div className="progress-bar-container">
-            <div className={`progress-bar ${passwordStrength}`}></div>
+          <div className="h-2 mt-2 rounded bg-gray-200">
+            <div
+              className={`h-full rounded ${
+                passwordStrength === "muito-forte"
+                  ? "bg-green-700 w-full"
+                  : passwordStrength === "forte"
+                  ? "bg-green-400 w-3/4"
+                  : passwordStrength === "média"
+                  ? "bg-yellow-500 w-1/2"
+                  : "bg-red-500 w-1"
+              }`}
+            ></div>
           </div>
-          <p className={`password-strength-text ${passwordStrength}`}>
+          <p
+            className={`text-sm mt-1 font-medium ${
+              passwordStrength === "muito-forte"
+                ? "text-green-500"
+                : passwordStrength === "forte"
+                ? "text-green-400"
+                : passwordStrength === "média"
+                ? "text-yellow-500"
+                : "text-red-500"
+            }`}
+          >
             {passwordStrength === "fraca"
               ? "Senha fraca"
               : passwordStrength === "média"
-              ? "Senha Média"
+              ? "Senha média"
               : passwordStrength === "forte"
               ? "Senha forte"
               : "Senha muito forte"}
           </p>
-          {errors.senha && <p className="error-text">{errors.senha}</p>}
         </div>
 
-        <div className="form-group">
-          <label htmlFor="confirmarSenha">Confirmar Senha*</label>
-          <div className="password-wrapper">
+        <div className="mb-4">
+          <label htmlFor="confirmarSenha" className="block text-gray-700 font-medium mb-1">
+            Confirmar Senha*
+          </label>
+          <div className="relative">
             <input
               type={showConfirmPassword ? "text" : "password"}
               id="confirmarSenha"
@@ -248,20 +270,28 @@ const RegisterUser = () => {
               value={formData.confirmarSenha}
               onChange={handleChange}
               placeholder="Confirme sua senha"
+              className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
             <i
-              className={`pi ${showConfirmPassword ? "pi-eye-slash" : "pi-eye"}`}
+              className={`absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500 ${
+                showConfirmPassword ? "pi pi-eye-slash" : "pi pi-eye"
+              }`}
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               title={showConfirmPassword ? "Ocultar senha" : "Mostrar senha"}
             ></i>
           </div>
-          {errors.confirmarSenha && <p className="error-text">{errors.confirmarSenha}</p>}
+          {errors.confirmarSenha && (
+            <p className="text-sm text-red-600 mt-1">{errors.confirmarSenha}</p>
+          )}
         </div>
 
         <button
           type="submit"
-          className="login-button"
+          className={`w-full p-3 bg-blue-500 text-white font-bold rounded shadow hover:bg-blue-600 transition ${
+            isSubmitting ? "cursor-not-allowed opacity-50" : ""
+          }`}
+          disabled={isSubmitting}
         >
           {isSubmitting ? "Registrando..." : "Registrar"}
         </button>

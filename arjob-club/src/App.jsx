@@ -17,6 +17,7 @@ import Login from "./pages/Login";
 import Preloading from "./pages/Preloading";
 import RegisterUser from "./pages/RegisterUser";
 import AdminPanel from "./components/adminPages/AdminPanel";
+import VerifyAccount from "./pages/VerifyAccount";
 
 const PrivateRoute = () => {
   const authToken = sessionStorage.getItem("authToken");
@@ -53,6 +54,7 @@ const AppContent = () => {
             <Route path="/Cliente" element={<CadastroCliente />} />
             <Route path="/Fluxo" element={<FluxoDeCaixa />} />
             <Route path="/admin" element={<AdminPanel/>} />
+            <Route path="/verify" element={<VerifyAccount />} />
           </Route>
         </Routes>
       </div>

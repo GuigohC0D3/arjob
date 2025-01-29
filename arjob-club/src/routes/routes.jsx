@@ -12,6 +12,7 @@ import Preloading from "../pages/Preloading";
 import RegisterUser from "../pages/RegisterUser";
 import ComandaAberta from "../pages/ComandaAberta";
 import AdminPanel from "../components/adminPages/AdminPanel"
+import VerifyAccount from "../pages/VerifyAccount"
 const AppRoutes = () => {
   return (
     <Router>
@@ -27,6 +28,7 @@ const AppRoutes = () => {
         <Route path="/Register" element={<RegisterUser/>} />
         <Route path="/comandas/:numero" element={<ComandaAberta />} />
         <Route path="/admin" element={<AdminPanel/>} />
+        <Route path="/verify" element={<VerifyAccount />} />
       </Routes>
     </Router>
   );
