@@ -9,8 +9,8 @@ from datetime import timedelta
 from flask_mail import Message
 from src.extensions import mail 
 
-def generate_verification_token(user_id):
-    return create_access_token(identity=str(user_id), expires_delta=timedelta(days=7))
+def generate_verification_token(user_email):
+    return create_access_token(identity=str(user_email), expires_delta=timedelta(days=7))
 
 
 def get_by_id(user_id):
@@ -67,10 +67,9 @@ def create_user(nome, cpf, email, senha):
     if conn:
         try:
             senha_hash = bcrypt.hashpw(senha.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-
             cur = conn.cursor()
 
-            # Criar usuário com status "Pendente"
+            # Inserir usuário com status "Pendente"
             cur.execute(
                 """
                 INSERT INTO usuarios (nome, cpf, email, senha, ativo, criado_em, status_id)
@@ -80,7 +79,7 @@ def create_user(nome, cpf, email, senha):
                 (nome, cpf, email, senha_hash, True, 3),  # 3 = "Pendente"
             )
             usuario_id = cur.fetchone()[0]
-            
+
             conn.commit()
             cur.close()
             conn.close()
@@ -88,7 +87,7 @@ def create_user(nome, cpf, email, senha):
             return {"message": "Usuário registrado! Verifique seu e-mail para ativar a conta.", "id": usuario_id}, 201
         except Exception as e:
             conn.rollback()
-            print(f"Erro ao registrar usuário: {e}")
+            print(f"❌ Erro ao registrar usuário: {e}")
             return {"error": "Erro ao registrar usuário"}, 500
     else:
         return {"error": "Erro ao conectar ao banco de dados"}, 500
@@ -318,25 +317,39 @@ def check_user(cpf, email):
         print(f"Erro ao verificar duplicidade de usuário: {e}")
         return {"error": "Erro ao verificar duplicidade no banco de dados."}, 500
 
-def send_verification_email(user_email, user_id):
+def send_verification_email(user_email):
     try:
-        token = generate_verification_token(user_id)
-        verification_url = f"http://10.11.1.67:5000/auth/verify?token={token}"
-
-        print(f"🔑 Token gerado para {user_email}: {token}")  # DEBUG
-        print(f"📩 Link de ativação enviado: {verification_url}")  # DEBUG
+        token = generate_verification_token(user_email)  
+        verification_url = f"http://10.11.1.67:5173/verify?token={token}"  # Aponta para o frontend
 
         msg = Message(
             subject="Confirmação de Cadastro",
             recipients=[user_email],
+            body=f"Olá! 😊\n\nClique no link para ativar sua conta:\n{verification_url}\n\nEste link expira em 7 dias."
         )
-        
-        # Definir o corpo do e-mail com UTF-8
-        msg.body = f"""Olá! 😊\n\nClique no link para ativar sua conta:\n{verification_url}\n\nEste link expira em 24 horas."""
-        msg.charset = "utf-8"
 
         mail.send(msg)
         print(f"✅ E-mail de verificação enviado para {user_email}")
-    
+
     except Exception as e:
         print(f"❌ Erro ao enviar e-mail: {e}")
+        return {"error": "Erro ao enviar e-mail"}, 500
+
+def register_user(nome=None, cpf=None, email=None, senha=None):
+    try:
+        if not all([nome, cpf, email, senha]):
+            return {"error": "Todos os campos são obrigatórios."}, 400
+
+        response, status_code = create_user(nome, cpf, email, senha)
+
+        if status_code == 201:
+            email_response = send_verification_email(email) 
+            
+             # ✅ Só verifica erros se houver um retorno da função
+            if email_response and isinstance(email_response, dict) and "error" in email_response:
+                return email_response  
+
+        return response, status_code
+    except Exception as e:
+        print(f"❌ Erro no controlador register_user: {e}")
+        return {"error": "Erro ao processar o registro de usuário."}, 500

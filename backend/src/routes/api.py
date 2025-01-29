@@ -398,23 +398,21 @@ def verificar_token_route():
 
 @main_bp.route('/auth/verify', methods=['GET'])
 def verify_email():
-    token = request.args.get("token")  # Pega o token enviado por e-mail
-    print(token)
-    
+    token = request.args.get("token")
+
     if not token:
         return jsonify({"error": "Token inválido"}), 400
 
     try:
-        # Decodificar o token para obter o e-mail ou ID do usuário
-        user_id = verify_token(token)  
+        user_email = verify_token(token)  # Agora retorna o e-mail
 
-        if not user_id:
+        if not user_email:
             return jsonify({"error": "Token inválido ou expirado"}), 400
 
-        # Conectar ao banco de dados e ativar a conta do usuário
+        # Atualizar usuário para "Ativo" pelo e-mail
         conn = connect_db()
         cur = conn.cursor()
-        cur.execute("UPDATE usuarios SET status_id = 1 WHERE id = %s", (user_id,))
+        cur.execute("UPDATE usuarios SET status_id = 1 WHERE email = %s", (user_email,))
         conn.commit()
         cur.close()
         conn.close()
@@ -425,21 +423,20 @@ def verify_email():
         print(f"❌ Erro ao ativar conta: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
 
+
 @main_bp.route('/send-confirmation-email', methods=['POST'])
 def send_confirmation_email():
     try:
         data = request.json
         email = data.get("email")
-        user_id = data.get("user_id")  # Pegamos o ID do usuário para gerar o token
 
-        if not email or not user_id:
-            return jsonify({"error": "E-mail e ID do usuário são obrigatórios"}), 400
+        if not email:
+            return jsonify({"error": "E-mail é obrigatório"}), 400
 
-        # Enviar e-mail de ativação
-        send_verification_email(email, user_id)
+        # Enviar e-mail de confirmação sem precisar do ID
+        send_verification_email(email)  
 
         return jsonify({"message": "E-mail enviado com sucesso!"}), 200
-
     except Exception as e:
         print(f"❌ Erro ao enviar e-mail: {e}")
         return jsonify({"error": "Erro ao enviar e-mail"}), 500

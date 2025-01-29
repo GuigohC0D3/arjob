@@ -15,7 +15,7 @@ def register_user(nome=None, cpf=None, email=None, senha=None):
 
 
             # Enviar e-mail de verificação
-            users.send_verification_email(email, user_id)
+            users.send_verification_email(email)
 
         return json.dumps(response), status_code
 

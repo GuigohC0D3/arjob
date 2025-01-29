@@ -49,7 +49,7 @@ def verify_token(token):
         decoded_token = decode_token(token)  # Decodifica o token
         print(f"✅ Token decodificado com sucesso: {decoded_token}")  # DEBUG
 
-        return int(decoded_token["sub"])  # Converte o ID de volta para inteiro
+        return decoded_token["sub"]  # Retorna o email, não o ID
     except Exception as e:
         print(f"❌ Erro ao decodificar token: {e}")
         return None
