@@ -238,6 +238,15 @@ def listar_usuarios_com_permissoes():
         print(f"Erro no endpoint /admin/usuarios: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
 
+@main_bp.route('/admin/usuarios/status', methods=['GET'])
+def listar_status_usuarios():
+    try:
+        usuarios_status, status_code = users_controller.listar_usuarios_status()
+        return jsonify(usuarios_status), status_code
+    except Exception as e:
+        print(f"Erro no endpoint /admin/usuarios/status: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
+
 # Atualizar permissões de um usuário
 @main_bp.route('/admin/usuarios/<int:usuario_id>/permissoes', methods=['PUT'])
 def atualizar_permissoes_usuario(usuario_id):

@@ -13,10 +13,6 @@ def register_user(nome=None, cpf=None, email=None, senha=None):
         if status_code == 201:
             user_id = response["id"]
 
-
-            # Enviar e-mail de verificação
-            users.send_verification_email(email)
-
         return json.dumps(response), status_code
 
     except Exception as e:
@@ -61,6 +57,14 @@ def listar_usuarios():
     except Exception as e:
         print(f"Erro no controlador listar_usuarios: {e}")
         return json.dumps({"error": "Erro ao listar usuários"}), 500
+
+def listar_usuarios_status():
+    try:
+        usuarios_status, status_code = users.get_usuarios_status()
+        return usuarios_status, status_code
+    except Exception as e:
+        print(f"Erro ao listar status dos usuários: {e}")
+        return {"error": "Erro ao listar status dos usuários"}, 500
 
 
 def listar_usuarios_com_permissoes():

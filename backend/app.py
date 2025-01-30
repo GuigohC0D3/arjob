@@ -28,7 +28,7 @@ def create_app():
     jwt = JWTManager(app)  # Inicializa o JWTManager com o app
 
     # Configuração do CORS
-    CORS(app, supports_credentials=True, resources={r"/*": {"origins": "http://localhost:5173"}})
+    CORS(app, supports_credentials=True, resources={r"/*": {"origins": "*"}})
 
     # Configuração da chave secreta
     app.secret_key = os.getenv('FLASK_SECRET_KEY', 'b2d79f7202d194fc6de942abc1297eeb44d5f4e5')

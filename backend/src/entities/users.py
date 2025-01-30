@@ -7,7 +7,8 @@ from src.utils import cryptography_utils
 from flask_jwt_extended import create_access_token
 from datetime import timedelta
 from flask_mail import Message
-from src.extensions import mail 
+from src.extensions import mail
+import os
 
 def generate_verification_token(user_email):
     return create_access_token(identity=str(user_email), expires_delta=timedelta(days=7))
@@ -60,6 +61,31 @@ def get_usuarios():
             conn.close()
     else:
         return jsonify({'error': 'Erro ao conectar ao banco de dados'}), 500
+    
+def get_usuarios_status():
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT id, status_id FROM usuarios
+            """)
+            usuarios_status = cur.fetchall()
+            cur.close()
+            conn.close()
+
+            return [
+                {
+                    "id": usuario[0],
+                    "status": usuario[1]  # status_id pode ser referenciado na tabela de status se necessário
+                }
+                for usuario in usuarios_status
+            ], 200
+        except Exception as e:
+            print(f"Erro ao listar status dos usuários: {e}")
+            return {"error": "Erro ao listar status dos usuários"}, 500
+    else:
+        return {"error": "Erro ao conectar ao banco de dados"}, 500
 
 # Função para criar um usuário
 def create_user(nome, cpf, email, senha):
@@ -319,8 +345,14 @@ def check_user(cpf, email):
 
 def send_verification_email(user_email):
     try:
-        token = generate_verification_token(user_email)  
-        verification_url = f"http://10.11.1.67:5173/verify?token={token}"  # Aponta para o frontend
+        token = generate_verification_token(user_email)
+
+        # Determina se está rodando localmente ou em produção
+        frontend_url = "http://10.11.1.67:5173"  # IP da rede local
+        if "PRODUCTION" in os.environ:  
+            frontend_url = "https://meusite.com"  # URL do servidor real
+
+        verification_url = f"{frontend_url}/verify?token={token}"
 
         msg = Message(
             subject="Confirmação de Cadastro",
@@ -339,11 +371,14 @@ def register_user(nome=None, cpf=None, email=None, senha=None):
     try:
         if not all([nome, cpf, email, senha]):
             return {"error": "Todos os campos são obrigatórios."}, 400
-
+        
         response, status_code = create_user(nome, cpf, email, senha)
+        print("🔍 Entrou em register_user")
 
         if status_code == 201:
-            email_response = send_verification_email(email) 
+            print(f"📧 Enviando e-mail para {email}...")
+            email_response = send_verification_email(email)
+            print(f"📧 Resposta do envio de e-mail: {email_response}")
             
              # ✅ Só verifica erros se houver um retorno da função
             if email_response and isinstance(email_response, dict) and "error" in email_response:
