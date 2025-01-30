@@ -12,7 +12,7 @@ const RegisterUser = () => {
     senha: "",
     confirmarSenha: "",
   });
-  const [passwordStrength, setPasswordStrength] = useState("");
+  const [passwordStrength, setPasswordStrength] = useState("fraca");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
@@ -71,7 +71,9 @@ const RegisterUser = () => {
     const newErrors = {};
 
     if (!nome) newErrors.nome = "Por favor, preencha seu nome.";
-    if (!cpf) newErrors.cpf = "CPF inválido. Certifique-se de que está no formato correto.";
+    if (!cpf)
+      newErrors.cpf =
+        "CPF inválido. Certifique-se de que está no formato correto.";
     if (!email || !email.includes("@")) newErrors.email = "E-mail inválido.";
 
     if (passwordStrength === "fraca" || passwordStrength === "média") {
@@ -117,7 +119,7 @@ const RegisterUser = () => {
         nome,
         cpf,
         email,
-        senha
+        senha,
       });
 
       if (response.data) {
@@ -132,12 +134,17 @@ const RegisterUser = () => {
         navigate("/");
       }
     } catch (error) {
-      console.error("Erro ao registrar usuário:", error.response?.data || error.message);
+      console.error(
+        "Erro ao registrar usuário:",
+        error.response?.data || error.message
+      );
 
       toast.current.show({
         severity: "error",
         summary: "Erro",
-        detail: error.response?.data?.error || "Erro desconhecido. Tente novamente mais tarde.",
+        detail:
+          error.response?.data?.error ||
+          "Erro desconhecido. Tente novamente mais tarde.",
         life: 3000,
       });
     } finally {
@@ -149,10 +156,15 @@ const RegisterUser = () => {
     <div className="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-md">
       <Toast ref={toast} />
       <form onSubmit={handleSubmit}>
-        <h2 className="text-2xl font-bold text-center text-gray-700 mb-6">Registro de Usuário</h2>
+        <h2 className="text-2xl font-bold text-center text-gray-700 mb-6">
+          Registro de Usuário
+        </h2>
 
         <div className="mb-4">
-          <label htmlFor="nome" className="block text-gray-700 font-medium mb-1">
+          <label
+            htmlFor="nome"
+            className="block text-gray-700 font-medium mb-1"
+          >
             Nome*
           </label>
           <input
@@ -165,7 +177,9 @@ const RegisterUser = () => {
             className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
-          {errors.nome && <p className="text-sm text-red-600 mt-1">{errors.nome}</p>}
+          {errors.nome && (
+            <p className="text-sm text-red-600 mt-1">{errors.nome}</p>
+          )}
         </div>
         <div className="mb-4">
           <label htmlFor="cpf" className="block text-gray-700 font-medium mb-1">
@@ -181,11 +195,16 @@ const RegisterUser = () => {
             className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
-          {errors.cpf && <p className="text-sm text-red-600 mt-1">{errors.cpf}</p>}
+          {errors.cpf && (
+            <p className="text-sm text-red-600 mt-1">{errors.cpf}</p>
+          )}
         </div>
 
         <div className="mb-4">
-          <label htmlFor="email" className="block text-gray-700 font-medium mb-1">
+          <label
+            htmlFor="email"
+            className="block text-gray-700 font-medium mb-1"
+          >
             E-mail*
           </label>
           <input
@@ -198,11 +217,16 @@ const RegisterUser = () => {
             className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
-          {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email}</p>}
+          {errors.email && (
+            <p className="text-sm text-red-600 mt-1">{errors.email}</p>
+          )}
         </div>
 
         <div className="mb-4">
-          <label htmlFor="senha" className="block text-gray-700 font-medium mb-1">
+          <label
+            htmlFor="senha"
+            className="block text-gray-700 font-medium mb-1"
+          >
             Senha*
           </label>
           <div className="relative">
@@ -233,7 +257,7 @@ const RegisterUser = () => {
                   ? "bg-green-400 w-3/4"
                   : passwordStrength === "média"
                   ? "bg-yellow-500 w-1/2"
-                  : "bg-red-500 w-1"
+                  : "bg-red-500 w-1" // Fraca ou valor padrão
               }`}
             ></div>
           </div>
@@ -259,7 +283,10 @@ const RegisterUser = () => {
         </div>
 
         <div className="mb-4">
-          <label htmlFor="confirmarSenha" className="block text-gray-700 font-medium mb-1">
+          <label
+            htmlFor="confirmarSenha"
+            className="block text-gray-700 font-medium mb-1"
+          >
             Confirmar Senha*
           </label>
           <div className="relative">
@@ -288,7 +315,7 @@ const RegisterUser = () => {
 
         <button
           type="submit"
-          className={`w-full p-3 bg-blue-500 text-white font-bold rounded shadow hover:bg-blue-600 transition ${
+          className={`w-full p-3 bg-blue-600 text-white font-bold rounded shadow hover:bg-blue-700 transition ${
             isSubmitting ? "cursor-not-allowed opacity-50" : ""
           }`}
           disabled={isSubmitting}

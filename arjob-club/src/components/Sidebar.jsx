@@ -155,7 +155,7 @@ const Sidebar = () => {
               ))
             ) : (
               <li>
-                <Link to="/Login">
+                <Link to="/">
                   <i className="bi bi-box-arrow-in-right"></i> Login
                 </Link>
               </li>
