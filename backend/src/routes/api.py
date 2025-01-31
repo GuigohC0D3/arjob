@@ -449,3 +449,12 @@ def send_confirmation_email():
     except Exception as e:
         print(f"❌ Erro ao enviar e-mail: {e}")
         return jsonify({"error": "Erro ao enviar e-mail"}), 500
+
+@main_bp.route('/admin/usuarios/<int:usuario_id>/cargo', methods=['PUT'])
+@jwt_required()
+def atualizar_cargo(usuario_id):
+    try:
+        return users_controller.atualizar_cargo_usuario(usuario_id)
+    except Exception as e:
+        print(f"Erro ao atualizar cargo do usuário: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500

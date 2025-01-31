@@ -388,3 +388,21 @@ def register_user(nome=None, cpf=None, email=None, senha=None):
     except Exception as e:
         print(f"❌ Erro no controlador register_user: {e}")
         return {"error": "Erro ao processar o registro de usuário."}, 500
+    
+def atualizar_cargo(usuario_id, novo_cargo_id):
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("UPDATE usuarios SET status_id = %s WHERE id = %s", (novo_cargo_id, usuario_id))
+            conn.commit()
+            cur.close()
+            conn.close()
+            return True
+        except Exception as e:
+            print(f"Erro ao atualizar cargo: {e}")
+            conn.rollback()
+            return False
+    else:
+        print("Erro ao conectar ao banco de dados")
+        return False

@@ -1,5 +1,6 @@
 from ..entities import users
 import json
+from flask import jsonify, request
 
 def register_user(nome=None, cpf=None, email=None, senha=None):
     try:
@@ -91,3 +92,22 @@ def check_user(cpf, email):
     except Exception as e:
         print(f"Erro no controlador check_user: {e}")
         return {"error": "Erro ao verificar duplicidade."}, 500
+    
+
+def atualizar_cargo_usuario(usuario_id):
+    try:
+        dados = request.json
+        novo_cargo_id = dados.get("cargo_id")
+
+        if not novo_cargo_id:
+            return jsonify({"error": "Cargo ID é obrigatório"}), 400
+
+        sucesso = users.atualizar_cargo(usuario_id, novo_cargo_id)
+        
+        if sucesso:
+            return jsonify({"message": "Cargo atualizado com sucesso!"}), 200
+        else:
+            return jsonify({"error": "Erro ao atualizar cargo"}), 500
+    except Exception as e:
+        print(f"Erro ao atualizar cargo do usuário: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
