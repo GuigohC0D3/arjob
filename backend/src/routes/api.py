@@ -4,7 +4,7 @@ from flask_cors import cross_origin, CORS
 from math import ceil
 from datetime import datetime
 from ..controllers import dashboard_controller
-from ..controllers import clientes_controller, departamento_cliente_controller, departamentos_controller,  mesas_controller, comandas_controller, produtos_controller, buscar_produtos_controller, users_controller, permissoes_controller
+from ..controllers import clientes_controller, departamento_cliente_controller, departamentos_controller,  mesas_controller, comandas_controller, produtos_controller, buscar_produtos_controller, users_controller, permissoes_controller, cargos_controller
 from ..entities import comandas
 from ..classes.user import User
 from ..entities.users import authenticate_user, get_user_permissions, get_user_cargo, send_verification_email
@@ -304,6 +304,11 @@ def dashboard():
         return jsonify(data), 200
     return jsonify({"error": "Erro ao carregar dashboard"}), 50
 
+@main_bp.route('/admin/cargos', methods=['GET'])
+@jwt_required()
+def listar_cargos_admin():
+    return cargos_controller.listar_todos_os_cargos()
+
 @main_bp.route('/users/check', methods=['POST'])
 def check_user():
     try:
@@ -458,3 +463,8 @@ def atualizar_cargo(usuario_id):
     except Exception as e:
         print(f"Erro ao atualizar cargo do usuário: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
+    
+@main_bp.route('/admin/usuarios/<int:usuario_id>/status', methods=['PUT'])
+@jwt_required()
+def atualizar_status(usuario_id):
+    return users_controller.atualizar_status_usuario(usuario_id)

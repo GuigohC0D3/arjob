@@ -34,3 +34,21 @@ def associar_usuario_cargo(usuario_id, cargo_id):
             print(f"Erro ao associar usuário a cargo: {e}")
     else:
         print("Erro ao conectar ao banco de dados")
+
+def buscar_todos():
+    conn = connect_db() 
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT id, nome FROM cargos")
+            resultados = cur.fetchall()
+            cur.close()
+            conn.close()
+            
+            return [{"id": row[0], "nome": row[1]} for row in resultados]
+        except Exception as e:
+            print(f"Erro ao buscar cargos: {e}")
+            return []
+    else:
+        print("Erro ao conectar ao banco de dados")
+        return []

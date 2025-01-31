@@ -111,3 +111,21 @@ def atualizar_cargo_usuario(usuario_id):
     except Exception as e:
         print(f"Erro ao atualizar cargo do usuário: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
+
+def atualizar_status_usuario(usuario_id):
+    try:
+        dados = request.json
+        novo_status = dados.get("status")
+
+        if novo_status not in [1, 2, 3]:
+            return jsonify({"error": "Status inválido"}), 400
+
+        sucesso = users.atualizar_status(usuario_id, novo_status)
+        
+        if sucesso:
+            return jsonify({"message": "Status atualizado com sucesso!"})
+        else:
+            return jsonify({"error": "Erro ao atualizar status"}), 500
+    except Exception as e:
+        print(f"Erro ao atualizar status: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
