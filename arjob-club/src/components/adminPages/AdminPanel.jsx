@@ -10,6 +10,7 @@ import "primereact/resources/primereact.min.css";
 import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 
 // Importando componentes adicionais
+import EditCargo from "./actionsaAdmin/EditCargo";
 import Dashboard from "./DashboardAdmin";
 import Logs from "./Filters";
 import Filters from "./LogsAdmin";
@@ -29,6 +30,12 @@ const AdminPanel = () => {
   // Estado para paginação
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4; // Número de usuários por página
+
+  const [editCargoModal, setEditCargoModal] = useState({
+    open: false,
+    userId: null,
+    currentCargo: null,
+  });
 
   useEffect(() => {
     if (activeTab === "usuarios") {
@@ -114,18 +121,6 @@ const AdminPanel = () => {
     });
   };
 
-  const handleEdit = (id, type) => {
-    toast.current.show({
-      severity: "info",
-      summary: "Editar",
-      detail: `Editar ${
-        type === "usuarios" ? "Usuário" : "Cliente"
-      } com ID: ${id}`,
-      life: 3000,
-    });
-    // Redirecione para a página de edição ou abra um modal para edição.
-  };
-
   const handleView = (id, type) => {
     toast.current.show({
       severity: "info",
@@ -152,6 +147,9 @@ const AdminPanel = () => {
     Bloqueado: "bg-red-500",
   };
 
+  const handleEditCargo = (userId, currentCargo) => {
+    setEditCargoModal({ open: true, userId, currentCargo });
+  };
 
   const dataToDisplay = activeTab === "usuarios" ? usuarios : clientes;
   const filteredData = dataToDisplay?.filter((item) =>
@@ -245,7 +243,7 @@ const AdminPanel = () => {
                 </button>
                 <button
                   className="bg-yellow-500 text-white p-2 rounded-md hover:bg-yellow-600"
-                  onClick={() => handleEdit(item.id, activeTab)}
+                  onClick={() => handleEditCargo(item.id, item.cargo)}
                 >
                   <FaEdit />
                 </button>
@@ -292,6 +290,14 @@ const AdminPanel = () => {
           Próximo
         </button>
       </div>
+      {editCargoModal.open && (
+        <EditCargo
+        userId={editCargoModal.userId}
+        currentCargo={editCargoModal.currentCargo}
+        onClose={() => setEditCargoModal({ open: false, userId: null, currentCargo: null})}
+        onUpdate={fetchUsuarios} 
+        />
+      )}
     </div>
   );
 };
