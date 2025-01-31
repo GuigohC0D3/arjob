@@ -44,6 +44,7 @@ const AppContent = () => {
           <Route path="/" element={<Login />} />
           <Route path="/Preloading" element={<Preloading />} />
           <Route path="/Register" element={<RegisterUser />} />
+          <Route path="/verify" element={<VerifyAccount />} />
 
           {/* Rotas protegidas */}
           <Route element={<PrivateRoute />}>
@@ -54,7 +55,6 @@ const AppContent = () => {
             <Route path="/Cliente" element={<CadastroCliente />} />
             <Route path="/Fluxo" element={<FluxoDeCaixa />} />
             <Route path="/admin" element={<AdminPanel/>} />
-            <Route path="/verify" element={<VerifyAccount />} />
           </Route>
         </Routes>
       </div>
