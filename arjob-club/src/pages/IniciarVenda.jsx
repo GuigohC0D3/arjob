@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import NovaComanda from "../components/NovaComanda";
 import ComandaProcesso from "../components/ComandaProcesso";
-import "./IniciarVenda.css";
 
 const IniciarVenda = () => {
   const [mesas, setMesas] = useState([]);
@@ -9,14 +8,11 @@ const IniciarVenda = () => {
   const [cpfCliente, setCpfCliente] = useState("");
   const [clienteInfo, setClienteInfo] = useState(null);
   const [produtosCategoria, setProdutosCategoria] = useState([]);
-  const [produtosCategoriaOriginal, setProdutosCategoriaOriginal] = useState(
-    []
-  );
+  const [produtosCategoriaOriginal, setProdutosCategoriaOriginal] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [mostrarFiltro, setMostrarFiltro] = useState(false);
   const [comandaId, setComandaId] = useState(null);
 
-  // Carregar mesas ao montar o componente
   useEffect(() => {
     const fetchMesas = async () => {
       try {
@@ -59,9 +55,8 @@ const IniciarVenda = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setComandaId(data.id); // Certifique-se de armazenar o ID retornado pelo backend
+        setComandaId(data.id);
 
-        // Atualizar o status da mesa para "ocupada"
         setMesas((prevMesas) =>
           prevMesas.map((mesa) =>
             mesa.id === selectedMesa.id ? { ...mesa, status: "ocupada" } : mesa
@@ -73,9 +68,7 @@ const IniciarVenda = () => {
           const produtos = await produtosResponse.json();
           setProdutosCategoria(produtos);
           setProdutosCategoriaOriginal(produtos);
-          const categoriasUnicas = [
-            ...new Set(produtos.map((p) => p.categoria)),
-          ];
+          const categoriasUnicas = [...new Set(produtos.map((p) => p.categoria))];
           setCategorias(categoriasUnicas);
         }
       } else {
@@ -88,24 +81,19 @@ const IniciarVenda = () => {
 
   const acessarComandaOcupada = async (mesa) => {
     try {
-      const response = await fetch(
-        `http://10.11.1.67:5000/comandas/mesa/${mesa.id}`
-      );
+      const response = await fetch(`http://10.11.1.67:5000/comandas/mesa/${mesa.id}`);
       if (response.ok) {
         const comandaData = await response.json();
         setComandaId(comandaData.id);
         setSelectedMesa(mesa);
 
-        // Carregar produtos disponíveis
         const produtosResponse = await fetch("http://10.11.1.67:5000/produtos");
         if (produtosResponse.ok) {
           const produtos = await produtosResponse.json();
           setProdutosCategoria(produtos);
           setProdutosCategoriaOriginal(produtos);
 
-          const categoriasUnicas = [
-            ...new Set(produtos.map((produto) => produto.categoria)),
-          ];
+          const categoriasUnicas = [...new Set(produtos.map((produto) => produto.categoria))];
           setCategorias(categoriasUnicas);
         }
       } else {
@@ -120,15 +108,15 @@ const IniciarVenda = () => {
   };
 
   return (
-    <div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
       {!selectedMesa ? (
-        <div className="mesas-container">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 grid-rows-4 gap-6 max-w-screen-lg mx-auto">
           {mesas.map((mesa) => (
             <button
               key={mesa.id}
-              className={`mesa ${
-                mesa.status === "ocupada" ? "ocupada" : "disponivel"
-              }`}
+              className={`w-24 h-24 md:w-28 md:h-28 text-lg font-semibold border rounded-lg shadow-md transition-transform
+                ${mesa.status === "ocupada" ? "bg-red-500 text-white" : "bg-green-500 text-white"}
+                hover:scale-105`}
               onClick={() =>
                 mesa.status === "ocupada"
                   ? acessarComandaOcupada(mesa)

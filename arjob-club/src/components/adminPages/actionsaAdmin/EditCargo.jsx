@@ -95,7 +95,7 @@ const EditCargo = ({ userId, currentCargo, onClose, onUpdate }) => {
             onClick={onClose}
             className="bg-red-500 text-white px-4 py-2 rounded-md"
           >
-            Cancelar
+            Fechar
           </button>
           <button
             onClick={handleSave}
