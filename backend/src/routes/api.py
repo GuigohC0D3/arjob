@@ -238,6 +238,12 @@ def listar_usuarios_com_permissoes():
         print(f"Erro no endpoint /admin/usuarios: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
 
+@main_bp.route('/admin/usuarios/<int:usuario_id>', methods=['DELETE'])
+@jwt_required()
+def deletar_usuario(usuario_id):
+    return users_controller.deletar_usuario(usuario_id)
+
+
 @main_bp.route('/admin/usuarios/status', methods=['GET'])
 def listar_status_usuarios():
     try:
@@ -307,6 +313,11 @@ def dashboard():
 @main_bp.route('/admin/cargos', methods=['GET'])
 @jwt_required()
 def listar_cargos_admin():
+    identidade = get_jwt_identity()
+    print(f"🔹 Usuário autenticado (Token JWT): {identidade}")
+    if not identidade:
+        return jsonify({"msg": "Token Inválido ou Não reconhecido"}), 401
+    
     return cargos_controller.listar_todos_os_cargos()
 
 @main_bp.route('/users/check', methods=['POST'])

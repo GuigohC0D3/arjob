@@ -1,6 +1,9 @@
 from ..entities import users
 import json
+from ..connection.config import connect_db 
 from flask import jsonify, request
+from flask_jwt_extended import create_access_token
+
 
 def register_user(nome=None, cpf=None, email=None, senha=None):
     try:
@@ -20,6 +23,21 @@ def register_user(nome=None, cpf=None, email=None, senha=None):
         print(f"Erro no controlador register_user: {e}")
         return json.dumps({"error": "Erro ao processar o registro de usuário."}), 500
 
+def deletar_usuario(usuario_id):
+    try:
+        print(f"🛠 Tentando deletar usuário {usuario_id}")  # DEBUG
+
+        response = users.deletar_usuario(usuario_id)
+
+        if "error" in response:
+            return jsonify(response), 500
+
+        print(f"✅ Usuário {usuario_id} deletado com sucesso!")  # DEBUG
+        return jsonify(response), 200
+
+    except Exception as e:
+        print(f"❌ Erro ao deletar usuário: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
 
 
 def authenticate_user(cpf, senha):
@@ -96,36 +114,54 @@ def check_user(cpf, email):
 
 def atualizar_cargo_usuario(usuario_id):
     try:
-        dados = request.json
-        novo_cargo_id = dados.get("cargo_id")
+        data = request.json
+        cargo_id = data.get("cargo_id")
 
-        if not novo_cargo_id:
-            return jsonify({"error": "Cargo ID é obrigatório"}), 400
+        print(f"🛠 Atualizando cargo para usuário {usuario_id}, novo cargo: {cargo_id}")
 
-        sucesso = users.atualizar_cargo(usuario_id, novo_cargo_id)
-        
-        if sucesso:
-            return jsonify({"message": "Cargo atualizado com sucesso!"}), 200
-        else:
-            return jsonify({"error": "Erro ao atualizar cargo"}), 500
+        if not cargo_id:
+            print("❌ Erro: Cargo não fornecido!")
+            return jsonify({"error": "Cargo não fornecido"}), 400
+
+        conn = connect_db()
+        cur = conn.cursor()
+
+        cur.execute(
+            "UPDATE usuarios SET cargo_id = %s WHERE id = %s",
+            (cargo_id, usuario_id)
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        print("✅ Cargo atualizado com sucesso!")
+        return jsonify({"message": "Cargo atualizado com sucesso"}), 200
+
     except Exception as e:
-        print(f"Erro ao atualizar cargo do usuário: {e}")
+        print(f"❌ Erro ao atualizar cargo do usuário: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
+
 
 def atualizar_status_usuario(usuario_id):
     try:
-        dados = request.json
-        novo_status = dados.get("status")
+        data = request.json
+        novo_status_id = data.get("status_id")  # Agora pegamos "status_id"
 
-        if novo_status not in [1, 2, 3]:
-            return jsonify({"error": "Status inválido"}), 400
+        print(f"🔍 Recebido para atualização: Usuário {usuario_id}, Novo Status ID: {novo_status_id}")  # DEBUG
 
-        sucesso = users.atualizar_status(usuario_id, novo_status)
-        
-        if sucesso:
-            return jsonify({"message": "Status atualizado com sucesso!"})
-        else:
-            return jsonify({"error": "Erro ao atualizar status"}), 500
+        if not novo_status_id:
+            return jsonify({"error": "status_id não fornecido"}), 400
+
+        response = users.atualizar_status(usuario_id, novo_status_id)
+
+        if "error" in response:
+            return jsonify(response), 500
+
+        print(f"✅ status_id atualizado com sucesso para {novo_status_id}")  # DEBUG
+
+        return jsonify(response), 200
+
     except Exception as e:
-        print(f"Erro ao atualizar status: {e}")
-        return jsonify({"error": "Erro interno no servidor"}), 500
+        print(f"❌ Erro ao atualizar status: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 5
+

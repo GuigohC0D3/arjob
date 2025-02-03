@@ -118,6 +118,26 @@ def create_user(nome, cpf, email, senha):
     else:
         return {"error": "Erro ao conectar ao banco de dados"}, 500
 
+def deletar_usuario(usuario_id):
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+
+        print(f"🛠 Removendo usuário {usuario_id} do banco")  # DEBUG
+
+        cur.execute("DELETE FROM usuarios WHERE id = %s", (usuario_id,))
+        conn.commit()
+
+        cur.close()
+        conn.close()
+
+        print(f"✅ Usuário {usuario_id} removido com sucesso!")  # DEBUG
+        return {"message": "Usuário removido com sucesso"}
+
+    except Exception as e:
+        print(f"❌ Erro ao remover usuário: {e}")
+        return {"error": "Erro ao remover usuário"}
+
 def listar_usuarios():
     conn = connect_db()
     if conn:
@@ -406,3 +426,39 @@ def atualizar_cargo(usuario_id, novo_cargo_id):
     else:
         print("Erro ao conectar ao banco de dados")
         return False
+
+def buscar_usuario_por_cpf(cpf):
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor(dictionary=True)
+            cur.execute("SELECT id, cpf, senha, cargo_id FROM usuarios WHERE cpf = %s", (cpf,))
+            usuario = cur.fetchone()  # ✅ Retorna um dicionário com os dados do usuário
+            cur.close()
+            return usuario  # ✅ Retorna os dados do usuário ou None se não encontrar
+        except Exception as e:
+            print(f"❌ Erro ao buscar usuário por CPF: {e}")
+            return None
+    else:
+        print("❌ Erro: Falha ao conectar ao banco de dados.")
+        return None
+
+def atualizar_status(usuario_id, novo_status_id):
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+
+        print(f"🛠 Atualizando usuário {usuario_id} para status_id {novo_status_id}")  # DEBUG
+
+        # Atualiza o status_id do usuário
+        cur.execute("UPDATE usuarios SET status_id = %s WHERE id = %s", (novo_status_id, usuario_id))
+        conn.commit()
+
+        cur.close()
+        conn.close()
+
+        print("✅ status_id atualizado no banco!")  # DEBUG
+        return {"message": "Status atualizado com sucesso"}
+    except Exception as e:
+        print(f"❌ Erro ao atualizar status do usuário: {e}")
+        return {"error": "Erro ao atualizar status"}
