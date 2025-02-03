@@ -27,20 +27,28 @@ const Login = () => {
       const response = await api.post("/login", { cpf, senha });
 
       if (response.data && response.data.token) {
-        sessionStorage.setItem("authToken", response.data.token);
+        const token = response.data.token; // Corrigido para pegar o token correto
+
+        // Salva no sessionStorage e localStorage
+        sessionStorage.setItem("authToken", token);
+        localStorage.setItem("token", token);
+
         sessionStorage.setItem("user", JSON.stringify(response.data.user));
         sessionStorage.setItem(
           "permissions",
           JSON.stringify(response.data.permissions)
         );
 
-        console.log("Token armazenado:", response.data.token);
+        console.log("✅ Token armazenado com sucesso:", token);
         navigate("/Home");
       } else {
         setError("Erro: Token não recebido do servidor.");
       }
     } catch (err) {
-      console.error("Erro ao autenticar usuário:", err.response?.data || err.message);
+      console.error(
+        "Erro ao autenticar usuário:",
+        err.response?.data || err.message
+      );
       setError(err.response?.data?.error || "Erro ao autenticar.");
     }
   };

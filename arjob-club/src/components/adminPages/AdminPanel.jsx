@@ -11,6 +11,7 @@ import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 
 // Importando componentes adicionais
 import EditCargo from "./actionsaAdmin/EditCargo";
+import ViewProfile from "./actionsaAdmin/ViewProfile";
 import Dashboard from "./DashboardAdmin";
 import Logs from "./Filters";
 import Filters from "./LogsAdmin";
@@ -35,6 +36,11 @@ const AdminPanel = () => {
     open: false,
     userId: null,
     currentCargo: null,
+  });
+
+  const [viewProfileModal, setViewProfileModal] = useState({
+    open: false,
+    user: null,
   });
 
   useEffect(() => {
@@ -94,43 +100,52 @@ const AdminPanel = () => {
     }
   };
 
-  const handleDelete = (id, type) => {
+  const handleDelete = async (userId) => {
     confirmDialog({
-      message: "Você tem certeza que deseja excluir?",
+      message: "Você tem certeza que deseja excluir este usuário?",
       header: "Confirmação",
       icon: "pi pi-exclamation-triangle",
       accept: async () => {
         try {
-          await api.delete(`/admin/${type}/${id}`);
+          const token =
+            localStorage.getItem("token") ||
+            sessionStorage.getItem("authToken");
+
+          if (!token) {
+            toast.current.show({
+              severity: "error",
+              summary: "Erro de autenticação",
+              detail: "Faça login novamente.",
+              life: 3000,
+            });
+            return;
+          }
+
+          await api.delete(`/admin/usuarios/${userId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`, // ✅ Enviando o token corretamente
+            },
+          });
+
           toast.current.show({
             severity: "success",
             summary: "Sucesso",
-            detail: "Item excluído com sucesso.",
+            detail: "Usuário excluído com sucesso.",
             life: 3000,
           });
-          type === "usuarios" ? fetchUsuarios() : fetchClientes();
-        } catch {
+
+          fetchUsuarios(); // 🔄 Atualiza a lista de usuários após a exclusão
+        } catch (error) {
+          console.error("❌ Erro ao excluir usuário:", error);
           toast.current.show({
             severity: "error",
             summary: "Erro",
-            detail: "Erro ao excluir item.",
+            detail: "Erro ao excluir usuário. Verifique suas permissões.",
             life: 3000,
           });
         }
       },
     });
-  };
-
-  const handleView = (id, type) => {
-    toast.current.show({
-      severity: "info",
-      summary: "Visualizar",
-      detail: `Visualizar ${
-        type === "usuarios" ? "Usuário" : "Cliente"
-      } com ID: ${id}`,
-      life: 3000,
-    });
-    // Redirecione para a página de detalhes.
   };
 
   const statusLabels = {
@@ -151,15 +166,19 @@ const AdminPanel = () => {
     setEditCargoModal({ open: true, userId, currentCargo });
   };
 
+  const handleView = (user) => {
+    setViewProfileModal({ open: true, user });
+  };
+
   const dataToDisplay = activeTab === "usuarios" ? usuarios : clientes;
   const filteredData = dataToDisplay?.filter((item) =>
     item?.nome?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-    // Paginação corrigida
-    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = filteredData.slice(indexOfFirstItem, indexOfLastItem);
+  // Paginação corrigida
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredData.slice(indexOfFirstItem, indexOfLastItem);
 
   return (
     <div className="max-w-7xl mx-auto p-6 bg-white rounded-lg shadow-md">
@@ -168,9 +187,6 @@ const AdminPanel = () => {
 
       {/* Cabeçalho de ações */}
       <div className="flex justify-between items-center mb-4">
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-md shadow hover:bg-blue-700">
-          + ADD NEW
-        </button>
         <input
           type="text"
           placeholder="Pesquise um nome"
@@ -237,10 +253,11 @@ const AdminPanel = () => {
               <td className="py-3 px-4 flex space-x-2">
                 <button
                   className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"
-                  onClick={() => handleView(item.id, activeTab)}
+                  onClick={() => handleView(item)}
                 >
                   <FaEye />
                 </button>
+
                 <button
                   className="bg-yellow-500 text-white p-2 rounded-md hover:bg-yellow-600"
                   onClick={() => handleEditCargo(item.id, item.cargo)}
@@ -292,10 +309,20 @@ const AdminPanel = () => {
       </div>
       {editCargoModal.open && (
         <EditCargo
-        userId={editCargoModal.userId}
-        currentCargo={editCargoModal.currentCargo}
-        onClose={() => setEditCargoModal({ open: false, userId: null, currentCargo: null})}
-        onUpdate={fetchUsuarios} 
+          userId={editCargoModal.userId}
+          currentCargo={editCargoModal.currentCargo}
+          onClose={() =>
+            setEditCargoModal({ open: false, userId: null, currentCargo: null })
+          }
+          onUpdate={fetchUsuarios}
+        />
+      )}
+      {/* Modal de Visualizar Perfil */}
+      {viewProfileModal.open && (
+        <ViewProfile
+          user={viewProfileModal.user}
+          onClose={() => setViewProfileModal({ open: false, user: null })}
+          onUpdate={fetchUsuarios}
         />
       )}
     </div>
