@@ -177,72 +177,37 @@ const CadastroCliente = () => {
     <>
       <Toast ref={toast} />
       <ConfirmDialog />
-      <div className="cadastro-container">
-        <h2>Cadastro de Cliente</h2>
-        <form onSubmit={(e) => e.preventDefault()}>
-          <div className="input-group-row">
-            <div className="input-group">
-              <label htmlFor="nome">Nome:</label>
-              <input
-                type="text"
-                id="nome"
-                name="nome"
-                value={cliente.nome}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div className="input-group">
-              <label htmlFor="cpf">CPF:</label>
-              <input
-                type="text"
-                id="cpf"
-                name="cpf"
-                value={cliente.cpf}
-                onChange={handleInputChange}
-                placeholder="Digite o CPF"
-                required
-              />
-            </div>
-            <div className="input-group">
-              <label htmlFor="email">Email:</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={cliente.email}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-          </div>
+      <div className="max-w-4xl mx-auto bg-white p-10 rounded-xl shadow-lg border border-gray-200">
+        <h2 className="text-3xl font-bold text-gray-800 text-center mb-8">
+          Cadastro de Cliente
+        </h2>
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { label: "Nome", name: "nome", type: "text" },
+              { label: "CPF", name: "cpf", type: "text" },
+              { label: "Email", name: "email", type: "email" },
+              { label: "Telefone", name: "telefone", type: "text" },
+              { label: "Filial", name: "filial", type: "text" },
+            ].map(({ label, name, type }) => (
+              <div key={name} className="flex flex-col">
+                <label className="text-sm font-semibold text-gray-700">
+                  {label}:
+                </label>
+                <input
+                  type={type}
+                  name={name}
+                  value={cliente[name]}
+                  onChange={handleInputChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+            ))}
 
-          <div className="input-group-row">
-            <div className="input-group">
-              <label htmlFor="telefone">Telefone:</label>
-              <input
-                type="text"
-                id="telefone"
-                name="telefone"
-                value={cliente.telefone}
-                onChange={handleInputChange}
-                placeholder="(99) 99999-9999"
-                required
-              />
-            </div>
-            <div className="input-group">
-              <label htmlFor="filial">Filial:</label>
-              <input
-                type="text"
-                id="filial"
-                name="filial"
-                value={cliente.filial}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div className="input-group">
-              <label htmlFor="convenio">Convênio:</label>
+            <div className="flex flex-col">
+              <label className="text-sm font-semibold text-gray-700">
+                Convênio:
+              </label>
               <Dropdown
                 id="convenio"
                 value={cliente.convenio}
@@ -252,29 +217,33 @@ const CadastroCliente = () => {
                 ]}
                 onChange={handleConvenioChange}
                 placeholder="Selecione um convênio"
+                className="w-full border border-gray-300 rounded-lg"
               />
             </div>
           </div>
 
-          <div className="input-group-row">
-            <div className="input-group">
-              <label htmlFor="departamento">Departamento:</label>
-              <Dropdown
-                id="departamento"
-                value={cliente.departamento}
-                options={departamentos}
-                onChange={handleDepartamentoChange}
-                placeholder="Selecione um departamento"
-              />
-            </div>
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-gray-700">
+              Departamento:
+            </label>
+            <Dropdown
+              id="departamento"
+              value={cliente.departamento}
+              options={departamentos}
+              onChange={handleDepartamentoChange}
+              placeholder="Selecione um departamento"
+              className="w-full border border-gray-300 rounded-lg"
+            />
           </div>
 
-          <Button
-            type="button"
-            label="Cadastrar Cliente"
-            onClick={confirmSubmit}
-            className="p-button-success"
-          />
+          <div className="flex justify-center">
+            <Button
+              type="button"
+              label="Cadastrar Cliente"
+              onClick={confirmSubmit}
+              className="w-2/3 md:w-1/3 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-md text-lg transition duration-200 ease-in-out transform hover:scale-105"
+            />
+          </div>
         </form>
       </div>
     </>
