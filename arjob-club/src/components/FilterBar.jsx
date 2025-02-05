@@ -5,20 +5,18 @@ const FilterBar = ({ categorias, onFilter }) => {
     <div className="categorias-container bg-gray-100 p-4 rounded shadow-md mt-2">
       <h4 className="mb-2">Filtrar por Categoria</h4>
       <ul className="flex flex-col gap-2">
-        {/* Opção para "Todas" as categorias */}
         <li
           key="todas"
-          className="cursor-pointer hover:text-blue-500"
-          onClick={() => onFilter(null)}
+          className="cursor-pointer hover:text-blue-500 font-medium"
+          onClick={() => onFilter("Todas")}
         >
           Todas
         </li>
 
-        {/* Renderiza as categorias dinamicamente */}
         {categorias.map((categoria, index) => (
           <li
             key={index}
-            className="cursor-pointer hover:text-blue-500"
+            className="cursor-pointer hover:text-blue-500 font-medium"
             onClick={() => onFilter(categoria)}
           >
             {categoria}

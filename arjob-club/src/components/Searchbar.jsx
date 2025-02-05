@@ -1,45 +1,48 @@
-import { useState } from "react";
-import { InputText } from "primereact/inputtext";
-import { Button } from "primereact/button";
-import "primereact/resources/themes/lara-light-indigo/theme.css";
-import "primereact/resources/primereact.min.css";
-import "primeicons/primeicons.css";
+import { useState, useEffect, useRef } from "react";
+import PropTypes from "prop-types";
 
 const SearchBar = ({ onSearch, onFilterClick }) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const inputRef = useRef(null); // Mantém o foco no input
+
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      if (onSearch) onSearch(searchTerm);
+    }, 500); // Pequeno atraso para evitar re-renders desnecessários
+
+    return () => clearTimeout(delayDebounce);
+  }, [searchTerm, onSearch]);
+
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus(); // Mantém o foco no input após re-render
+    }
+  }, []);
 
   return (
-    <div className="flex items-center justify-center w-full max-w-3xl gap-3 mt-6 px-4">
-      {/* Input de pesquisa com ícone */}
+    <div className="flex items-center justify-center w-full max-w-3xl gap-3 mb-6 px-4">
       <div className="relative w-full">
-        <i
-          className="pi pi-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500"
-          aria-hidden="true"
-        ></i>
-        <InputText
+        <i className="pi pi-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
+        <input
+          ref={inputRef} // Aplica o ref no input
+          type="text"
           value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            if (onSearch) onSearch(e.target.value);
-          }}
+          onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Pesquise por um produto..."
-          className="w-full pl-10 pr-4 py-3 text-sm border border-gray-300 rounded-lg shadow-md focus:outline-none 
-          focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300"
+          className="w-full pl-10 pr-4 py-3 text-sm border border-gray-300 rounded-lg shadow-md"
         />
       </div>
 
-      {/* Botão de filtro aprimorado */}
-      <Button
-        icon="pi pi-filter"
-        className="flex items-center justify-center p-3 text-black bg-transparent rounded-lg 
-        hover:bg-white-700 focus:ring-2 focus:ring-gray-100 transition duration-300"
-        onClick={onFilterClick}
-        tooltip="Filtrar produtos"
-        tooltipOptions={{ position: "top" }}
-        aria-label="Abrir filtros"
-      />
+      <button className="bg-withe p-3 rounded-lg" onClick={onFilterClick}>
+        <i className="pi pi-filter"></i>
+      </button>
     </div>
   );
+};
+
+SearchBar.propTypes = {
+  onSearch: PropTypes.func.isRequired, 
+  onFilterClick: PropTypes.func.isRequired,
 };
 
 export default SearchBar;
