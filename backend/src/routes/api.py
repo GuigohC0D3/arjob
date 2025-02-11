@@ -119,18 +119,21 @@ def criar_comanda():
         print(f"Erro no endpoint /comandas: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
 
-@main_bp.route('/comandas/<string:numero_comanda>/fechar', methods=['PUT', 'OPTIONS'])
+@main_bp.route('/comandas/<string:code>/fechar', methods=['PUT'])
 @cross_origin(origins="http://localhost:5173")
-def fechar_comanda(numero_comanda):
-    if request.method == "OPTIONS":
-        return '', 204  # Resposta para a pré-verificação CORS
-    
-    # Sua lógica de fechamento da comanda
+def fechar_comanda(code):
     try:
-        response, status_code = comandas_controller.fechar_comanda_por_numero(numero_comanda)
-        return jsonify(response), status_code
+        dados = request.get_json(silent=True)  # 🔥 Garantir que está recebendo JSON válido
+
+        # 🔍 Debug: Exibir os dados recebidos
+        print(f"🔹 Dados recebidos na requisição: {dados}")
+
+        if not dados:
+            return jsonify({"error": "Nenhum JSON foi enviado"}), 400
+
+        return comandas_controller.fechar_comanda(code)
     except Exception as e:
-        print(f"Erro ao fechar comanda pelo número: {e}")
+        print(f"Erro ao fechar comanda pelo código: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
     
 @main_bp.route('/comandas/mesa/<int:mesa_id>', methods=['GET'])
