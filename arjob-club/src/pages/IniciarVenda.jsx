@@ -8,11 +8,13 @@ const IniciarVenda = () => {
   const [cpfCliente, setCpfCliente] = useState("");
   const [clienteInfo, setClienteInfo] = useState(null);
   const [produtosCategoria, setProdutosCategoria] = useState([]);
-  const [produtosCategoriaOriginal, setProdutosCategoriaOriginal] = useState([]);
+  const [produtosCategoriaOriginal, setProdutosCategoriaOriginal] = useState(
+    []
+  );
   const [categorias, setCategorias] = useState([]);
   const [mostrarFiltro, setMostrarFiltro] = useState(false);
   const [comandaId, setComandaId] = useState(null);
-
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     const fetchMesas = async () => {
       try {
@@ -26,12 +28,13 @@ const IniciarVenda = () => {
         }
       } catch (error) {
         console.error("Erro ao conectar ao servidor:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchMesas();
-  }, []);
-
+  }, [loading]);
   const handleAbrirComanda = async () => {
     if (!selectedMesa || !selectedMesa.id) {
       alert("Selecione uma mesa para abrir a comanda.");
@@ -48,14 +51,14 @@ const IniciarVenda = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          comanda_id: comandaId.id,
           mesa_id: selectedMesa.id,
           cliente_cpf: cpfCliente,
+          mesa: comandaId,
         }),
       });
-
       if (response.ok) {
-        const data = await response.json();
-        setComandaId(data.id);
+        // Verifica se a mesa está ocupada
 
         setMesas((prevMesas) =>
           prevMesas.map((mesa) =>
@@ -68,8 +71,11 @@ const IniciarVenda = () => {
           const produtos = await produtosResponse.json();
           setProdutosCategoria(produtos);
           setProdutosCategoriaOriginal(produtos);
-          const categoriasUnicas = [...new Set(produtos.map((p) => p.categoria))];
+          const categoriasUnicas = [
+            ...new Set(produtos.map((p) => p.categoria)),
+          ];
           setCategorias(categoriasUnicas);
+          setLoading(true);
         }
       } else {
         console.error("Erro ao abrir comanda:", await response.json());
@@ -81,21 +87,22 @@ const IniciarVenda = () => {
 
   const acessarComandaOcupada = async (mesa) => {
     try {
-      const response = await fetch(`http://10.11.1.67:5000/comandas/mesa/${mesa.id}`);
+      const response = await fetch(
+        `http://10.11.1.67:5000/comandas/mesa/${mesa.id}`
+      );
       if (response.ok) {
         const comandaData = await response.json();
-        setComandaId(comandaData.id);
-        setSelectedMesa(mesa);
 
-        const produtosResponse = await fetch("http://10.11.1.67:5000/produtos");
-        if (produtosResponse.ok) {
-          const produtos = await produtosResponse.json();
-          setProdutosCategoria(produtos);
-          setProdutosCategoriaOriginal(produtos);
-
-          const categoriasUnicas = [...new Set(produtos.map((produto) => produto.categoria))];
-          setCategorias(categoriasUnicas);
+        if (!comandaData.code || comandaData.code === "MISSING_CODE") {
+          alert("Erro: Código da comanda não encontrado no backend.");
+          return;
         }
+
+        setComandaId(comandaData.id);
+        setSelectedMesa({
+          ...mesa,
+          code: comandaData.code, // 🔥 Agora garantimos que `code` sempre vem da API
+        });
       } else {
         const errorData = await response.json();
         console.error("Erro ao acessar comanda ocupada:", errorData);
@@ -111,17 +118,23 @@ const IniciarVenda = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       {!selectedMesa ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 grid-rows-4 gap-6 max-w-screen-lg mx-auto">
+          {/* Botão que seleciona a mesa e verifica se estiver ocupada fica vermelho e se estiver disponível fica verde */}
           {mesas.map((mesa) => (
             <button
               key={mesa.id}
               className={`w-24 h-24 md:w-28 md:h-28 text-lg font-semibold border rounded-lg shadow-md transition-transform
-                ${mesa.status === "ocupada" ? "bg-red-500 text-white" : "bg-green-500 text-white"}
-                hover:scale-105`}
-              onClick={() =>
-                mesa.status === "ocupada"
-                  ? acessarComandaOcupada(mesa)
-                  : setSelectedMesa(mesa)
+              ${
+                mesa.status
+                  ? "bg-red-500 text-white"
+                  : "bg-green-500 text-white"
               }
+              hover:scale-105`}
+              onClick={() => {
+                mesa.status
+                  ? acessarComandaOcupada(mesa)
+                  : setSelectedMesa(mesa),
+                  setComandaId(mesa.id);
+              }}
             >
               Mesa {mesa.numero}
             </button>
@@ -139,8 +152,12 @@ const IniciarVenda = () => {
         />
       ) : (
         <ComandaProcesso
-          selectedMesa={selectedMesa}
-          clienteInfo={clienteInfo}
+          selectedMesa={{
+            ...selectedMesa,
+            code: selectedMesa.code ?? "",
+            status: Boolean(selectedMesa.status),
+          }}
+          clienteInfo={clienteInfo || { nome: "Cliente Desconhecido" }}
           comandaId={String(comandaId)}
           cpfInfo={{ cpf: cpfCliente }}
           produtosCategoria={produtosCategoria}

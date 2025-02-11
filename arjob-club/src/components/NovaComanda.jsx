@@ -116,7 +116,7 @@ const NovaComanda = ({
           disabled={!clienteInfo || loading}
           className="w-full md:w-auto bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Gerar e Abrir Comanda
+          Abrir Comanda
         </button>
         <button
           onClick={onBack}

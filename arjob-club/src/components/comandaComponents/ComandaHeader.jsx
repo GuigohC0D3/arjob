@@ -4,7 +4,7 @@ const ComandaHeader = ({ selectedMesa, clienteInfo, cpfInfo }) => {
   return (
     <div className="text-center">
       <h2 className="text-2xl font-bold mb-2">
-        Comanda - Mesa {selectedMesa.numero}
+        Comanda - Mesa {selectedMesa.numero} ({selectedMesa.status === "ocupada" ? "🔴 Ocupada" : "🟢 Disponível"})
       </h2>
       <p className="text-lg text-gray-700">
         <span className="font-semibold">Nome:</span> {clienteInfo?.nome || "Desconhecido"}
@@ -17,9 +17,16 @@ const ComandaHeader = ({ selectedMesa, clienteInfo, cpfInfo }) => {
 };
 
 ComandaHeader.propTypes = {
-  selectedMesa: PropTypes.object.isRequired,
-  clienteInfo: PropTypes.object.isRequired,
-  cpfInfo: PropTypes.object.isRequired,
+  selectedMesa: PropTypes.shape({
+    numero: PropTypes.number.isRequired,
+    status: PropTypes.string, // 🔥 Agora verifica o status da mesa corretamente
+  }).isRequired,
+  clienteInfo: PropTypes.shape({
+    nome: PropTypes.string,
+  }).isRequired,
+  cpfInfo: PropTypes.shape({
+    cpf: PropTypes.string,
+  }).isRequired,
 };
 
 export default ComandaHeader;

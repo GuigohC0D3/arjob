@@ -15,7 +15,6 @@ const ComandaProcesso = ({
   mostrarFiltro,
   onFecharComanda,
   onAtualizarMesas,
-  comandaId,
   onBack,
 }) => {
   const [comandaItens, setComandaItens] = useState([]);
@@ -68,28 +67,32 @@ const ComandaProcesso = ({
   };
 
   const handleFecharComanda = async () => {
-    if (!comandaId || typeof comandaId !== "string") {
-      alert("ID da comanda inválido ou ausente.");
+    const code = selectedMesa?.code?.trim();
+
+    if (!code || code === "MISSING_CODE") {
+      alert("Erro: Código da comanda não encontrado ou inválido.");
+      console.error("Erro: Código da comanda é inválido:", code);
       return;
     }
 
-    const comanda = {
-      mesa: selectedMesa.numero,
-      cliente: clienteInfo?.nome || "Desconhecido",
-      cpf: cpfInfo?.cpf || "Não informado",
-      itens: comandaItens,
+    // 🔍 Debug: Garantir que os dados corretos estão sendo enviados
+    console.log("🔹 Enviando dados para o backend:", {
       total,
-    };
+      mesa: selectedMesa.id,
+    });
 
     try {
       const response = await fetch(
-        `http://10.11.1.67:5000/comandas/${encodeURIComponent(
-          comandaId
-        )}/fechar`,
+        `http://10.11.1.67:5000/comandas/${code}/fechar`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(comanda),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            total: total, // 🔥 Certifica que está enviando "total"
+            mesa: selectedMesa.id, // 🔥 Certifica que está enviando "mesa"
+          }),
         }
       );
 
@@ -97,19 +100,19 @@ const ComandaProcesso = ({
         alert("Comanda fechada com sucesso!");
         onAtualizarMesas((prevMesas) =>
           prevMesas.map((mesa) =>
-            mesa.id === selectedMesa.id
-              ? { ...mesa, status: "disponivel" }
-              : mesa
+            mesa.id === selectedMesa.id ? { ...mesa, status: false } : mesa
           )
         );
         onFecharComanda();
       } else {
         const errorResponse = await response.json();
+        console.error("Erro ao fechar comanda:", errorResponse);
         alert(
           `Erro ao fechar comanda: ${errorResponse.error || "Desconhecido"}`
         );
       }
     } catch (error) {
+      console.error("Erro na requisição de fechamento:", error);
       alert("Erro ao fechar a comanda. Tente novamente mais tarde.");
     }
   };
@@ -134,7 +137,10 @@ const ComandaProcesso = ({
   return (
     <div className="p-6 bg-gray-100 min-h-screen flex flex-col">
       <ComandaHeader
-        selectedMesa={selectedMesa}
+        selectedMesa={{
+          ...selectedMesa,
+          status: selectedMesa.status ? "ocupada" : "disponivel",
+        }}
         clienteInfo={clienteInfo}
         cpfInfo={cpfInfo}
       />
@@ -166,6 +172,8 @@ ComandaProcesso.propTypes = {
   selectedMesa: PropTypes.shape({
     id: PropTypes.number.isRequired,
     numero: PropTypes.number.isRequired,
+    code: PropTypes.string,
+    status: PropTypes.bool.isRequired, // ✅ Agora status é uma string
   }).isRequired,
   clienteInfo: PropTypes.shape({
     nome: PropTypes.string,
