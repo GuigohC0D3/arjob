@@ -1,13 +1,13 @@
 from ..connection.config import connect_db
-from ..entities import mesas, clientes, comandas
+from ..entities import mesas, clientes, comandas, users
 from datetime import datetime
 import random
 import string
 
-def gerar_code_comanda():
-    """
-    Gera um código único para a comanda com base em caracteres alfanuméricos.
-    """
+
+
+
+def gerar_numero_comanda():
     conn = connect_db()
     if conn:
         cur = conn.cursor()
@@ -21,24 +21,23 @@ def gerar_code_comanda():
     else:
         raise Exception("Erro ao conectar ao banco de dados")
 
-def criar_comanda(mesa_id, cliente_id):
+def criar_comanda(mesa_id, usuario_id):  # ✅ Agora recebe `usuario_id`
     conn = connect_db()
     if conn:
         try:
-            code_comanda = gerar_code_comanda()  # Gera um código único para a comanda
+            numero_comanda = gerar_numero_comanda()  # ✅ Gera número único da comanda
             cur = conn.cursor()
             cur.execute(
                 """
-                INSERT INTO comandas (code, mesa_id, cliente_id, status)
-                VALUES (%s, %s, %s, %s) RETURNING id
+                INSERT INTO comandas (code, mesa_id, usuario_id, status, data_abertura)
+                VALUES (%s, %s, %s, 'aberta', NOW())
                 """,
-                (code_comanda, mesa_id, cliente_id, 'aberta'),
+                (numero_comanda, mesa_id, usuario_id),
             )
-            comanda_id = cur.fetchone()[0]
             conn.commit()
             cur.close()
             conn.close()
-            return {"id": comanda_id, "code": code_comanda}, 201
+            return {"id": numero_comanda}, 201
         except Exception as e:
             conn.rollback()
             print(f"Erro ao criar comanda: {e}")
@@ -46,32 +45,23 @@ def criar_comanda(mesa_id, cliente_id):
     else:
         return {"error": "Erro ao conectar ao banco de dados"}, 500
 
-def abrir_comanda(mesa_id, cliente_cpf):
+def abrir_comanda(mesa_id, atendente_id):
     try:
-        # Busca o cliente pelo CPF
-        cliente, status_code = clientes.buscar_cliente_por_cpf(cliente_cpf)
-        if status_code != 200:
-            return cliente, status_code
-
-        cliente_id = cliente.get("id")
+        # Verifica se o atendente_id realmente tem o cargo de atendente
+        if not users.verificar_se_usuario_eh_atendente(atendente_id):
+            return {"error": "Usuário selecionado não é um atendente."}, 403
 
         # Verifica se já existe uma comanda ativa na mesa
-        comanda_existente = obter_comanda_por_mesa(mesa_id)
+        comanda_existente = comandas.obter_comanda_por_mesa(mesa_id)
         if comanda_existente:
             return {"error": "Já existe uma comanda ativa para esta mesa."}, 400
 
-        # Cria uma nova comanda com o cliente_id
-        response, status_code = criar_comanda(mesa_id, cliente_id)
+        # Cria uma nova comanda sem CPF do cliente, mas com atendente
+        response, status_code = comandas.criar_comanda(mesa_id, atendente_id)
 
         if status_code == 201:
-            # 🔥 Atualiza a mesa para `True` (ocupada)
-            conn = connect_db()
-            if conn:
-                cur = conn.cursor()
-                cur.execute("UPDATE mesas SET status = TRUE WHERE id = %s", (mesa_id,))
-                conn.commit()
-                cur.close()
-                conn.close()
+            # Atualiza o status da mesa para ocupada
+            mesas.atualizar_status_mesa(mesa_id, "ocupada")
 
         return response, status_code
     except Exception as e:
@@ -246,3 +236,5 @@ def fechar_comanda(code, total, mesa_id):
             return {"error": "Erro ao fechar comanda no banco de dados"}, 500
     else:
         return {"error": "Erro ao conectar ao banco de dados"}, 500
+
+

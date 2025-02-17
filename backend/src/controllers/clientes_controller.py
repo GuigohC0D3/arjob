@@ -44,4 +44,3 @@ def remover_cliente(cliente_id):
     except Exception as e:
         print(f"Erro ao remover cliente: {e}")
         return {"error": "Erro ao remover cliente"}, 500
-

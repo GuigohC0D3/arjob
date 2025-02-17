@@ -263,29 +263,30 @@ def get_user_by_cpf_and_password(cpf, senha):
     return None
 
 def get_user_cargo(usuario_id):
+    """Retorna o cargo do usuário com base no ID."""
     conn = connect_db()
     if conn:
         try:
             cur = conn.cursor()
             cur.execute("""
-                SELECT c.nome
-                FROM cargos c
-                INNER JOIN cargo_usuario cu ON c.id = cu.cargo_id
-                WHERE cu.usuario_id = %s
+                SELECT c.nome 
+                FROM usuarios u
+                JOIN cargos c ON u.cargo_id = c.id
+                WHERE u.id = %s
             """, (usuario_id,))
             cargo = cur.fetchone()
             cur.close()
             conn.close()
 
-            if cargo:
-                return cargo[0]  # Retorna o nome do cargo
-            return None
+            if cargo and cargo[0]:  # 🔥 Verifica se há um cargo atribuído
+                return cargo[0].lower()  # 🔥 Retorna o cargo em letras minúsculas
+            else:
+                print(f"⚠️ Usuário {usuario_id} não tem um cargo atribuído.")
+                return "desconhecido"  # 🔥 Retorna um valor padrão em vez de `None`
         except Exception as e:
-            print(f"Erro ao buscar cargo do usuário no banco de dados: {e}")
-            return None
-    else:
-        print("Erro ao conectar ao banco de dados")
-        return None
+            print(f"Erro ao buscar cargo do usuário: {e}")
+            return "erro"  # 🔥 Retorna "erro" se houver falha
+    return "erro"
 
 def get_user_permissions(user_id):
     conn = connect_db()
@@ -462,3 +463,56 @@ def atualizar_status(usuario_id, novo_status_id):
     except Exception as e:
         print(f"❌ Erro ao atualizar status do usuário: {e}")
         return {"error": "Erro ao atualizar status"}
+    
+
+def listar_atendentes():
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT u.id, u.nome 
+                FROM usuarios u
+                WHERE u.cargo_id IN (
+                    SELECT id FROM cargos WHERE LOWER(nome) = 'atendente'
+                )
+            """)
+            atendentes = cur.fetchall()
+            cur.close()
+            conn.close()
+            
+            return [
+                {
+                    "id": atendente[0],
+                    "nome": atendente[1]
+                }
+                for atendente in atendentes
+            ], 200
+        except Exception as e:
+            print(f"Erro ao listar atendentes: {e}")
+            return {"error": "Erro ao listar atendentes"}, 500
+    else:
+        return {"error": "Erro ao conectar ao banco de dados"}, 500
+
+
+
+def verificar_se_usuario_atendente(usuario_id):
+    """Verifica se o usuário tem o cargo de atendente."""
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT id FROM usuarios 
+                WHERE id = %s AND cargo_id = 5
+            """, (usuario_id,))
+            
+            atendente = cur.fetchone()
+            cur.close()
+            conn.close()
+
+            return atendente is not None  # Retorna True se o usuário for atendente
+        except Exception as e:
+            print(f"Erro ao verificar se usuário é atendente: {e}")
+            return False
+    return False

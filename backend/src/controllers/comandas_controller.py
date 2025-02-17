@@ -1,33 +1,45 @@
 from flask import jsonify, request
 from ..entities import comandas, mesas, clientes
 from ..entities.comandas import atualizar_status_comanda
+from ..entities.users import get_user_cargo
 
-def abrir_comanda(mesa_id, cliente_cpf):
+def abrir_comanda():
     try:
-        # Busca o cliente pelo CPF
-        cliente, status_code = clientes.buscar_cliente_por_cpf(cliente_cpf)
-        if status_code != 200:
-            return cliente, status_code
+        dados = request.json
+        mesa_id = dados.get("mesa_id")
+        usuario_id = dados.get("usuario_id")
 
-        cliente_id = cliente.get("id")
+        if mesa_id is None or usuario_id is None:
+            return jsonify({"error": "Mesa e usuário são obrigatórios"}), 400
 
-        # Verifica se já existe uma comanda ativa na mesa
+        mesa_id = int(mesa_id)
+        usuario_id = int(usuario_id)
+
+        # 🔥 Obtém o cargo do usuário corretamente
+        cargo_do_usuario = get_user_cargo(usuario_id)
+
+        if cargo_do_usuario in ["desconhecido", "erro"]:
+            return jsonify({"error": "Usuário não tem cargo atribuído ou ocorreu um erro."}), 403
+
+        if cargo_do_usuario != "atendente":
+            return jsonify({"error": "Usuário selecionado não é um atendente."}), 403
+
+        # 🔥 Verifica se já existe uma comanda ativa na mesa
         comanda_existente = comandas.obter_comanda_por_mesa(mesa_id)
         if comanda_existente:
-            return {"error": "Já existe uma comanda ativa para esta mesa."}, 400
+            return jsonify({"error": "Já existe uma comanda ativa para esta mesa."}), 400
 
-        # Cria a comanda corretamente com mesa_id e cliente_id
-        response, status_code = comandas.criar_comanda(mesa_id, cliente_id)
+        # 🔥 Agora chama `criar_comanda()` corretamente
+        response, status_code = comandas.criar_comanda(mesa_id, usuario_id)  # ✅ Agora está correto!
 
         if status_code == 201:
-            # 🔥 Atualiza o status da mesa para ocupada (True)
-            mesas.atualizar_status_mesa(mesa_id, True)
+            # Atualiza o status da mesa para ocupada
+            mesas.atualizar_status_mesa(mesa_id, "ocupada")
 
-        return response, status_code
+        return jsonify(response), status_code
     except Exception as e:
         print(f"Erro ao abrir comanda no controlador: {e}")
-        return {"error": "Erro interno no servidor"}, 500
-
+        return jsonify({"error": "Erro interno no servidor"}), 500
 
     
 def criar_comanda():

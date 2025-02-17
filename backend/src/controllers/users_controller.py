@@ -165,3 +165,19 @@ def atualizar_status_usuario(usuario_id):
         print(f"❌ Erro ao atualizar status: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 5
 
+
+def listar_atendentes():
+    try:
+        atendentes, status_code = users.listar_atendentes()
+        return jsonify(atendentes), status_code
+    except Exception as e:
+        print(f"Erro ao listar atendentes: {e}")
+        return jsonify({"error": "Erro ao listar atendentes"}), 500
+
+def verificar_se_usuario_atendente(usuario_id):
+    try:
+        return users.verificar_se_usuario_atendente(usuario_id)  # 🔥 Chama a função no `users.py`
+    except Exception as e:
+        print(f"Erro ao verificar atendente no controlador: {e}")
+        return False  # Retorna False se ocorrer um erro
+
