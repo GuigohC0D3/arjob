@@ -75,7 +75,7 @@ const ComandaProcesso = ({
       return;
     }
 
-    // 🔍 Debug: Garantir que os dados corretos estão sendo enviados
+    // 🔍 Debug: Garantir que estamos enviando os dados certos
     console.log("🔹 Enviando dados para o backend:", {
       total,
       mesa: selectedMesa.id,
@@ -90,8 +90,8 @@ const ComandaProcesso = ({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            total: total, // 🔥 Certifica que está enviando "total"
-            mesa: selectedMesa.id, // 🔥 Certifica que está enviando "mesa"
+            total: parseFloat(total), // 🔥 Garante que `total` é um número
+            mesa: selectedMesa.id, // 🔥 Garante que `mesa` é o ID correto
           }),
         }
       );

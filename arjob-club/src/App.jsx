@@ -1,10 +1,10 @@
-import { 
-  BrowserRouter as Router, 
-  Routes, 
-  Route, 
-  Outlet, 
-  Navigate,  
-  useLocation 
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Outlet,
+  Navigate,
+  useLocation,
 } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import MainContent from "./components/MainContent";
@@ -18,6 +18,8 @@ import Preloading from "./pages/Preloading";
 import RegisterUser from "./pages/RegisterUser";
 import AdminPanel from "./components/adminPages/AdminPanel";
 import VerifyAccount from "./pages/VerifyAccount";
+import NovaComanda from "./components/NovaComanda";
+import ComandaAberta from "./pages/ComandaAberta";
 
 const PrivateRoute = () => {
   const authToken = sessionStorage.getItem("authToken");
@@ -54,7 +56,14 @@ const AppContent = () => {
             <Route path="/Importar" element={<ImportarFinanceiros />} />
             <Route path="/Cliente" element={<CadastroCliente />} />
             <Route path="/Fluxo" element={<FluxoDeCaixa />} />
-            <Route path="/admin" element={<AdminPanel/>} />
+            <Route path="/admin" element={<AdminPanel />} />
+
+            {/* ✅ Rota corrigida de NovaComanda */}
+            <Route path="/nova-comanda/:mesaId" element={<NovaComanda />} />
+
+            {/* ✅ Nova rota para visualizar comandas abertas */}
+            {/* Comanda aberta */}
+            <Route path="/comanda-aberta/:mesaId" element={<ComandaAberta />} />
           </Route>
         </Routes>
       </div>

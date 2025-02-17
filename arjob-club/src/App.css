@@ -1,0 +1,16 @@
+/* Personalizando a página ativa (selecionada) */
+.custom-paginator .p-highlight {
+    @apply bg-blue-600 text-white font-bold rounded-lg scale-105 transition-all duration-200;
+  }
+  
+  /* Efeito hover para a página ativa */
+  .custom-paginator .p-highlight:hover {
+    @apply bg-blue-700 scale-110;
+  }
+  
+  /* Estilizando os botões de "Anterior" e "Próximo" */
+  .custom-paginator .p-paginator-prev,
+  .custom-paginator .p-paginator-next {
+    @apply bg-gray-200 text-gray-700 px-3 py-1 rounded-lg hover:bg-gray-300 transition-all;
+  }
+  
