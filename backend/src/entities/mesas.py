@@ -68,8 +68,13 @@ def verificar_status_mesa(mesa_id):
 
 
 def atualizar_status_mesa(mesa_id, ocupada):
-    if not isinstance(mesa_id, int) or mesa_id <= 0 or not isinstance(ocupada, bool):
-        print("Dados inválidos para atualizar status da mesa")
+    
+    if not isinstance(mesa_id, int) or mesa_id <= 0:
+        print(f"❌ ID da mesa inválido: mesa_id={mesa_id}")
+        return False
+
+    if ocupada not in [True, False]:  # 🔥 Garante que `ocupada` seja booleano
+        print(f"❌ Status inválido: ocupada={ocupada}")
         return False
 
     conn = connect_db()
@@ -78,18 +83,18 @@ def atualizar_status_mesa(mesa_id, ocupada):
             cur = conn.cursor()
             cur.execute("UPDATE mesas SET status = %s WHERE id = %s", (ocupada, mesa_id))
             conn.commit()
+
+            print(f"✅ Mesa {mesa_id} atualizada para {'ocupada' if ocupada else 'disponível'}")
             return True
         except Exception as e:
-            print(f"Erro ao atualizar status da mesa: {e}")
+            print(f"❌ Erro ao atualizar status da mesa {mesa_id}: {e}")
             return False
         finally:
             cur.close()
             conn.close()
     else:
-        print("Erro ao conectar ao banco de dados")
+        print("❌ Erro ao conectar ao banco de dados")
         return False
-
-
 
 def excluir_mesa(mesa_id):
     if not isinstance(mesa_id, int) or mesa_id <= 0:

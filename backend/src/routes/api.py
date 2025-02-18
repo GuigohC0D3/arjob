@@ -126,7 +126,6 @@ def listar_comandas_fechadas():
         print(f"Erro no endpoint /comandas/fechadas: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
 
-
 @main_bp.route("/comandas", methods=["GET"])
 def listar_comandas():
     return comandas_controller.listar_comandas()

@@ -19,12 +19,20 @@ def criar_mesa():
     return jsonify({"error": "Erro ao criar mesa"}), 500
 
 def atualizar_status_mesa(mesa_id):
+    """Endpoint para atualizar o status de uma mesa."""
+
     data = request.json
     status = data.get("status")
-    if not status:
-        return jsonify({"error": "Status é obrigatório"}), 400
+
+    # 🔥 Se `status` for `None`, retorna erro
+    if status is None:
+        return jsonify({"error": "Status deve ser um booleano (true ou false)"}), 400
+
+    # 🔥 Garante que status seja booleano
+    status = bool(status)
 
     atualizado = mesas.atualizar_status_mesa(mesa_id, status)
+
     if atualizado:
         return jsonify({"message": "Status da mesa atualizado com sucesso"}), 200
     return jsonify({"error": "Erro ao atualizar status da mesa"}), 500
