@@ -23,7 +23,6 @@ import ComandaAberta from "./pages/ComandaAberta";
 
 const PrivateRoute = () => {
   const authToken = sessionStorage.getItem("authToken");
-  console.log("Auth token no PrivateRoute:", authToken); // Para debug
   return authToken ? <Outlet /> : <Navigate to="/" />;
 };
 

@@ -6,42 +6,88 @@ import ComandaProcesso from "../components/ComandaProcesso";
 const IniciarVenda = () => {
   const [mesas, setMesas] = useState([]);
   const [selectedMesa, setSelectedMesa] = useState(null);
-  const [cpfCliente, setCpfCliente] = useState("");
   const [clienteInfo, setClienteInfo] = useState(null);
   const [produtosCategoria, setProdutosCategoria] = useState([]);
   const navigate = useNavigate();
   const [mostrarFiltro, setMostrarFiltro] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchMesas = async () => {
-      try {
-        const response = await fetch("http://10.11.1.67:5000/mesas");
-        if (response.ok) {
-          const mesasData = await response.json();
-          const mesasOrdenadas = mesasData.sort((a, b) => a.numero - b.numero);
-          setMesas(mesasOrdenadas);
-        } else {
-          console.error("Erro ao carregar mesas.");
-        }
-      } catch (error) {
-        console.error("Erro ao conectar ao servidor:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchMesas = async () => {
+    try {
+      const response = await fetch("http://10.11.1.67:5000/mesas");
+      if (response.ok) {
+        let mesasData = await response.json();
 
+        // ✅ Garante que `status` seja booleano e atualizado corretamente
+        const novasMesas = mesasData.map((mesa) => ({
+          ...mesa,
+          status: Boolean(mesa.status),
+        }));
+
+        setMesas(novasMesas.sort((a, b) => a.numero - b.numero));
+      } else {
+        console.error("Erro ao carregar mesas.");
+      }
+    } catch (error) {
+      console.error("Erro ao conectar ao servidor:", error);
+    }
+  };
+
+  // 🔥 Agora chamamos `fetchMesas()` sempre que o estado mudar
+  useEffect(() => {
     fetchMesas();
-  }, [loading]);
+  }, []);
+
+  useEffect(() => {
+    fetchMesas();
+  }, [loading]); // ✅ Agora só depende de `loading`
+
+  const handleAtualizarStatusMesa = async (mesaId, status) => {
+    try {
+      // 🔥 Corrige qualquer tipo errado e garante que só pode ser `true` ou `false`
+      const booleanStatus = status === true || status === "true";
+
+      console.log(
+        `📡 Enviando para o backend:`,
+        JSON.stringify({ status: booleanStatus })
+      ); // 🚀 Veja no console se está correto
+
+      const response = await fetch(
+        `http://10.11.1.67:5000/mesas/${mesaId}/status`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: booleanStatus }), // ✅ Agora só envia `true` ou `false`
+        }
+      );
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        console.error("❌ Erro ao atualizar status da mesa:", responseData);
+        alert(
+          `Erro ao atualizar status da mesa: ${
+            responseData.error || "Erro desconhecido"
+          }`
+        );
+      } else {
+        console.log(
+          `✅ Status atualizado com sucesso: mesaId=${mesaId}, status=${booleanStatus}`
+        );
+        fetchMesas(); // 🔄 Atualiza a UI
+      }
+    } catch (error) {
+      console.error(
+        "❌ Erro ao conectar ao servidor para atualizar mesa:",
+        error
+      );
+      alert("Erro de conexão com o servidor ao atualizar a mesa.");
+    }
+  };
 
   const handleAbrirComanda = async () => {
     if (!selectedMesa || !selectedMesa.id) {
       alert("Selecione uma mesa para abrir a comanda.");
-      return;
-    }
-
-    if (!cpfCliente || !clienteInfo) {
-      alert("Insira e busque o CPF do cliente antes de abrir a comanda.");
       return;
     }
 
@@ -51,17 +97,31 @@ const IniciarVenda = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mesa_id: selectedMesa.id,
-          cliente_cpf: cpfCliente,
         }),
       });
 
       if (response.ok) {
-        setLoading(true); // 🔥 Faz o useEffect rodar de novo e buscar as mesas atualizadas
+        console.log(`✅ Comanda aberta na mesa ${selectedMesa.id}`);
+
+        // 🔄 Atualiza o status da mesa no frontend imediatamente
+        setMesas((prevMesas) =>
+          prevMesas.map((mesa) =>
+            mesa.id === selectedMesa.id ? { ...mesa, status: true } : mesa
+          )
+        );
+
+        // ✅ Agora ele redireciona para a comanda recém-aberta
+        navigate(`/comanda-aberta/${selectedMesa.id}`);
       } else {
-        console.error("Erro ao abrir comanda:", await response.json());
+        const errorResponse = await response.json();
+        console.error("❌ Erro ao abrir comanda:", errorResponse);
+        alert(
+          `Erro ao abrir comanda: ${errorResponse.error || "Erro desconhecido"}`
+        );
       }
     } catch (error) {
-      console.error("Erro ao abrir comanda:", error);
+      console.error("❌ Erro ao abrir comanda:", error);
+      alert("Erro de conexão com o servidor ao abrir a comanda.");
     }
   };
 
@@ -70,18 +130,26 @@ const IniciarVenda = () => {
       const response = await fetch(
         `http://10.11.1.67:5000/comandas/mesa/${mesa.id}`
       );
+
       if (response.ok) {
         const comanda = await response.json();
+
         if (comanda.aberta) {
-          navigate(`/comanda-aberta/${mesa.id}`); // 🔥 Comanda já aberta, redireciona
+          console.log(
+            `🔄 Redirecionando para comanda aberta da mesa ${mesa.id}`
+          );
+          navigate(`/comanda-aberta/${mesa.id}`); // ✅ Agora abre a comanda existente
         } else {
-          navigate(`/nova-comanda/${mesa.id}`); // 🔥 Comanda fechada, pode abrir uma nova
+          console.log(
+            `🔄 Redirecionando para abrir nova comanda na mesa ${mesa.id}`
+          );
+          navigate(`/nova-comanda/${mesa.id}`); // ✅ Somente se não houver comanda
         }
       } else {
-        console.error("Erro ao verificar comanda da mesa.");
+        console.error("❌ Erro ao verificar comanda da mesa.");
       }
     } catch (error) {
-      console.error("Erro ao conectar ao servidor:", error);
+      console.error("❌ Erro ao conectar ao servidor:", error);
     }
   };
 
@@ -89,16 +157,22 @@ const IniciarVenda = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       {!selectedMesa ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 grid-rows-4 gap-6 max-w-screen-lg mx-auto">
-          {/* Botão que seleciona a mesa e verifica se estiver ocupada fica vermelho e se estiver disponível fica verde */}
+          {/* 🔥 Agora a mesa fica vermelha corretamente quando ocupada */}
           {mesas.map((mesa) => (
             <button
               key={mesa.id}
               className={`w-24 h-24 md:w-28 md:h-28 text-lg font-semibold border rounded-lg shadow-md transition-transform ${
-                mesa.status === "ocupada"
+                mesa.status
                   ? "bg-red-500 text-white"
                   : "bg-green-500 text-white"
               } hover:scale-105`}
-              onClick={() => handleSelecionarMesa(mesa)}
+              onClick={() => {
+                console.log(
+                  `🖱️ Clicou na mesa ${mesa.id}! Status atual: ${mesa.status}`
+                );
+                handleAtualizarStatusMesa(mesa.id, !mesa.status);
+                handleSelecionarMesa(mesa); // 🔥 Agora também redireciona corretamente
+              }}
             >
               Mesa {mesa.numero}
             </button>
@@ -107,9 +181,7 @@ const IniciarVenda = () => {
       ) : produtosCategoria.length === 0 ? (
         <NovaComanda
           selectedMesa={selectedMesa}
-          cpfCliente={cpfCliente}
           clienteInfo={clienteInfo}
-          setCpfCliente={setCpfCliente}
           setClienteInfo={setClienteInfo}
           onAbrirComanda={handleAbrirComanda}
           onBack={() => setSelectedMesa(null)}
@@ -122,7 +194,6 @@ const IniciarVenda = () => {
             status: Boolean(selectedMesa.status),
           }}
           clienteInfo={clienteInfo || { nome: "Cliente Desconhecido" }}
-          cpfInfo={{ cpf: cpfCliente }}
           produtosCategoria={produtosCategoria}
           setProdutosCategoria={setProdutosCategoria}
           mostrarFiltro={mostrarFiltro}
