@@ -126,30 +126,45 @@ const IniciarVenda = () => {
   };
 
   const handleSelecionarMesa = async (mesa) => {
+    console.log(
+      `🖱️ Clicou na mesa ${mesa.id}, verificando se há comanda aberta...`
+    );
+
     try {
       const response = await fetch(
-        `http://10.11.1.67:5000/comandas/mesa/${mesa.id}`
+        `http://127.0.0.1:5000/comandas/mesa/${mesa.id}`
       );
+      const comanda = await response.json();
 
-      if (response.ok) {
-        const comanda = await response.json();
-
-        if (comanda.aberta) {
-          console.log(
-            `🔄 Redirecionando para comanda aberta da mesa ${mesa.id}`
-          );
-          navigate(`/comanda-aberta/${mesa.id}`); // ✅ Agora abre a comanda existente
-        } else {
-          console.log(
-            `🔄 Redirecionando para abrir nova comanda na mesa ${mesa.id}`
-          );
-          navigate(`/nova-comanda/${mesa.id}`); // ✅ Somente se não houver comanda
-        }
-      } else {
-        console.error("❌ Erro ao verificar comanda da mesa.");
+      if (!response.ok) {
+        console.error(
+          `❌ Erro ao verificar comanda da mesa ${mesa.id}:`,
+          comanda
+        );
+        return;
       }
+
+      console.log(`📡 Resposta do backend para mesa ${mesa.id}:`, comanda);
+
+      // 🔥 Se já existir uma comanda aberta, redirecionamos para ela
+      if (comanda && comanda.id && comanda.status === true) {
+        console.log(
+          `✅ Mesa ${mesa.id} já tem uma comanda aberta. Redirecionando...`
+        );
+        navigate(`/comanda-aberta/${comanda.id}`);
+        return;
+      }
+
+      // 🔥 Se não existir comanda aberta, vai para a tela de seleção de atendente
+      console.log(
+        `🔄 Nenhuma comanda aberta encontrada para a mesa ${mesa.id}. Criando nova comanda.`
+      );
+      navigate(`/nova-comanda/${mesa.id}`);
     } catch (error) {
-      console.error("❌ Erro ao conectar ao servidor:", error);
+      console.error(
+        `❌ Erro ao conectar ao servidor para mesa ${mesa.id}:`,
+        error
+      );
     }
   };
 

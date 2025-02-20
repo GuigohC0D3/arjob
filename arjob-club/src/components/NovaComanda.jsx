@@ -6,7 +6,7 @@ const NovaComanda = () => {
   const navigate = useNavigate();
   const [atendentes, setAtendentes] = useState([]);
   const [atendenteSelecionado, setAtendenteSelecionado] = useState("");
-  const [loading, setLoading] = useState(false); // ✅ Adicionando o estado loading
+  const [loading, setLoading] = useState(false); // ✅ Estado de carregamento
 
   useEffect(() => {
     const fetchAtendentes = async () => {
@@ -16,15 +16,33 @@ const NovaComanda = () => {
           const data = await response.json();
           setAtendentes(data);
         } else {
-          console.error("Erro ao buscar atendentes.");
+          console.error("❌ Erro ao buscar atendentes.");
         }
       } catch (error) {
-        console.error("Erro ao conectar ao servidor:", error);
+        console.error("❌ Erro ao conectar ao servidor:", error);
       }
     };
 
     fetchAtendentes();
   }, []);
+
+  // 🔥 Função para verificar se já existe uma comanda aberta para a mesa
+  async function verificarComandaAberta(mesaId) {
+    try {
+      const response = await fetch(`http://127.0.0.1:5000/comandas/mesa/${mesaId}`);
+      const data = await response.json();
+
+      if (response.ok && data.id) {
+        console.warn("⚠️ Comanda já existente, redirecionando...");
+        navigate(`/comanda-aberta/${data.id}`);
+        return true;
+      }
+      return false; // 🔥 Retorna `false` se a mesa não tiver comanda aberta
+    } catch (error) {
+      console.error("❌ Erro ao verificar comanda da mesa:", error);
+      return false;
+    }
+  }
 
   const handleAbrirComanda = async () => {
     if (!mesaId) {
@@ -38,28 +56,39 @@ const NovaComanda = () => {
     }
 
     try {
-      setLoading(true); // 🔥 Agora podemos usar setLoading sem erro
+      setLoading(true);
+
+      // 🔥 Se já existir comanda aberta, sai da função
+      const existeComanda = await verificarComandaAberta(mesaId);
+      if (existeComanda) return;
+
+      // 🔥 Se não existir, cria uma nova comanda
       const response = await fetch("http://127.0.0.1:5000/comandas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mesa_id: Number(mesaId),
           usuario_id: Number(atendenteSelecionado),
+          status: true, // ✅ Garantindo que a comanda seja aberta
         }),
       });
 
-      if (response.ok) {
-        alert("Comanda aberta com sucesso!");
-        navigate(`/comanda-aberta/${mesaId}`);
-      } else {
-        const errorData = await response.json();
-        alert(`Erro ao abrir comanda: ${errorData.error}`);
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        console.error("❌ Erro ao abrir comanda:", responseData);
+        alert(`Erro ao abrir comanda: ${responseData.error}`);
+        return;
       }
+
+      console.log("✅ Comanda criada com sucesso:", responseData);
+      navigate(`/comanda-aberta/${responseData.id}`);
+
     } catch (error) {
-      alert("Erro ao conectar ao servidor.");
-      console.error("Erro ao abrir comanda:", error);
+      console.error("❌ Erro ao conectar ao servidor:", error);
+      alert("Erro de conexão com o servidor ao abrir a comanda.");
     } finally {
-      setLoading(false); // ✅ Evita travar a interface
+      setLoading(false);
     }
   };
 
