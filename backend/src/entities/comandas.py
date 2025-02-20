@@ -21,7 +21,7 @@ def gerar_numero_comanda():
     else:
         raise Exception("Erro ao conectar ao banco de dados")
 
-def criar_comanda(mesa_id, usuario_id):  # ✅ Agora recebe `usuario_id`
+def criar_comanda(mesa_id, usuario_id):
     conn = connect_db()
     if conn:
         try:
@@ -30,20 +30,22 @@ def criar_comanda(mesa_id, usuario_id):  # ✅ Agora recebe `usuario_id`
             cur.execute(
                 """
                 INSERT INTO comandas (code, mesa_id, usuario_id, status, data_abertura)
-                VALUES (%s, %s, %s, 'aberta', NOW())
+                VALUES (%s, %s, %s, TRUE, NOW()) RETURNING id
                 """,
                 (numero_comanda, mesa_id, usuario_id),
             )
+            comanda_id = cur.fetchone()[0]  # 🔥 Pegamos o ID da nova comanda
             conn.commit()
             cur.close()
             conn.close()
-            return {"id": numero_comanda}, 201
+            return {"id": comanda_id}, 201
         except Exception as e:
             conn.rollback()
             print(f"Erro ao criar comanda: {e}")
             return {"error": "Erro ao criar comanda"}, 500
     else:
         return {"error": "Erro ao conectar ao banco de dados"}, 500
+
 
 def abrir_comanda(mesa_id, atendente_id):
     try:
@@ -166,36 +168,35 @@ def obter_comanda_por_code(code):
 
 
 def obter_comanda_por_mesa(mesa_id):
+    """Retorna a comanda aberta de uma mesa."""
+    
     conn = connect_db()
-    if conn:
-        try:
-            cur = conn.cursor()
-            cur.execute("""
-                SELECT c.id, c.code, c.mesa_id, c.status, cl.nome, cl.cpf
-                FROM comandas c
-                LEFT JOIN clientes cl ON c.cliente_id = cl.id
-                WHERE c.mesa_id = %s AND c.status = 'aberta'
-            """, (mesa_id,))
-            comanda = cur.fetchone()
-            cur.close()
-            conn.close()
-
-            if comanda:
-                return {
-                    "id": comanda[0],
-                    "code": comanda[1] if comanda[1] else "MISSING_CODE",  # 🔥 Se code for None, retorna "MISSING_CODE"
-                    "mesa_id": comanda[2],
-                    "status": comanda[3],
-                    "cliente": comanda[4] or "Desconhecido",
-                    "cpf": comanda[5] or "Não informado"
-                }
-            return None
-        except Exception as e:
-            print(f"Erro ao buscar comanda por mesa: {e}")
-            return None
-    else:
-        print("Erro ao conectar ao banco de dados")
+    if not conn:
         return None
+
+    try:
+        cur = conn.cursor()
+        # 🔥 Agora buscamos `status` como BOOLEAN corretamente
+        cur.execute("SELECT id, mesa_id, status, code FROM comandas WHERE mesa_id = %s AND status = TRUE LIMIT 1", (mesa_id,))
+        comanda = cur.fetchone()
+
+        if comanda:
+            return {
+                "id": comanda[0],
+                "mesa_id": comanda[1],  # ✅ Agora retornamos corretamente o ID da mesa
+                "status": comanda[2],   # ✅ `status` já vem como BOOLEAN do banco
+                "code": comanda[3]
+            }
+        else:
+            return None  # 🔥 Retorna `None` corretamente se não houver comanda
+
+    except Exception as e:
+        print(f"❌ Erro ao buscar comanda da mesa {mesa_id}: {e}")
+        return None
+
+    finally:
+        cur.close()
+        conn.close()
 
 
 def fechar_comanda(code, total, mesa_id):

@@ -18,27 +18,25 @@ def abrir_comanda():
         # 🔥 Obtém o cargo do usuário corretamente
         cargo_do_usuario = get_user_cargo(usuario_id)
 
-        if cargo_do_usuario in ["desconhecido", "erro"]:
-            return jsonify({"error": "Usuário não tem cargo atribuído ou ocorreu um erro."}), 403
-
         if cargo_do_usuario != "atendente":
             return jsonify({"error": "Usuário selecionado não é um atendente."}), 403
 
         # 🔥 Verifica se já existe uma comanda ativa na mesa
         comanda_existente = comandas.obter_comanda_por_mesa(mesa_id)
         if comanda_existente:
-            return jsonify({"error": "Já existe uma comanda ativa para esta mesa."}), 400
+            return jsonify({"message": "Comanda já existente", "id": comanda_existente["id"]}), 200
 
         # 🔥 Agora chama `criar_comanda()` corretamente
-        response, status_code = comandas.criar_comanda(mesa_id, usuario_id)  # ✅ Agora está correto!
+        response, status_code = comandas.criar_comanda(mesa_id, usuario_id)
 
         if status_code == 201:
             # Atualiza o status da mesa para ocupada
             mesas.atualizar_status_mesa(mesa_id, "ocupada")
 
         return jsonify(response), status_code
+
     except Exception as e:
-        print(f"Erro ao abrir comanda no controlador: {e}")
+        print(f"❌ Erro ao abrir comanda no controlador: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
 
     
