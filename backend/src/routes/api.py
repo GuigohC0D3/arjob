@@ -98,10 +98,19 @@ def get_mesa(id):
 def excluir_mesa(mesa_id):
     return mesas_controller.excluir_mesa(mesa_id)
 
-
 @main_bp.route('/comandas', methods=['POST'])
 def criar_comanda():
-    return comandas_controller.abrir_comanda() 
+    """Cria uma nova comanda."""
+    dados = request.json  # Pegamos os dados do frontend
+
+    mesa_id = dados.get("mesa_id")
+    atendente_id = dados.get("usuario_id")  # 🔥 Se necessário, ajuste o nome correto
+
+    if not mesa_id or not atendente_id:
+        return jsonify({"error": "Campos obrigatórios: mesa_id e usuario_id"}), 400
+
+    return comandas_controller.abrir_comanda(mesa_id, atendente_id)  # 🔥 Agora passa os parâmetros corretos
+ 
     
 @main_bp.route('/comandas/mesa/<int:mesa_id>', methods=['GET'])
 def obter_comanda_por_mesa(mesa_id):

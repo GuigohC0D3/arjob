@@ -496,23 +496,28 @@ def listar_atendentes():
 
 
 
-def verificar_se_usuario_atendente(usuario_id):
-    """Verifica se o usuário tem o cargo de atendente."""
+def verificar_se_usuario_eh_atendente(usuario_id):
+    """Verifica se o usuário é um atendente no banco de dados."""
     conn = connect_db()
-    if conn:
-        try:
-            cur = conn.cursor()
-            cur.execute("""
+    if not conn:
+        return False
+
+    try:
+        cur = conn.cursor()
+        cur.execute ("""
                 SELECT id FROM usuarios 
                 WHERE id = %s AND cargo_id = 5
             """, (usuario_id,))
-            
-            atendente = cur.fetchone()
-            cur.close()
-            conn.close()
+        resultado = cur.fetchone()
 
-            return atendente is not None  # Retorna True se o usuário for atendente
-        except Exception as e:
-            print(f"Erro ao verificar se usuário é atendente: {e}")
-            return False
-    return False
+        if resultado:
+            return True  # ✅ O usuário é um atendente
+        return False  # ❌ O usuário não é um atendente
+
+    except Exception as e:
+        print(f"❌ Erro ao verificar cargo do usuário {usuario_id}: {e}")
+        return False
+
+    finally:
+        cur.close()
+        conn.close()

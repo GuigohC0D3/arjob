@@ -1,43 +1,30 @@
 from flask import jsonify, request
-from ..entities import comandas, mesas, clientes
+from ..entities import comandas, mesas, clientes, users
 from ..entities.comandas import atualizar_status_comanda
 from ..entities.users import get_user_cargo
 
-def abrir_comanda():
+def abrir_comanda(mesa_id, atendente_id):
     try:
-        dados = request.json
-        mesa_id = dados.get("mesa_id")
-        usuario_id = dados.get("usuario_id")
+        # Verifica se o atendente_id realmente tem o cargo de atendente
+        if not users.verificar_se_usuario_eh_atendente(atendente_id):
+            return {"error": "Usuário selecionado não é um atendente."}, 403
 
-        if mesa_id is None or usuario_id is None:
-            return jsonify({"error": "Mesa e usuário são obrigatórios"}), 400
-
-        mesa_id = int(mesa_id)
-        usuario_id = int(usuario_id)
-
-        # 🔥 Obtém o cargo do usuário corretamente
-        cargo_do_usuario = get_user_cargo(usuario_id)
-
-        if cargo_do_usuario != "atendente":
-            return jsonify({"error": "Usuário selecionado não é um atendente."}), 403
-
-        # 🔥 Verifica se já existe uma comanda ativa na mesa
+        # Verifica se já existe uma comanda ativa na mesa
         comanda_existente = comandas.obter_comanda_por_mesa(mesa_id)
         if comanda_existente:
-            return jsonify({"message": "Comanda já existente", "id": comanda_existente["id"]}), 200
+            return {"error": "Já existe uma comanda ativa para esta mesa."}, 400
 
-        # 🔥 Agora chama `criar_comanda()` corretamente
-        response, status_code = comandas.criar_comanda(mesa_id, usuario_id)
+        # Cria uma nova comanda sem CPF do cliente, mas com atendente
+        response, status_code = comandas.criar_comanda(mesa_id, atendente_id)
 
         if status_code == 201:
             # Atualiza o status da mesa para ocupada
             mesas.atualizar_status_mesa(mesa_id, "ocupada")
 
-        return jsonify(response), status_code
-
+        return response, status_code
     except Exception as e:
-        print(f"❌ Erro ao abrir comanda no controlador: {e}")
-        return jsonify({"error": "Erro interno no servidor"}), 500
+        print(f"Erro ao abrir comanda no controlador: {e}")
+        return {"error": "Erro interno no servidor"}, 500
 
     
 def criar_comanda():

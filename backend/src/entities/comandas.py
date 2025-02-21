@@ -47,28 +47,47 @@ def criar_comanda(mesa_id, usuario_id):
         return {"error": "Erro ao conectar ao banco de dados"}, 500
 
 
-def abrir_comanda(mesa_id, atendente_id):
-    try:
-        # Verifica se o atendente_id realmente tem o cargo de atendente
-        if not users.verificar_se_usuario_eh_atendente(atendente_id):
-            return {"error": "Usuário selecionado não é um atendente."}, 403
+def abrir_comanda(mesa_id, usuario_id):
+    """Cria uma comanda e atualiza a mesa para ocupada."""
+    conn = connect_db()
+    if conn:
+        try:
+            numero_comanda = gerar_numero_comanda()
+            cur = conn.cursor()
 
-        # Verifica se já existe uma comanda ativa na mesa
-        comanda_existente = comandas.obter_comanda_por_mesa(mesa_id)
-        if comanda_existente:
-            return {"error": "Já existe uma comanda ativa para esta mesa."}, 400
+            # 🔥 Verifica se já existe uma comanda aberta para essa mesa
+            cur.execute("SELECT id FROM comandas WHERE mesa_id = %s AND status = TRUE LIMIT 1", (mesa_id,))
+            comanda_existente = cur.fetchone()
 
-        # Cria uma nova comanda sem CPF do cliente, mas com atendente
-        response, status_code = comandas.criar_comanda(mesa_id, atendente_id)
+            if comanda_existente:
+                return {"message": "Comanda já existente", "id": comanda_existente[0]}, 200
 
-        if status_code == 201:
-            # Atualiza o status da mesa para ocupada
-            mesas.atualizar_status_mesa(mesa_id, "ocupada")
+            # 🔥 Cria uma nova comanda
+            cur.execute(
+                """
+                INSERT INTO comandas (code, mesa_id, usuario_id, status, data_abertura)
+                VALUES (%s, %s, %s, TRUE, NOW()) RETURNING id
+                """,
+                (numero_comanda, mesa_id, usuario_id),
+            )
+            comanda_id = cur.fetchone()[0]
 
-        return response, status_code
-    except Exception as e:
-        print(f"Erro ao abrir comanda no controlador: {e}")
-        return {"error": "Erro interno no servidor"}, 500
+            # 🔥 Atualiza o status da mesa para ocupada (vermelha)
+            cur.execute("UPDATE mesas SET status = TRUE WHERE id = %s", (mesa_id,))
+
+            conn.commit()
+            cur.close()
+            conn.close()
+
+            return {"id": comanda_id}, 201
+
+        except Exception as e:
+            conn.rollback()
+            print(f"❌ Erro ao abrir comanda: {e}")
+            return {"error": "Erro ao abrir comanda"}, 500
+    else:
+        return {"error": "Erro ao conectar ao banco de dados"}, 500
+
 
 def atualizar_status_comanda(comanda_id, total, mesa_id):
     conn = connect_db()
@@ -199,43 +218,40 @@ def obter_comanda_por_mesa(mesa_id):
         conn.close()
 
 
-def fechar_comanda(code, total, mesa_id):
+def fechar_comanda(comanda_id):
+    """Fecha a comanda e libera a mesa."""
     conn = connect_db()
     if conn:
         try:
             cur = conn.cursor()
 
-            # 🔥 Buscar comanda pelo código
-            comanda = obter_comanda_por_code(code)
+            # 🔥 Verifica se a comanda existe e está aberta
+            cur.execute("SELECT mesa_id FROM comandas WHERE id = %s AND status = TRUE", (comanda_id,))
+            comanda = cur.fetchone()
+
             if not comanda:
-                return {"error": "Comanda não encontrada"}, 404
+                return {"error": "Comanda não encontrada ou já fechada"}, 400
 
-            comanda_id = comanda["id"]  # Pegamos o ID correto baseado no `code`
+            mesa_id = comanda[0]
 
-            # Atualiza a comanda para "fechada"
-            cur.execute("""
-                UPDATE comandas
-                SET status = 'fechada', total = %s, data_fechamento = NOW()
-                WHERE id = %s
-            """, (total, comanda_id))
-
-            # Atualiza a mesa para "disponível"
-            cur.execute("""
-                UPDATE mesas
-                SET status = FALSE
-                WHERE id = %s
-            """, (mesa_id,))
-
+            # 🔥 Fecha a comanda
+            cur.execute("UPDATE comandas SET status = FALSE, data_fechamento = NOW() WHERE id = %s", (comanda_id,))
+            
+            # 🔥 Atualiza a mesa para disponível (verde)
+            cur.execute("UPDATE mesas SET status = FALSE WHERE id = %s", (mesa_id,))
+            
             conn.commit()
             cur.close()
             conn.close()
 
-            return {"message": "Comanda fechada com sucesso!"}, 200
+            return {"message": "Comanda fechada com sucesso"}, 200
+
         except Exception as e:
             conn.rollback()
-            print(f"Erro ao fechar comanda no banco de dados: {e}")
-            return {"error": "Erro ao fechar comanda no banco de dados"}, 500
+            print(f"❌ Erro ao fechar comanda {comanda_id}: {e}")
+            return {"error": "Erro ao fechar comanda"}, 500
     else:
         return {"error": "Erro ao conectar ao banco de dados"}, 500
+
 
 
