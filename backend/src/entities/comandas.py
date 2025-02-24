@@ -41,7 +41,7 @@ def criar_comanda(mesa_id, usuario_id):
             return {"id": comanda_id}, 201
         except Exception as e:
             conn.rollback()
-            print(f"Erro ao criar comanda: {e}")
+            print(f"❌ Erro ao criar comanda: {e}")
             return {"error": "Erro ao criar comanda"}, 500
     else:
         return {"error": "Erro ao conectar ao banco de dados"}, 500
@@ -116,7 +116,7 @@ def atualizar_status_comanda(comanda_id, total, mesa_id):
             return {"message": "Comanda fechada com sucesso!"}, 200
         except Exception as e:
             conn.rollback()
-            print(f"Erro ao fechar comanda no banco de dados: {e}")
+            print(f"❌ Erro ao fechar comanda no banco de dados: {e}")
             return {"error": "Erro ao fechar comanda no banco de dados"}, 500
     else:
         return {"error": "Erro ao conectar ao banco de dados"}, 500
@@ -150,7 +150,7 @@ def listar_comandas():
                 for c in comandas
             ]
         except Exception as e:
-            print(f"Erro ao listar comandas: {e}")
+            print(f"❌ Erro ao listar comandas: {e}")
             return None
     return None
 
@@ -179,7 +179,7 @@ def obter_comanda_por_code(code):
                 }
             return None
         except Exception as e:
-            print(f"Erro ao buscar comanda por código: {e}")
+            print(f"❌ Erro ao buscar comanda por código: {e}")
             return None
     else:
         print("Erro ao conectar ao banco de dados")
@@ -219,39 +219,39 @@ def obter_comanda_por_mesa(mesa_id):
 
 
 def fechar_comanda(comanda_id):
-    """Fecha a comanda e libera a mesa."""
     conn = connect_db()
     if conn:
         try:
             cur = conn.cursor()
 
-            # 🔥 Verifica se a comanda existe e está aberta
-            cur.execute("SELECT mesa_id FROM comandas WHERE id = %s AND status = TRUE", (comanda_id,))
-            comanda = cur.fetchone()
+            # Obter itens da comanda
+            cur.execute("""
+                SELECT produto_id, quantidade FROM itens_comanda WHERE comanda_id = %s
+            """, (comanda_id,))
+            itens = cur.fetchall()
 
-            if not comanda:
-                return {"error": "Comanda não encontrada ou já fechada"}, 400
+            if not itens:
+                return {"error": "Nenhum item encontrado na comanda"}, 400
 
-            mesa_id = comanda[0]
+            # Atualizar estoque
+            for produto_id, quantidade in itens:
+                cur.execute("""
+                    UPDATE produtos SET estoque = estoque - %s WHERE id = %s
+                """, (quantidade, produto_id))
 
-            # 🔥 Fecha a comanda
-            cur.execute("UPDATE comandas SET status = FALSE, data_fechamento = NOW() WHERE id = %s", (comanda_id,))
-            
-            # 🔥 Atualiza a mesa para disponível (verde)
-            cur.execute("UPDATE mesas SET status = FALSE WHERE id = %s", (mesa_id,))
-            
+            # Fechar a comanda
+            cur.execute("""
+                UPDATE comandas SET status = FALSE, data_fechament = NOW() WHERE id = %s
+            """, (comanda_id,))
+
             conn.commit()
             cur.close()
             conn.close()
 
-            return {"message": "Comanda fechada com sucesso"}, 200
-
+            return {"message": "Comanda fechada e estoque atualizado com sucesso!"}, 200
         except Exception as e:
             conn.rollback()
-            print(f"❌ Erro ao fechar comanda {comanda_id}: {e}")
+            print(f"❌ Erro ao fechar comanda: {e}")
             return {"error": "Erro ao fechar comanda"}, 500
     else:
         return {"error": "Erro ao conectar ao banco de dados"}, 500
-
-
-
