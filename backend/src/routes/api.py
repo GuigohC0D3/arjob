@@ -144,6 +144,7 @@ def listar_produtos():
     produtos, status = produtos_controller.get_produtos()
     return jsonify(produtos), status
 
+
 @main_bp.route("/produtos/buscar", methods=["GET"])
 def buscar_produtos_route():
     return buscar_produtos_controller.buscar_produtos()
