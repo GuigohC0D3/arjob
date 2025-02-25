@@ -19,15 +19,35 @@ const ComandaAberta = () => {
     const fetchProdutos = async () => {
       try {
         const response = await fetch(`http://127.0.0.1:5000/produtos`);
-        if (response.ok) {
-          const produtos = await response.json();
-          setProdutosCategoria(produtos);
+        if (!response.ok) throw new Error("Erro ao buscar produtos.");
 
-          const categoriasUnicas = [...new Set(produtos.map((p) => p.categoria))];
-          setCategorias(categoriasUnicas);
-        } else {
-          console.error("Erro ao buscar produtos.");
+        let data = await response.json();
+        console.log("Resposta bruta da API:", data);
+        let produtos = Array.isArray(data) ? data : data.produtos || [];
+        console.log("Produtos corrigidos:", produtos);
+
+        // 🔥 Corrige caso produtos esteja aninhado dentro de um array extra
+        if (Array.isArray(produtos) && Array.isArray(produtos[0])) {
+          produtos = produtos[0]; // Extrai o array correto
         }
+
+        // 🔥 Verifica se cada produto tem `id`, `nome`, `preco`
+        produtos = produtos.map((p) => ({
+          id: p.id || 0,
+          nome: p.nome || "Produto Sem Nome",
+          preco: p.preco || 0.0,
+          categoria: p.categoria || "Sem Categoria",
+          estoque: p.estoque || 0,
+        }));
+
+        console.log("Produtos após correção:", produtos); // Debug final
+        setProdutosCategoria(produtos);
+
+        // 🔥 Captura categorias únicas corretamente
+        const categoriasUnicas = [
+          ...new Set(produtos.map((p) => p.categoria).filter(Boolean)),
+        ];
+        setCategorias(categoriasUnicas);
       } catch (error) {
         console.error("Erro ao conectar ao servidor:", error);
       } finally {
@@ -38,12 +58,38 @@ const ComandaAberta = () => {
     fetchProdutos();
   }, [mesaId]);
 
-  // 🔥 Filtrando produtos por categoria e nome completo
-  const produtosFiltrados = produtosCategoria
-    .filter((produto) => categoriaSelecionada ? produto.categoria === categoriaSelecionada : true)
-    .filter((produto) => searchTerm.trim() !== "" ? produto.nome.toLowerCase().includes(searchTerm.toLowerCase().trim()) : true);
+  const fecharComanda = async () => {
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:5000/fechar_mesa/${mesaId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ comanda }),
+        }
+      );
+      if (response.ok) {
+        navigate("/historico");
+      } else {
+        console.error("Erro ao fechar comanda");
+      }
+    } catch (error) {
+      console.error("Erro ao conectar ao servidor:", error);
+    }
+  };
 
-  // 🔄 Paginação com PrimeReact
+  const produtosFiltrados = produtosCategoria
+    .filter((produto) =>
+      categoriaSelecionada ? produto.categoria === categoriaSelecionada : true
+    )
+    .filter((produto) =>
+      searchTerm.trim() !== ""
+        ? produto.nome.toLowerCase().includes(searchTerm.toLowerCase().trim())
+        : true
+    );
+
   const totalPaginas = Math.ceil(produtosFiltrados.length / produtosPorPagina);
   const produtosPaginados = produtosFiltrados.slice(
     currentPage * produtosPorPagina,
@@ -54,7 +100,9 @@ const ComandaAberta = () => {
     setComanda((prevComanda) => {
       const produtoExistente = prevComanda.find((p) => p.id === produto.id);
       return produtoExistente
-        ? prevComanda.map((p) => p.id === produto.id ? { ...p, quantidade: p.quantidade + 1 } : p)
+        ? prevComanda.map((p) =>
+            p.id === produto.id ? { ...p, quantidade: p.quantidade + 1 } : p
+          )
         : [...prevComanda, { ...produto, quantidade: 1 }];
     });
   };
@@ -75,25 +123,31 @@ const ComandaAberta = () => {
     );
   };
 
-  const totalComanda = comanda.reduce((total, produto) => total + produto.preco * produto.quantidade, 0);
+  const totalComanda = comanda.reduce(
+    (total, produto) => total + produto.preco * produto.quantidade,
+    0
+  );
 
-  if (loading) return <p>Carregando produtos...</p>;
+  if (loading)
+    return <p className="text-center text-gray-600">Carregando produtos...</p>;
 
   return (
     <motion.div
-      className="p-6"
-      initial={{ opacity: 0, x: -30 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 30 }}
+      className="p-6 max-w-5xl mx-auto"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.4 }}
     >
-      <h1 className="text-2xl font-bold text-gray-800 mb-4">Comanda Aberta - Mesa {mesaId}</h1>
+      <h1 className="text-2xl font-bold text-gray-800 mb-4 text-center">
+        Comanda Aberta - Mesa {mesaId}
+      </h1>
 
       {/* 🔍 Barra de Pesquisa */}
       <input
         type="text"
         placeholder="Buscar produto..."
-        className="w-full p-2 border border-gray-300 rounded-lg mb-4"
+        className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
       />
@@ -101,15 +155,21 @@ const ComandaAberta = () => {
       {/* 🔥 Filtros de categoria */}
       <div className="flex gap-2 overflow-x-auto pb-2">
         <button
-          className={`p-2 rounded ${!categoriaSelecionada ? "bg-blue-600 text-white" : "bg-gray-200"}`}
+          className={`p-2 rounded transition ${
+            !categoriaSelecionada ? "bg-blue-600 text-white" : "bg-gray-200"
+          }`}
           onClick={() => setCategoriaSelecionada(null)}
         >
           Todas
         </button>
-        {categorias.map((categoria) => (
+        {categorias.map((categoria, index) => (
           <button
-            key={categoria}
-            className={`p-2 rounded ${categoria === categoriaSelecionada ? "bg-blue-600 text-white" : "bg-gray-200"}`}
+            key={index} // 🔥 Agora cada item terá um índice único
+            className={`p-2 rounded transition ${
+              categoria === categoriaSelecionada
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200"
+            }`}
             onClick={() => setCategoriaSelecionada(categoria)}
           >
             {categoria}
@@ -119,17 +179,19 @@ const ComandaAberta = () => {
 
       {/* 🔥 Lista de produtos */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
-        {produtosPaginados.map((produto) => (
+        {produtosPaginados.map((produto, index) => (
           <motion.div
-            key={produto.id}
-            className="border p-4 shadow-md rounded-lg bg-white"
+            key={produto.id || index} // 🔥 Usa `index` se `id` estiver ausente
+            className="border p-4 shadow-lg rounded-lg bg-white flex flex-col items-center"
             whileHover={{ scale: 1.05 }}
             transition={{ duration: 0.2 }}
           >
-            <h3 className="font-semibold">{produto.nome}</h3>
-            <p className="text-gray-600">R$ {Number(produto.preco || 0).toFixed(2)}</p>
+            <h3 className="font-semibold text-center">{produto.nome}</h3>
+            <p className="text-gray-600">
+              R$ {Number(produto.preco || 0).toFixed(2)}
+            </p>
             <button
-              className="bg-green-500 text-white px-3 py-1 rounded mt-2 hover:bg-green-600"
+              className="bg-green-500 text-white px-4 py-2 rounded mt-3 hover:bg-green-600 transition"
               onClick={() => adicionarProduto(produto)}
             >
               Adicionar
@@ -138,42 +200,82 @@ const ComandaAberta = () => {
         ))}
       </div>
 
-      {/* 🔄 Paginação usando PrimeReact */}
-      <div className="mt-6">
+      {/* 🔄 Paginação */}
+      <div className="mt-6 flex justify-center">
         <Paginator
           first={currentPage * produtosPorPagina}
           rows={produtosPorPagina}
           totalRecords={produtosFiltrados.length}
           onPageChange={(e) => setCurrentPage(e.page)}
           template="PrevPageLink PageLinks NextPageLink"
-          className="p-paginator p-component text-blue-700 "
+          className="p-paginator p-component text-blue-700"
         />
       </div>
 
-      {/* 🔥 Exibição da comanda */}
-      <div className="mt-6 bg-gray-100 p-4 rounded-lg shadow-md">
-        <h2 className="text-lg font-bold">Itens na Comanda</h2>
+      <div className="mt-6 bg-gray-100 p-6 rounded-lg shadow-md">
+        <h2 className="text-lg font-bold mb-3">Itens na Comanda</h2>
         {comanda.length === 0 ? (
           <p className="text-gray-500">Nenhum produto adicionado.</p>
         ) : (
-          comanda.map((produto) => (
-            <div key={produto.id} className="flex justify-between items-center p-2 border-b">
-              <span>{produto.nome} x{produto.quantidade}</span>
-              <div className="flex gap-2">
-                <button className="bg-red-500 text-white px-2 rounded" onClick={() => decrementarQuantidade(produto.id)}>-</button>
-                <button className="bg-blue-500 text-white px-2 rounded" onClick={() => incrementarQuantidade(produto.id)}>+</button>
+          <div className="w-full">
+            {comanda.map((produto, index) => (
+              <div
+                key={produto.id || index}
+                className="flex justify-between items-center p-3 border-b"
+              >
+                {/* Nome do Produto e Quantidade */}
+                <span className="text-gray-800 font-medium w-1/3">
+                  {produto.nome} x{produto.quantidade}
+                </span>
+
+                {/* Botões de Quantidade */}
+                <div className="flex items-center gap-2">
+                  <button
+                    className="bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-600 transition"
+                    onClick={() => decrementarQuantidade(produto.id)}
+                  >
+                    -
+                  </button>
+                  <span className="text-gray-900 font-semibold">
+                    {produto.quantidade}
+                  </span>
+                  <button
+                    className="bg-blue-500 text-white px-3 py-2 rounded-md hover:bg-blue-600 transition"
+                    onClick={() => incrementarQuantidade(produto.id)}
+                  >
+                    +
+                  </button>
+                </div>
+
+                {/* Preço Total do Produto */}
+                <span className="text-gray-900 font-semibold w-1/3 text-right">
+                  R$ {(produto.preco * produto.quantidade).toFixed(2)}
+                </span>
               </div>
-              <span>R$ {(produto.preco * produto.quantidade).toFixed(2)}</span>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
 
-      {/* 🔥 Total e botões */}
-      <h3 className="text-right font-bold mt-4">Total: R$ {totalComanda.toFixed(2)}</h3>
-      <div className="mt-6 flex gap-4">
-        <button className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Fechar Comanda</button>
-        <button className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700" onClick={() => navigate("/iniciar-venda")}>Voltar</button>
+      {/* 🔥 Total e Botões */}
+      <div className="mt-6 flex flex-col items-center bg-gray-100 p-6 rounded-lg shadow-md">
+        <h3 className="text-lg font-bold mb-2">
+          Total: R$ {totalComanda.toFixed(2)}
+        </h3>
+        <div className="flex gap-4 mt-2">
+          <button
+            className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition"
+            onClick={fecharComanda}
+          >
+            Fechar Comanda
+          </button>
+          <button
+            className="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition"
+            onClick={() => navigate("/iniciar-venda")}
+          >
+            Voltar
+          </button>
+        </div>
       </div>
     </motion.div>
   );

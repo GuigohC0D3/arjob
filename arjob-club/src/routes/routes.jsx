@@ -13,6 +13,7 @@ import RegisterUser from "../pages/RegisterUser";
 import AdminPanel from "../components/adminPages/AdminPanel";
 import VerifyAccount from "../pages/VerifyAccount";
 import NovaComanda from "../components/NovaComanda";
+import GerenciarProdutos from "../pages/GerenciarProdutos";
 const AppRoutes = () => {
   return (
     <Router>
@@ -29,6 +30,7 @@ const AppRoutes = () => {
         <Route path="/nova-comanda/:mesaId" element={<NovaComanda />} /> {/* 🔥 Criamos a rota aqui */}
         <Route path="/admin" element={<AdminPanel />} />
         <Route path="/verify" element={<VerifyAccount />} />
+        <Route path="/produtos" element={<GerenciarProdutos />} />
       </Routes>
     </Router>
   );

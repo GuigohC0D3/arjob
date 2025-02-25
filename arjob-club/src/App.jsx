@@ -20,6 +20,7 @@ import AdminPanel from "./components/adminPages/AdminPanel";
 import VerifyAccount from "./pages/VerifyAccount";
 import NovaComanda from "./components/NovaComanda";
 import ComandaAberta from "./pages/ComandaAberta";
+import GerenciarProdutos from "./pages/GerenciarProdutos";
 
 const PrivateRoute = () => {
   const authToken = sessionStorage.getItem("authToken");
@@ -54,6 +55,7 @@ const AppContent = () => {
             <Route path="/listagem" element={<ListagemComandas />} />
             <Route path="/Importar" element={<ImportarFinanceiros />} />
             <Route path="/Cliente" element={<CadastroCliente />} />
+            <Route path="/produtos" element={<GerenciarProdutos />} />
             <Route path="/Fluxo" element={<FluxoDeCaixa />} />
             <Route path="/admin" element={<AdminPanel />} />
 

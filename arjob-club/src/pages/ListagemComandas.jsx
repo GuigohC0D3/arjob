@@ -38,7 +38,7 @@ const ListagemComandas = () => {
   return (
     <div className="listagem-comandas-container">
       <header>
-        <h1>Histórico de Comandas Fechadas</h1>
+        <h1 className="items-center justify-center flex">Histórico de Comandas Fechadas</h1>
       </header>
       <main>
         {comandasExibidas.length > 0 ? (
@@ -56,7 +56,7 @@ const ListagemComandas = () => {
             </div>
           ))
         ) : (
-          <p>Nenhuma comanda fechada encontrada.</p>
+          <p className="items-center justify-center flex">Nenhuma comanda fechada encontrada.</p>
         )}
       </main>
       {comandas.length > 0 && (
