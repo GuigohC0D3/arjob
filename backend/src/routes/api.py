@@ -5,7 +5,7 @@ from math import ceil
 from datetime import datetime
 from ..controllers import dashboard_controller
 from ..controllers import clientes_controller, departamento_cliente_controller, departamentos_controller,  mesas_controller, comandas_controller, produtos_controller, buscar_produtos_controller, users_controller, permissoes_controller, cargos_controller
-from ..entities import comandas
+from ..entities import comandas, produtos
 from ..classes.user import User
 from ..entities.users import authenticate_user, get_user_permissions, get_user_cargo, send_verification_email
 from ..entities.clientes import get_clientes 
@@ -110,8 +110,48 @@ def criar_comanda():
         return jsonify({"error": "Campos obrigatórios: mesa_id e usuario_id"}), 400
 
     return comandas_controller.abrir_comanda(mesa_id, atendente_id)  # 🔥 Agora passa os parâmetros corretos
- 
-    
+
+@main_bp.route('/comandas/<int:comanda_id>/itens/<int:item_id>', methods=['DELETE'])
+def remover_item_comanda(comanda_id, item_id):
+    try:
+        response, status_code = comandas_controller.remover_item_da_comanda(comanda_id, item_id)
+        return jsonify(response), status_code
+    except Exception as e:
+        print(f"Erro ao remover item da comanda: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
+
+@main_bp.route("/comandas/<int:comanda_id>/itens", methods=["POST"])
+def adicionar_item_comanda(comanda_id):
+    data = request.json
+    produto_id = data.get("produto_id")
+    quantidade = data.get("quantidade")
+    preco_unitario = data.get("preco_unitario")
+
+    if not produto_id or not quantidade or not preco_unitario:
+        return jsonify({"error": "Todos os campos são obrigatórios"}), 400
+
+    return comandas_controller.add_item_comanda(comanda_id, produto_id, quantidade, preco_unitario) 
+
+@main_bp.route('/comandas/<int:comanda_id>/itens', methods=['GET'])
+def obter_itens_comanda_endpoint(comanda_id):
+    try:
+        itens, status = comandas.obter_itens_comanda(comanda_id)
+        return jsonify(itens), status
+    except Exception as e:
+        print(f"Erro ao obter itens da comanda: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
+
+@main_bp.route("/comandas/<int:comanda_id>/itens/<int:produto_id>", methods=["PUT"])
+def atualizar_item_comanda(comanda_id, produto_id):
+    data = request.json
+    nova_quantidade = data.get("quantidade")
+
+    if nova_quantidade is None or nova_quantidade < 0:
+        return jsonify({"error": "Quantidade inválida"}), 400
+
+    return comandas_controller.atualizar_quantidade_item(comanda_id, produto_id, nova_quantidade)
+
+
 @main_bp.route('/comandas/mesa/<int:mesa_id>', methods=['GET'])
 def obter_comanda_por_mesa(mesa_id):
     try:
@@ -134,6 +174,11 @@ def listar_comandas_fechadas():
     except Exception as e:
         print(f"Erro no endpoint /comandas/fechadas: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
+    
+@main_bp.route("/comandas/<int:comanda_id>/fechar", methods=["POST"])
+def fechar_comanda(comanda_id):
+    return comandas_controller.fechar_comanda(comanda_id)
+
 
 @main_bp.route("/comandas", methods=["GET"])
 def listar_comandas():
@@ -464,3 +509,8 @@ def atualizar_status(usuario_id):
 @main_bp.route('/atendentes', methods=['GET'])
 def listar_atendentes():
     return users_controller.listar_atendentes()
+
+
+@main_bp.route('/categorias', methods=['GET'])
+def listar_categorias():
+    return produtos.listar_categorias()

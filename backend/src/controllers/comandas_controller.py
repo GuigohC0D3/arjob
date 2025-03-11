@@ -1,7 +1,5 @@
 from flask import jsonify, request
 from ..entities import comandas, mesas, clientes, users
-from ..entities.comandas import atualizar_status_comanda
-from ..entities.users import get_user_cargo
 
 def abrir_comanda(mesa_id, atendente_id):
     try:
@@ -136,4 +134,44 @@ def buscar_clinete_por_cpf():
         return jsonify(cliente), 200
     except Exception as e:
         print(f"Erro ao buscar cliente: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
+    
+def add_item_comanda(comanda_id, produto_id, quantidade, preco_unitario):
+    return comandas.adicionar_item_na_comanda(comanda_id, produto_id, quantidade, preco_unitario)
+
+def obter_itens_comanda(comanda_id):
+    return comandas.obter_itens_comanda(comanda_id)
+
+def atualizar_quantidade_item(comanda_id, produto_id, nova_quantidade):
+    if nova_quantidade < 0:
+        return {"error": "Quantidade inválida"}, 400
+
+    return comandas.atualizar_quantidade_item(comanda_id, produto_id, nova_quantidade)
+
+def remover_item_da_comanda(comanda_id, item_id):
+    try:
+        return comandas.remover_item_da_comanda(comanda_id, item_id)
+    except Exception as e:
+        print(f"Erro no controlador ao remover item da comanda: {e}")
+        return {"error": "Erro interno no servidor"}, 500
+def listar_itens_da_comanda(comanda_id):
+    try:
+        itens, status = comandas.buscar_itens_da_comanda(comanda_id)
+        return jsonify(itens), status
+    except Exception as e:
+        print(f"Erro ao listar itens da comanda: {e}")
+        return jsonify({"error": "Erro ao listar itens da comanda"}), 500
+
+def atualizar_item_da_comanda(comanda_id, item_id):
+    try:
+        dados = request.json
+        quantidade = dados.get("quantidade")
+
+        if quantidade is None:
+            return jsonify({"error": "Quantidade obrigatória"}), 400
+
+        resposta, status = comandas.atualizar_quantidade_item(comanda_id, item_id, quantidade)
+        return jsonify(resposta), status
+    except Exception as e:
+        print(f"Erro ao atualizar item: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
