@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 
 const GerenciarProdutos = () => {
   const [produtos, setProdutos] = useState([]);
+  const [categorias, setCategorias] = useState([]); // 🔥 Adicionado estado para categorias
   const [nome, setNome] = useState("");
   const [preco, setPreco] = useState("");
   const [categoria, setCategoria] = useState("");
@@ -11,25 +12,45 @@ const GerenciarProdutos = () => {
 
   useEffect(() => {
     fetchProdutos();
+    fetchCategorias(); // 🔥 Busca categorias disponíveis no banco
   }, []);
 
   const fetchProdutos = async () => {
     try {
       const response = await fetch("http://localhost:5000/produtos");
-      const data = await response.json();
+      let data = await response.json();
+      console.log("Produtos recebidos do backend:", data); // Debug
+
+      // 🔥 Corrige se a API retornar um array dentro de outro array
+      if (Array.isArray(data) && Array.isArray(data[0])) {
+        data = data[0];
+      }
+
       setProdutos(data);
     } catch (error) {
       console.error("Erro ao buscar produtos:", error);
     }
   };
 
+  const fetchCategorias = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/categorias"); // 🔥 Endpoint para categorias
+      let data = await response.json();
+      console.log("Categorias recebidas do backend:", data); // Debug
+
+      setCategorias(data);
+    } catch (error) {
+      console.error("Erro ao buscar categorias:", error);
+    }
+  };
+
   const adicionarProduto = async () => {
-    if (!nome || !preco) {
-      alert("Nome e preço são obrigatórios.");
+    if (!nome || !preco || isNaN(parseFloat(preco)) || parseFloat(preco) <= 0) {
+      alert("Por favor, insira um preço válido.");
       return;
     }
 
-    const produto = { nome, preco, categoria, estoque };
+    const produto = { nome, preco: parseFloat(preco), categoria, estoque };
 
     try {
       const response = await fetch("http://localhost:5000/produtos", {
@@ -96,19 +117,34 @@ const GerenciarProdutos = () => {
             className="border border-gray-300 p-3 rounded-lg focus:ring focus:ring-blue-300"
           />
           <input
-            type="number"
+            type="text"
             placeholder="Preço"
             value={preco}
-            onChange={(e) => setPreco(e.target.value)}
+            onChange={(e) => {
+              let value = e.target.value.replace(/\D/g, ""); // 🔥 Remove tudo que não for número
+              if (value.lenght > 8) return;
+              value = (parseFloat(value) / 100).toFixed(2); // 🔥 Divide por 100 para manter duas casas decimais
+              if (!isNaN(value)) {
+                setPreco(value);
+              }
+            }}
             className="border border-gray-300 p-3 rounded-lg focus:ring focus:ring-blue-300"
           />
-          <input
-            type="text"
-            placeholder="Categoria"
+
+          {/* 🔥 Dropdown para selecionar categoria */}
+          <select
             value={categoria}
             onChange={(e) => setCategoria(e.target.value)}
             className="border border-gray-300 p-3 rounded-lg focus:ring focus:ring-blue-300"
-          />
+          >
+            <option value="">Selecione a categoria</option>
+            {categorias.map((cat) => (
+              <option key={cat.id} value={cat.nome}>
+                {cat.nome}
+              </option>
+            ))}
+          </select>
+
           <input
             type="number"
             placeholder="Estoque"
@@ -139,8 +175,9 @@ const GerenciarProdutos = () => {
             <table className="w-full border-collapse bg-white shadow-md rounded-lg overflow-hidden">
               <thead>
                 <tr className="bg-gray-200 text-gray-700">
-                  <th className="text-left px-4 py-3 w-1/2">Nome</th>
+                  <th className="text-left px-4 py-3 w-1/3">Nome</th>
                   <th className="text-center px-4 py-3 w-1/4">Preço</th>
+                  <th className="text-center px-4 py-3 w-1/4">Categoria</th>
                   <th className="text-center px-4 py-3 w-1/4">Estoque</th>
                 </tr>
               </thead>
@@ -154,7 +191,10 @@ const GerenciarProdutos = () => {
                       {produto.nome}
                     </td>
                     <td className="text-center px-4 py-3 font-semibold text-blue-600">
-                      R$ {produto.preco}
+                      R$ {Number(produto.preco).toFixed(2)}
+                    </td>
+                    <td className="text-center px-4 py-3">
+                      {produto.categoria}
                     </td>
                     <td className="text-center px-4 py-3">{produto.estoque}</td>
                   </tr>

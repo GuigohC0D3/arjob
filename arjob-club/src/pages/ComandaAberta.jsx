@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Paginator } from "primereact/paginator";
 import { motion } from "framer-motion";
@@ -22,9 +22,7 @@ const ComandaAberta = () => {
         if (!response.ok) throw new Error("Erro ao buscar produtos.");
 
         let data = await response.json();
-        console.log("Resposta bruta da API:", data);
         let produtos = Array.isArray(data) ? data : data.produtos || [];
-        console.log("Produtos corrigidos:", produtos);
 
         // 🔥 Corrige caso produtos esteja aninhado dentro de um array extra
         if (Array.isArray(produtos) && Array.isArray(produtos[0])) {
@@ -40,7 +38,6 @@ const ComandaAberta = () => {
           estoque: p.estoque || 0,
         }));
 
-        console.log("Produtos após correção:", produtos); // Debug final
         setProdutosCategoria(produtos);
 
         // 🔥 Captura categorias únicas corretamente
@@ -58,20 +55,75 @@ const ComandaAberta = () => {
     fetchProdutos();
   }, [mesaId]);
 
+  const fetchItensComanda = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:5000/comandas/${mesaId}/itens`
+      );
+
+      if (!response.ok) throw new Error("Erro ao buscar itens da comanda.");
+
+      let itensComanda = await response.json();
+
+      console.log("Itens da comanda recebidos:", itensComanda);
+
+      if (!Array.isArray(itensComanda)) {
+        console.error(
+          "Dados inválidos recebidos para itens da comanda:",
+          itensComanda
+        );
+        return;
+      }
+
+      const comandaSalva = localStorage.getItem(`comanda_${mesaId}`);
+      const itensSalvos = comandaSalva ? JSON.parse(comandaSalva) : [];
+
+      const itensAtualizados = [...itensSalvos, ...itensComanda].reduce(
+        (acc, item) => {
+          const existente = acc.find((p) => p.id === item.id);
+          if (existente) {
+            existente.quantidade = item.quantidade; // Mantém a quantidade correta
+          } else {
+            acc.push(item);
+          }
+          return acc;
+        },
+        []
+      );
+
+      setComanda(itensAtualizados);
+      localStorage.setItem(
+        `comanda_${mesaId}`,
+        JSON.stringify(itensAtualizados)
+      ); // 🔥 Salva no localStorage
+    } catch (error) {
+      console.error("Erro ao buscar itens da comanda.", error);
+    }
+  }, [mesaId]);
+
+  useEffect(() => {
+    const comandaSalva = localStorage.getItem(`comanda_${mesaId}`);
+
+    if (comandaSalva) {
+      setComanda(JSON.parse(comandaSalva)); // 🔥 Carrega os itens do localStorage primeiro
+    } else {
+      fetchItensComanda(); // 🔥 Se não houver no localStorage, busca do backend
+    }
+  }, [mesaId, fetchItensComanda]);
+
   const fecharComanda = async () => {
     try {
       const response = await fetch(
-        `http://127.0.0.1:5000/fechar_mesa/${mesaId}`,
+        `http://127.0.0.1:5000/comandas/${mesaId}/fechar`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ comanda }),
+          headers: { "Content-Type": "application/json" },
         }
       );
+
       if (response.ok) {
-        navigate("/historico");
+        alert("Comanda fechada com sucesso! Estoque atualizado.");
+        navigate("/historico"); // 🔥 Redireciona para o histórico
       } else {
         console.error("Erro ao fechar comanda");
       }
@@ -96,31 +148,127 @@ const ComandaAberta = () => {
     (currentPage + 1) * produtosPorPagina
   );
 
-  const adicionarProduto = (produto) => {
-    setComanda((prevComanda) => {
-      const produtoExistente = prevComanda.find((p) => p.id === produto.id);
-      return produtoExistente
-        ? prevComanda.map((p) =>
-            p.id === produto.id ? { ...p, quantidade: p.quantidade + 1 } : p
+  const adicionarProduto = async (produto) => {
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:5000/comandas/${mesaId}/itens`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            produto_id: produto.id,
+            quantidade: 1,
+            preco_unitario: produto.preco,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        setComanda((prevComanda) => {
+          const produtoExistente = prevComanda.find((p) => p.id === produto.id);
+          return produtoExistente
+            ? prevComanda.map((p) =>
+                p.id === produto.id ? { ...p, quantidade: p.quantidade + 1 } : p
+              )
+            : [...prevComanda, { ...produto, quantidade: 1 }];
+        });
+      } else {
+        console.error("Erro ao adicionar produto na comanda.");
+      }
+    } catch (error) {
+      console.error("Erro ao conectar ao servidor:", error);
+    }
+  };
+
+  const incrementarQuantidade = async (id) => {
+    try {
+      const item = comanda.find((p) => p.id === id);
+      if (!item) return;
+
+      const novaQuantidade = item.quantidade + 1;
+
+      const response = await fetch(
+        `http://127.0.0.1:5000/comandas/${mesaId}/itens/${id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ quantidade: novaQuantidade }),
+        }
+      );
+
+      if (response.ok) {
+        // Atualiza a comanda no estado antes de buscar novamente
+        setComanda((prevComanda) =>
+          prevComanda.map((p) =>
+            p.id === id ? { ...p, quantidade: novaQuantidade } : p
           )
-        : [...prevComanda, { ...produto, quantidade: 1 }];
-    });
+        );
+
+        // Buscar novamente os itens do servidor
+        fetchItensComanda();
+      } else {
+        console.error("Erro ao atualizar quantidade do produto.");
+      }
+    } catch (error) {
+      console.error("Erro ao conectar ao servidor", error);
+    }
   };
 
-  const incrementarQuantidade = (id) => {
-    setComanda((prevComanda) =>
-      prevComanda.map((p) =>
-        p.id === id ? { ...p, quantidade: p.quantidade + 1 } : p
-      )
-    );
-  };
+  const decrementarQuantidade = async (id) => {
+    try {
+      const item = comanda.find((p) => p.id === id);
+      if (!item) return;
 
-  const decrementarQuantidade = (id) => {
-    setComanda((prevComanda) =>
-      prevComanda
-        .map((p) => (p.id === id ? { ...p, quantidade: p.quantidade - 1 } : p))
-        .filter((p) => p.quantidade > 0)
-    );
+      if (item.quantidade === 1) {
+        // Se quantidade for 1, remover item da comanda
+        const response = await fetch(
+          `http://127.0.0.1:5000/comandas/${mesaId}/itens/${id}`,
+          {
+            method: "DELETE", // 🔥 Agora usamos DELETE para remover o item do backend
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+
+        if (response.ok) {
+          const novaComanda = comanda.filter((p) => p.id !== id); // Remove do estado
+          setComanda(novaComanda);
+          localStorage.setItem(
+            `comanda_${mesaId}`,
+            JSON.stringify(novaComanda)
+          ); // Atualiza localStorage
+        } else {
+          console.error("Erro ao remover item da comanda.");
+        }
+      } else {
+        // Se for maior que 1, apenas diminui a quantidade
+        const novaQuantidade = item.quantidade - 1;
+
+        const response = await fetch(
+          `http://127.0.0.1:5000/comandas/${mesaId}/itens/${id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ quantidade: novaQuantidade }),
+          }
+        );
+
+        if (response.ok) {
+          const novaComanda = comanda.map((p) =>
+            p.id === id ? { ...p, quantidade: novaQuantidade } : p
+          );
+
+          setComanda(novaComanda);
+          localStorage.setItem(
+            `comanda_${mesaId}`,
+            JSON.stringify(novaComanda)
+          ); // 🔥 Mantém salvo no localStorage
+        } else {
+          console.error("Erro ao atualizar quantidade do produto.");
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao conectar ao servidor", error);
+    }
   };
 
   const totalComanda = comanda.reduce(
