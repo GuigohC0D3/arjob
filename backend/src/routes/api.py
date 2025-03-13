@@ -4,8 +4,8 @@ from flask_cors import cross_origin, CORS
 from math import ceil
 from datetime import datetime
 from ..controllers import dashboard_controller
-from ..controllers import clientes_controller, departamento_cliente_controller, departamentos_controller,  mesas_controller, comandas_controller, produtos_controller, buscar_produtos_controller, users_controller, permissoes_controller, cargos_controller
-from ..entities import comandas, produtos
+from ..controllers import clientes_controller, departamento_cliente_controller, departamentos_controller,  mesas_controller, comandas_controller, produtos_controller, buscar_produtos_controller, users_controller, permissoes_controller, cargos_controller, pagamentos_controller
+from ..entities import comandas, produtos, pagamentos
 from ..classes.user import User
 from ..entities.users import authenticate_user, get_user_permissions, get_user_cargo, send_verification_email
 from ..entities.clientes import get_clientes 
@@ -514,3 +514,7 @@ def listar_atendentes():
 @main_bp.route('/categorias', methods=['GET'])
 def listar_categorias():
     return produtos.listar_categorias()
+
+@main_bp.route('/pagamentos/tipos', methods=['GET'])
+def get_tipos_pagamento():
+    return pagamentos_controller.listar_tipos_pagamento()

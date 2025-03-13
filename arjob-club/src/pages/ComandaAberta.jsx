@@ -2,10 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Paginator } from "primereact/paginator";
 import { motion } from "framer-motion";
+import PagamentoOptions from "../components/pagamento/PagamentoOptions";
+import SelecionarClientes from "../components/selecionarClientes/SelecionarClientes";
 
 const ComandaAberta = () => {
   const { mesaId } = useParams();
   const navigate = useNavigate();
+
+  // ✅ Estados principais
   const [produtosCategoria, setProdutosCategoria] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [categoriaSelecionada, setCategoriaSelecionada] = useState(null);
@@ -14,7 +18,10 @@ const ComandaAberta = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const produtosPorPagina = 8;
+  const [pagamentoSelecionado, setPagamentoSelecionado] = useState(null);
+  const [cpfCliente, setCpfCliente] = useState(""); // ✅ Cliente selecionado
 
+  // ✅ Carregar produtos
   useEffect(() => {
     const fetchProdutos = async () => {
       try {
@@ -24,12 +31,10 @@ const ComandaAberta = () => {
         let data = await response.json();
         let produtos = Array.isArray(data) ? data : data.produtos || [];
 
-        // 🔥 Corrige caso produtos esteja aninhado dentro de um array extra
-        if (Array.isArray(produtos) && Array.isArray(produtos[0])) {
-          produtos = produtos[0]; // Extrai o array correto
+        if (Array.isArray(produtos[0])) {
+          produtos = produtos[0];
         }
 
-        // 🔥 Verifica se cada produto tem `id`, `nome`, `preco`
         produtos = produtos.map((p) => ({
           id: p.id || 0,
           nome: p.nome || "Produto Sem Nome",
@@ -40,7 +45,6 @@ const ComandaAberta = () => {
 
         setProdutosCategoria(produtos);
 
-        // 🔥 Captura categorias únicas corretamente
         const categoriasUnicas = [
           ...new Set(produtos.map((p) => p.categoria).filter(Boolean)),
         ];
@@ -55,6 +59,7 @@ const ComandaAberta = () => {
     fetchProdutos();
   }, [mesaId]);
 
+  // ✅ Carregar itens da comanda
   const fetchItensComanda = useCallback(async () => {
     try {
       const response = await fetch(
@@ -63,91 +68,25 @@ const ComandaAberta = () => {
 
       if (!response.ok) throw new Error("Erro ao buscar itens da comanda.");
 
-      let itensComanda = await response.json();
-
-      console.log("Itens da comanda recebidos:", itensComanda);
+      const itensComanda = await response.json();
 
       if (!Array.isArray(itensComanda)) {
-        console.error(
-          "Dados inválidos recebidos para itens da comanda:",
-          itensComanda
-        );
+        console.error("Dados inválidos recebidos:", itensComanda);
         return;
       }
 
-      const comandaSalva = localStorage.getItem(`comanda_${mesaId}`);
-      const itensSalvos = comandaSalva ? JSON.parse(comandaSalva) : [];
-
-      const itensAtualizados = [...itensSalvos, ...itensComanda].reduce(
-        (acc, item) => {
-          const existente = acc.find((p) => p.id === item.id);
-          if (existente) {
-            existente.quantidade = item.quantidade; // Mantém a quantidade correta
-          } else {
-            acc.push(item);
-          }
-          return acc;
-        },
-        []
-      );
-
-      setComanda(itensAtualizados);
-      localStorage.setItem(
-        `comanda_${mesaId}`,
-        JSON.stringify(itensAtualizados)
-      ); // 🔥 Salva no localStorage
+      setComanda(itensComanda);
+      localStorage.setItem(`comanda_${mesaId}`, JSON.stringify(itensComanda));
     } catch (error) {
       console.error("Erro ao buscar itens da comanda.", error);
     }
   }, [mesaId]);
 
   useEffect(() => {
-    const comandaSalva = localStorage.getItem(`comanda_${mesaId}`);
-
-    if (comandaSalva) {
-      setComanda(JSON.parse(comandaSalva)); // 🔥 Carrega os itens do localStorage primeiro
-    } else {
-      fetchItensComanda(); // 🔥 Se não houver no localStorage, busca do backend
-    }
+    fetchItensComanda();
   }, [mesaId, fetchItensComanda]);
 
-  const fecharComanda = async () => {
-    try {
-      const response = await fetch(
-        `http://127.0.0.1:5000/comandas/${mesaId}/fechar`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-
-      if (response.ok) {
-        alert("Comanda fechada com sucesso! Estoque atualizado.");
-        navigate("/historico"); // 🔥 Redireciona para o histórico
-      } else {
-        console.error("Erro ao fechar comanda");
-      }
-    } catch (error) {
-      console.error("Erro ao conectar ao servidor:", error);
-    }
-  };
-
-  const produtosFiltrados = produtosCategoria
-    .filter((produto) =>
-      categoriaSelecionada ? produto.categoria === categoriaSelecionada : true
-    )
-    .filter((produto) =>
-      searchTerm.trim() !== ""
-        ? produto.nome.toLowerCase().includes(searchTerm.toLowerCase().trim())
-        : true
-    );
-
-  const totalPaginas = Math.ceil(produtosFiltrados.length / produtosPorPagina);
-  const produtosPaginados = produtosFiltrados.slice(
-    currentPage * produtosPorPagina,
-    (currentPage + 1) * produtosPorPagina
-  );
-
+  // ✅ Adicionar produto à comanda
   const adicionarProduto = async (produto) => {
     try {
       const response = await fetch(
@@ -164,14 +103,7 @@ const ComandaAberta = () => {
       );
 
       if (response.ok) {
-        setComanda((prevComanda) => {
-          const produtoExistente = prevComanda.find((p) => p.id === produto.id);
-          return produtoExistente
-            ? prevComanda.map((p) =>
-                p.id === produto.id ? { ...p, quantidade: p.quantidade + 1 } : p
-              )
-            : [...prevComanda, { ...produto, quantidade: 1 }];
-        });
+        await fetchItensComanda();
       } else {
         console.error("Erro ao adicionar produto na comanda.");
       }
@@ -180,6 +112,7 @@ const ComandaAberta = () => {
     }
   };
 
+  // ✅ Incrementar quantidade
   const incrementarQuantidade = async (id) => {
     try {
       const item = comanda.find((p) => p.id === id);
@@ -197,50 +130,32 @@ const ComandaAberta = () => {
       );
 
       if (response.ok) {
-        // Atualiza a comanda no estado antes de buscar novamente
-        setComanda((prevComanda) =>
-          prevComanda.map((p) =>
-            p.id === id ? { ...p, quantidade: novaQuantidade } : p
-          )
-        );
-
-        // Buscar novamente os itens do servidor
-        fetchItensComanda();
-      } else {
-        console.error("Erro ao atualizar quantidade do produto.");
+        await fetchItensComanda();
       }
     } catch (error) {
       console.error("Erro ao conectar ao servidor", error);
     }
   };
 
+  // ✅ Decrementar quantidade / Remover item
   const decrementarQuantidade = async (id) => {
     try {
       const item = comanda.find((p) => p.id === id);
       if (!item) return;
 
       if (item.quantidade === 1) {
-        // Se quantidade for 1, remover item da comanda
         const response = await fetch(
           `http://127.0.0.1:5000/comandas/${mesaId}/itens/${id}`,
           {
-            method: "DELETE", // 🔥 Agora usamos DELETE para remover o item do backend
+            method: "DELETE",
             headers: { "Content-Type": "application/json" },
           }
         );
 
         if (response.ok) {
-          const novaComanda = comanda.filter((p) => p.id !== id); // Remove do estado
-          setComanda(novaComanda);
-          localStorage.setItem(
-            `comanda_${mesaId}`,
-            JSON.stringify(novaComanda)
-          ); // Atualiza localStorage
-        } else {
-          console.error("Erro ao remover item da comanda.");
+          await fetchItensComanda();
         }
       } else {
-        // Se for maior que 1, apenas diminui a quantidade
         const novaQuantidade = item.quantidade - 1;
 
         const response = await fetch(
@@ -253,23 +168,62 @@ const ComandaAberta = () => {
         );
 
         if (response.ok) {
-          const novaComanda = comanda.map((p) =>
-            p.id === id ? { ...p, quantidade: novaQuantidade } : p
-          );
-
-          setComanda(novaComanda);
-          localStorage.setItem(
-            `comanda_${mesaId}`,
-            JSON.stringify(novaComanda)
-          ); // 🔥 Mantém salvo no localStorage
-        } else {
-          console.error("Erro ao atualizar quantidade do produto.");
+          await fetchItensComanda();
         }
       }
     } catch (error) {
       console.error("Erro ao conectar ao servidor", error);
     }
   };
+
+  // ✅ Fechar a comanda (com CPF do cliente)
+  const fecharComanda = async () => {
+    if (!cpfCliente) {
+      alert("Selecione um cliente antes de fechar a comanda.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:5000/comandas/${mesaId}/fechar`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            cliente_cpf: cpfCliente,
+            pagamento: pagamentoSelecionado,
+            total: totalComanda,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        alert("Comanda fechada com sucesso!");
+        navigate("/historico");
+      } else {
+        console.error("Erro ao fechar comanda");
+      }
+    } catch (error) {
+      console.error("Erro ao conectar ao servidor:", error);
+    }
+  };
+
+  // ✅ Filtros e paginação
+  const produtosFiltrados = produtosCategoria
+    .filter((produto) =>
+      categoriaSelecionada ? produto.categoria === categoriaSelecionada : true
+    )
+    .filter((produto) =>
+      searchTerm.trim() !== ""
+        ? produto.nome.toLowerCase().includes(searchTerm.toLowerCase().trim())
+        : true
+    );
+
+  const totalPaginas = Math.ceil(produtosFiltrados.length / produtosPorPagina);
+  const produtosPaginados = produtosFiltrados.slice(
+    currentPage * produtosPorPagina,
+    (currentPage + 1) * produtosPorPagina
+  );
 
   const totalComanda = comanda.reduce(
     (total, produto) => total + produto.preco * produto.quantidade,
@@ -291,7 +245,7 @@ const ComandaAberta = () => {
         Comanda Aberta - Mesa {mesaId}
       </h1>
 
-      {/* 🔍 Barra de Pesquisa */}
+      {/* Barra de Pesquisa */}
       <input
         type="text"
         placeholder="Buscar produto..."
@@ -300,7 +254,7 @@ const ComandaAberta = () => {
         onChange={(e) => setSearchTerm(e.target.value)}
       />
 
-      {/* 🔥 Filtros de categoria */}
+      {/* Filtros de categoria */}
       <div className="flex gap-2 overflow-x-auto pb-2">
         <button
           className={`p-2 rounded transition ${
@@ -312,7 +266,7 @@ const ComandaAberta = () => {
         </button>
         {categorias.map((categoria, index) => (
           <button
-            key={index} // 🔥 Agora cada item terá um índice único
+            key={index}
             className={`p-2 rounded transition ${
               categoria === categoriaSelecionada
                 ? "bg-blue-600 text-white"
@@ -325,11 +279,11 @@ const ComandaAberta = () => {
         ))}
       </div>
 
-      {/* 🔥 Lista de produtos */}
+      {/* Lista de produtos */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
         {produtosPaginados.map((produto, index) => (
           <motion.div
-            key={produto.id || index} // 🔥 Usa `index` se `id` estiver ausente
+            key={produto.id || index}
             className="border p-4 shadow-lg rounded-lg bg-white flex flex-col items-center"
             whileHover={{ scale: 1.05 }}
             transition={{ duration: 0.2 }}
@@ -348,7 +302,7 @@ const ComandaAberta = () => {
         ))}
       </div>
 
-      {/* 🔄 Paginação */}
+      {/* Paginação */}
       <div className="mt-6 flex justify-center">
         <Paginator
           first={currentPage * produtosPorPagina}
@@ -360,6 +314,7 @@ const ComandaAberta = () => {
         />
       </div>
 
+      {/* Itens da comanda */}
       <div className="mt-6 bg-gray-100 p-6 rounded-lg shadow-md">
         <h2 className="text-lg font-bold mb-3">Itens na Comanda</h2>
         {comanda.length === 0 ? (
@@ -371,15 +326,13 @@ const ComandaAberta = () => {
                 key={produto.id || index}
                 className="flex justify-between items-center p-3 border-b"
               >
-                {/* Nome do Produto e Quantidade */}
                 <span className="text-gray-800 font-medium w-1/3">
                   {produto.nome} x{produto.quantidade}
                 </span>
 
-                {/* Botões de Quantidade */}
                 <div className="flex items-center gap-2">
                   <button
-                    className="bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-600 transition"
+                    className="bg-white text-black px-3 py-2 rounded-md transition"
                     onClick={() => decrementarQuantidade(produto.id)}
                   >
                     -
@@ -388,14 +341,13 @@ const ComandaAberta = () => {
                     {produto.quantidade}
                   </span>
                   <button
-                    className="bg-blue-500 text-white px-3 py-2 rounded-md hover:bg-blue-600 transition"
+                    className="bg-white text-black px-3 py-2 rounded-md transition"
                     onClick={() => incrementarQuantidade(produto.id)}
                   >
                     +
                   </button>
                 </div>
 
-                {/* Preço Total do Produto */}
                 <span className="text-gray-900 font-semibold w-1/3 text-right">
                   R$ {(produto.preco * produto.quantidade).toFixed(2)}
                 </span>
@@ -403,9 +355,28 @@ const ComandaAberta = () => {
             ))}
           </div>
         )}
+
+        {comanda.length > 0 && (
+          <>
+            <h2 className="text-lg font-bold mt-6">Forma de Pagamento</h2>
+            <PagamentoOptions
+              onSelect={(opcao) => {
+                console.log("Pagamento selecionado:", opcao);
+                setPagamentoSelecionado(opcao);
+              }}
+            />
+          </>
+        )}
+        {/* ✅ Seletor de Cliente */}
+        <SelecionarClientes
+          onSelectCliente={(cpf) => {
+            console.log("Cliente selecionado:", cpf);
+            setCpfCliente(cpf);
+          }}
+        />
       </div>
 
-      {/* 🔥 Total e Botões */}
+      {/* Total da comanda e botões */}
       <div className="mt-6 flex flex-col items-center bg-gray-100 p-6 rounded-lg shadow-md">
         <h3 className="text-lg font-bold mb-2">
           Total: R$ {totalComanda.toFixed(2)}
