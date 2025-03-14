@@ -39,3 +39,26 @@ O **ARJOB** é uma solução interna que gerencia comandas e pedidos dentro do c
 1. Clone o repositório:
    ```bash
    git clone https://github.com/GuigohC0D3/arjob.git
+
+2. Instale as dependências no backend e no frontend:
+   ```bash
+   cd backend
+   npm install
+
+   cd ../arjob-club
+   npm install
+   ```
+
+3. Inicie o servidor backend:
+   ```bash
+   cd ../backend
+   npm start
+   ```
+
+4. Acesse o sistema no navegador:
+   ```bash
+   http://localhost:3000
+   ```
+
+# Contribuição
+Atualmente o sistema é de uso interno e não recebe contribuições externas.
