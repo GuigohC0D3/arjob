@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
+import Select from "react-select";
 
 const SelecionarClientes = ({ onSelectCliente }) => {
   const [clientes, setClientes] = useState([]);
-  const [clienteSelecionado, setClienteSelecionado] = useState("");
+  const [clienteSelecionado, setClienteSelecionado] = useState(null);
 
   useEffect(() => {
     const fetchClientes = async () => {
@@ -12,11 +13,7 @@ const SelecionarClientes = ({ onSelectCliente }) => {
         if (response.ok) {
           const data = await response.json();
 
-          console.log("Dados brutos recebidos de /clientes:", data);
-
-          const clientesArray = Array.isArray(data)
-            ? data
-            : data.data || [];
+          const clientesArray = Array.isArray(data) ? data : data.data || [];
 
           if (!Array.isArray(clientesArray)) {
             console.error(
@@ -42,48 +39,48 @@ const SelecionarClientes = ({ onSelectCliente }) => {
     fetchClientes();
   }, []);
 
-  const handleChange = (event) => {
-    const cpf = event.target.value;
-    setClienteSelecionado(cpf);
+  // ✅ Mapeando os clientes para opções do Select
+  const options = clientes.map((cliente) => ({
+    value: cliente.cpf,
+    label: `${cliente.nome} - ${cliente.cpf}`,
+    data: cliente, // pra usar no onChange depois
+  }));
 
-    const cliente = clientes.find((c) => c.cpf === cpf);
-    if (cliente) {
-      onSelectCliente(cliente);
-    }
+  const handleChange = (selectedOption) => {
+    setClienteSelecionado(selectedOption);
+    onSelectCliente(selectedOption.data); // devolve o cliente completo
   };
 
   return (
     <div className="mb-4 mt-4">
-      <select
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        Selecione um cliente
+      </label>
+
+      <Select
+        options={options}
         value={clienteSelecionado}
         onChange={handleChange}
-        className="
-          w-full
-          px-3
-          py-2
-          bg-white
-          border border-gray-300
-          rounded-md
-          shadow-sm
-          focus:outline-none
-          focus:ring-2
-          focus:ring-blue-400
-          focus:ring-offset-1
-          text-gray-800
-          text-sm
-          font-medium
-          transition
-          duration-200
-          ease-in-out
-        "
-      >
-        <option value="">Selecione um cliente</option>
-        {clientes.map((cliente) => (
-          <option key={cliente.id} value={cliente.cpf}>
-            {cliente.nome} - {cliente.cpf}
-          </option>
-        ))}
-      </select>
+        placeholder="Digite o nome ou CPF..."
+        isSearchable
+        noOptionsMessage={() => "Nenhum cliente encontrado"}
+        styles={{
+          control: (provided) => ({
+            ...provided,
+            borderRadius: "0.375rem",
+            padding: "2px",
+            borderColor: "#d1d5db",
+            boxShadow: "none",
+            "&:hover": { borderColor: "#2563eb" },
+          }),
+          option: (provided, state) => ({
+            ...provided,
+            backgroundColor: state.isSelected ? "#2563eb" : "#ffffff",
+            color: state.isSelected ? "#ffffff" : "#1f2937",
+            "&:hover": { backgroundColor: "#bfdbfe" },
+          }),
+        }}
+      />
     </div>
   );
 };
