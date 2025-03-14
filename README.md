@@ -38,6 +38,7 @@ O **ARJOB** é um sistema de gerenciamento de comandas desenvolvido para facilit
 ```bash
 git clone https://github.com/GuigohC0D3/arjob.git
 cd arjob
+```
 
 ### 🔹 2. Instale as dependências
 ```bash
