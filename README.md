@@ -34,8 +34,9 @@ O **ARJOB** é um sistema de gerenciamento de comandas desenvolvido para facilit
 
 ## 🛠️ Como Rodar o Projeto
 
-### 🔹 1. Clone o repositório
+
 ```
+### 🔹 1. Clone o repositório
 bash
 git clone https://github.com/GuigohC0D3/arjob.git
 cd arjob
