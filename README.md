@@ -1,40 +1,41 @@
-# 🏷️ ARJOB - Sistema de Comanda
+# 🏢 ARJOB - Sistema de Comanda Interno
 
-O **ARJOB** é um sistema de gerenciamento de comandas desenvolvido para facilitar o controle de pedidos em clubes, bares e restaurantes. Ele permite registrar, acompanhar e finalizar comandas de forma eficiente, garantindo um fluxo de atendimento organizado e sem erros.
+Bem-vindo ao **ARJOB**, um sistema de comanda digital exclusivo para os funcionários do clube **ARJOB**. Este sistema foi desenvolvido para tornar o gerenciamento de pedidos mais rápido, organizado e seguro.
 
-## 📌 Funcionalidades
+---
 
-✅ **Gerenciamento de Mesas**: Atribua atendentes e controle pedidos por mesa.  
-🔍 **Busca de Clientes**: Localize rapidamente clientes pelo CPF.  
-🛒 **Registro de Pedidos**: Adicione e remova itens da comanda de forma dinâmica.  
-💰 **Fechamento de Comanda**: Calcule automaticamente os valores e finalize o pagamento.  
-📜 **Histórico de Comandas**: Mantenha registros para consultas futuras.  
+## 📌 Sobre o Projeto
 
-## 🚀 Tecnologias Utilizadas
+O **ARJOB** é uma solução interna que gerencia comandas e pedidos dentro do clube. Ele facilita o controle de consumo dos funcionários, permitindo mais eficiência no atendimento e organização nas operações internas.
 
-### **Frontend** (React)
-- ⚛️ React.js  
-- 🎨 PrimeReact (UI Components)  
-- 🎭 Bootstrap & CSS personalizado  
+---
 
-### **Backend** (Flask)
-- 🐍 Flask (API em Python)  
-- 🗄️ PostgreSQL (Banco de Dados)  
-- 🔍 pgAdmin (Gerenciamento do banco)  
+## 🚀 Funcionalidades Principais
+
+✅ **Cadastro de Comandas**  
+✅ **Controle de Pedidos em Tempo Real**  
+✅ **Histórico de Consumo por Funcionário**  
+✅ **Acesso Restrito a Funcionários**  
+✅ **Gestão Segura e Eficiente dos Dados**  
+
+---
+
+## 🛠️ Tecnologias Utilizadas
+
+- **Frontend**: ReactJS (ou outra, me confirma!)  
+- **Backend**: Node.js / Express  
+- **Banco de Dados**: MongoDB (ou outro?)  
+- **Linguagens**: JavaScript e Python  
+
+---
 
 ## 📂 Estrutura do Projeto
 
-```plaintext
-📦 arjob
-├── 📁 arjob-club (Frontend)
-├── 📁 backend (API e Banco de Dados)
-├── 📁 node_modules (Dependências)
-├── 📄 package.json (Configurações do Node.js)
-├── 📄 README.md (Este arquivo)
 
-## 🛠️ Como Rodar o Projeto
+---
 
+## 🖥️ Como Rodar o Projeto Localmente
 
-```
-### 🔹 1. Clone o repositório
-``` git clone https://github.com/GuigohC0D3/arjob.git cd arjob
+1. Clone o repositório:
+   ```bash
+   git clone https://github.com/GuigohC0D3/arjob.git
