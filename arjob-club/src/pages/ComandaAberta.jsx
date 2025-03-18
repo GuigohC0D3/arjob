@@ -9,292 +9,266 @@ const ComandaAberta = () => {
   const { mesaId } = useParams();
   const navigate = useNavigate();
 
-  // ✅ Estados principais
-  const [produtosCategoria, setProdutosCategoria] = useState([]);
+  const [produtos, setProdutos] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [categoriaSelecionada, setCategoriaSelecionada] = useState(null);
-  const [comanda, setComanda] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [comandaItens, setComandaItens] = useState([]);
+  const [pagamentoSelecionado, setPagamentoSelecionado] = useState(null);
+  const [clienteSelecionado, setClienteSelecionado] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const produtosPorPagina = 8;
-  const [pagamentoSelecionado, setPagamentoSelecionado] = useState(null);
-  const [cpfCliente, setCpfCliente] = useState(""); // ✅ Cliente selecionado
+  const [loading, setLoading] = useState(true);
 
-  // ✅ Carregar produtos
-  useEffect(() => {
-    const fetchProdutos = async () => {
-      try {
-        const response = await fetch(`http://127.0.0.1:5000/produtos`);
-        if (!response.ok) throw new Error("Erro ao buscar produtos.");
+  const fetchProdutos = useCallback(async () => {
+    try {
+      const res = await fetch("http://127.0.0.1:5000/produtos");
+      const data = await res.json();
+      let produtosData = Array.isArray(data) ? data : data.produtos || [];
 
-        let data = await response.json();
-        let produtos = Array.isArray(data) ? data : data.produtos || [];
-
-        if (Array.isArray(produtos[0])) {
-          produtos = produtos[0];
-        }
-
-        produtos = produtos.map((p) => ({
-          id: p.id || 0,
-          nome: p.nome || "Produto Sem Nome",
-          preco: p.preco || 0.0,
-          categoria: p.categoria || "Sem Categoria",
-          estoque: p.estoque || 0,
-        }));
-
-        setProdutosCategoria(produtos);
-
-        const categoriasUnicas = [
-          ...new Set(produtos.map((p) => p.categoria).filter(Boolean)),
-        ];
-        setCategorias(categoriasUnicas);
-      } catch (error) {
-        console.error("Erro ao conectar ao servidor:", error);
-      } finally {
-        setLoading(false);
+      if (Array.isArray(produtosData[0])) {
+        produtosData = produtosData[0];
       }
-    };
 
-    fetchProdutos();
-  }, [mesaId]);
+      const produtosFormatados = produtosData.map((p) => ({
+        id: p.id,
+        nome: p.nome || "Sem Nome",
+        preco: p.preco || 0,
+        categoria: p.categoria || "Sem Categoria",
+        estoque: p.estoque || 0,
+      }));
 
-  // ✅ Carregar itens da comanda
+      setProdutos(produtosFormatados);
+
+      const categoriasUnicas = [
+        ...new Set(produtosFormatados.map((p) => p.categoria).filter(Boolean)),
+      ];
+
+      setCategorias(categoriasUnicas);
+    } catch (err) {
+      console.error("Erro ao carregar produtos:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const fetchItensComanda = useCallback(async () => {
     try {
-      const response = await fetch(
-        `http://127.0.0.1:5000/comandas/${mesaId}/itens`
-      );
+      const res = await fetch(`http://127.0.0.1:5000/comandas/${mesaId}/itens`);
+      const data = await res.json();
 
-      if (!response.ok) throw new Error("Erro ao buscar itens da comanda.");
-
-      const itensComanda = await response.json();
-
-      if (!Array.isArray(itensComanda)) {
-        console.error("Dados inválidos recebidos:", itensComanda);
+      if (!Array.isArray(data)) {
+        console.warn("Itens de comanda inválidos:", data);
         return;
       }
 
-      setComanda(itensComanda);
-      localStorage.setItem(`comanda_${mesaId}`, JSON.stringify(itensComanda));
-    } catch (error) {
-      console.error("Erro ao buscar itens da comanda.", error);
+      setComandaItens(data);
+    } catch (err) {
+      console.error("Erro ao buscar itens da comanda:", err);
     }
   }, [mesaId]);
 
   useEffect(() => {
+    fetchProdutos();
     fetchItensComanda();
-  }, [mesaId, fetchItensComanda]);
+  }, [fetchProdutos, fetchItensComanda]);
 
-  // ✅ Adicionar produto à comanda
   const adicionarProduto = async (produto) => {
-    try {
-      const response = await fetch(
-        `http://127.0.0.1:5000/comandas/${mesaId}/itens`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            produto_id: produto.id,
-            quantidade: 1,
-            preco_unitario: produto.preco,
-          }),
-        }
-      );
+    if (!mesaId) return;
 
-      if (response.ok) {
-        await fetchItensComanda();
-      } else {
-        console.error("Erro ao adicionar produto na comanda.");
-      }
-    } catch (error) {
-      console.error("Erro ao conectar ao servidor:", error);
+    try {
+      await fetch(`http://127.0.0.1:5000/comandas/${mesaId}/itens`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          produto_id: produto.id,
+          quantidade: 1,
+          preco_unitario: produto.preco,
+        }),
+      });
+
+      await fetchItensComanda();
+    } catch (err) {
+      console.error("Erro ao adicionar produto:", err);
     }
   };
 
-  // ✅ Incrementar quantidade
-  const incrementarQuantidade = async (id) => {
+  const incrementarQuantidade = async (item) => {
+    if (!mesaId) return;
+
     try {
-      const item = comanda.find((p) => p.id === id);
-      if (!item) return;
+      await fetch(`http://127.0.0.1:5000/comandas/${mesaId}/itens/${item.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quantidade: item.quantidade + 1 }),
+      });
 
-      const novaQuantidade = item.quantidade + 1;
-
-      const response = await fetch(
-        `http://127.0.0.1:5000/comandas/${mesaId}/itens/${id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ quantidade: novaQuantidade }),
-        }
-      );
-
-      if (response.ok) {
-        await fetchItensComanda();
-      }
-    } catch (error) {
-      console.error("Erro ao conectar ao servidor", error);
+      await fetchItensComanda();
+    } catch (err) {
+      console.error("Erro ao incrementar quantidade:", err);
     }
   };
 
-  // ✅ Decrementar quantidade / Remover item
-  const decrementarQuantidade = async (id) => {
-    try {
-      const item = comanda.find((p) => p.id === id);
-      if (!item) return;
+  const decrementarQuantidade = async (item) => {
+    if (!mesaId) return;
 
+    try {
       if (item.quantidade === 1) {
-        const response = await fetch(
-          `http://127.0.0.1:5000/comandas/${mesaId}/itens/${id}`,
+        await fetch(
+          `http://127.0.0.1:5000/comandas/${mesaId}/itens/${item.id}`,
           {
             method: "DELETE",
-            headers: { "Content-Type": "application/json" },
           }
         );
-
-        if (response.ok) {
-          await fetchItensComanda();
-        }
       } else {
-        const novaQuantidade = item.quantidade - 1;
-
-        const response = await fetch(
-          `http://127.0.0.1:5000/comandas/${mesaId}/itens/${id}`,
+        await fetch(
+          `http://127.0.0.1:5000/comandas/${mesaId}/itens/${item.id}`,
           {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ quantidade: novaQuantidade }),
+            body: JSON.stringify({ quantidade: item.quantidade - 1 }),
           }
         );
-
-        if (response.ok) {
-          await fetchItensComanda();
-        }
       }
-    } catch (error) {
-      console.error("Erro ao conectar ao servidor", error);
+
+      await fetchItensComanda();
+    } catch (err) {
+      console.error("Erro ao decrementar quantidade:", err);
     }
   };
 
-  // ✅ Fechar a comanda (com CPF do cliente)
   const fecharComanda = async () => {
-    if (!cpfCliente) {
-      alert("Selecione um cliente antes de fechar a comanda.");
+    if (!pagamentoSelecionado || !clienteSelecionado) {
+      alert(
+        "Selecione um cliente e forma de pagamento antes de fechar a comanda."
+      );
       return;
     }
 
     try {
-      const response = await fetch(
-        `http://127.0.0.1:5000/comandas/${mesaId}/fechar`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            cliente_cpf: cpfCliente,
-            pagamento: pagamentoSelecionado,
-            total: totalComanda,
-          }),
-        }
-      );
+      await fetch(`http://127.0.0.1:5000/comandas/${mesaId}/fechar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cliente_id: clienteSelecionado.id,
+          pagamento_id: pagamentoSelecionado.id,
+          total: totalComanda,
+        }),
+      });
 
-      if (response.ok) {
-        alert("Comanda fechada com sucesso!");
-        navigate("/historico");
-      } else {
-        console.error("Erro ao fechar comanda");
-      }
-    } catch (error) {
-      console.error("Erro ao conectar ao servidor:", error);
+      alert("Comanda fechada com sucesso!");
+      navigate("/historico");
+    } catch (err) {
+      console.error("Erro ao fechar comanda:", err);
     }
   };
 
-  // ✅ Filtros e paginação
-  const produtosFiltrados = produtosCategoria
-    .filter((produto) =>
-      categoriaSelecionada ? produto.categoria === categoriaSelecionada : true
+  const produtosFiltrados = produtos
+    .filter(
+      (p) => !categoriaSelecionada || p.categoria === categoriaSelecionada
     )
-    .filter((produto) =>
-      searchTerm.trim() !== ""
-        ? produto.nome.toLowerCase().includes(searchTerm.toLowerCase().trim())
-        : true
+    .filter((p) =>
+      (p.nome || "").toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-  const totalPaginas = Math.ceil(produtosFiltrados.length / produtosPorPagina);
   const produtosPaginados = produtosFiltrados.slice(
     currentPage * produtosPorPagina,
     (currentPage + 1) * produtosPorPagina
   );
 
-  const totalComanda = comanda.reduce(
-    (total, produto) => total + produto.preco * produto.quantidade,
+  const totalComanda = comandaItens.reduce(
+    (acc, item) => acc + item.preco * item.quantidade,
     0
   );
 
-  if (loading)
-    return <p className="text-center text-gray-600">Carregando produtos...</p>;
+  if (loading) {
+    return (
+      <p className="text-center text-gray-500 text-lg py-8">
+        Carregando produtos...
+      </p>
+    );
+  }
 
   return (
-    <motion.div
-      className="p-6 max-w-5xl mx-auto"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.4 }}
-    >
-      <h1 className="text-2xl font-bold text-gray-800 mb-4 text-center">
-        Comanda Aberta - Mesa {mesaId}
+    <motion.div className="p-6 md:p-10 max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
+      {/* Botão Voltar */}
+      <div className="flex justify-start mb-6">
+        <button
+          onClick={() => navigate("/iniciar-venda")}
+          className="bg-neutral-700 hover:bg-neutral-800 text-white px-6 py-2 rounded-lg transition"
+        >
+          ← Voltar para mesas
+        </button>
+      </div>
+
+      {/* Cabeçalho */}
+      <h1 className="text-3xl font-bold mb-8 text-center text-gray-800">
+        Comanda da Mesa {mesaId}
       </h1>
 
-      {/* Barra de Pesquisa */}
-      <input
-        type="text"
-        placeholder="Buscar produto..."
-        className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
+      {/* Input de Busca */}
+      <div className="mb-6">
+        <input
+          type="text"
+          placeholder="Buscar produto..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
 
-      {/* Filtros de categoria */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
+      {/* Categorias */}
+      <div className="flex flex-wrap justify-center gap-3 mb-8">
         <button
-          className={`p-2 rounded transition ${
-            !categoriaSelecionada ? "bg-blue-600 text-white" : "bg-gray-200"
+          className={`px-4 py-2 rounded-full border transition 
+          ${
+            !categoriaSelecionada
+              ? "bg-blue-600 text-white shadow"
+              : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100"
           }`}
           onClick={() => setCategoriaSelecionada(null)}
         >
           Todas
         </button>
-        {categorias.map((categoria, index) => (
+        {categorias.map((cat, idx) => (
           <button
-            key={index}
-            className={`p-2 rounded transition ${
-              categoria === categoriaSelecionada
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200"
+            key={`${cat}-${idx}`}
+            className={`px-4 py-2 rounded-full border transition
+            ${
+              categoriaSelecionada === cat
+                ? "bg-blue-600 text-white shadow"
+                : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100"
             }`}
-            onClick={() => setCategoriaSelecionada(categoria)}
+            onClick={() => setCategoriaSelecionada(cat)}
           >
-            {categoria}
+            {cat}
           </button>
         ))}
       </div>
 
-      {/* Lista de produtos */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
-        {produtosPaginados.map((produto, index) => (
+      {/* Produtos */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {produtosPaginados.map((produto) => (
           <motion.div
-            key={produto.id || index}
-            className="border p-4 shadow-lg rounded-lg bg-white flex flex-col items-center"
-            whileHover={{ scale: 1.05 }}
-            transition={{ duration: 0.2 }}
+            key={produto.id}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="flex flex-col justify-between p-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition duration-300 ease-in-out"
           >
-            <h3 className="font-semibold text-center">{produto.nome}</h3>
-            <p className="text-gray-600">
-              R$ {Number(produto.preco || 0).toFixed(2)}
-            </p>
+            {/* Conteúdo do Produto */}
+            <div className="flex flex-col items-center text-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">
+                {produto.nome}
+              </h3>
+              <p className="mt-2 text-gray-500 text-base">
+                R$ {produto.preco.toFixed(2)}
+              </p>
+            </div>
+
+            {/* Botão Adicionar */}
             <button
-              className="bg-green-500 text-white px-4 py-2 rounded mt-3 hover:bg-green-600 transition"
               onClick={() => adicionarProduto(produto)}
+              className="mt-auto w-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2 rounded-lg shadow transition-all duration-300"
             >
               Adicionar
             </button>
@@ -303,98 +277,84 @@ const ComandaAberta = () => {
       </div>
 
       {/* Paginação */}
-      <div className="mt-6 flex justify-center">
+      <div className="flex justify-center mt-8">
         <Paginator
           first={currentPage * produtosPorPagina}
           rows={produtosPorPagina}
           totalRecords={produtosFiltrados.length}
           onPageChange={(e) => setCurrentPage(e.page)}
-          template="PrevPageLink PageLinks NextPageLink"
-          className="p-paginator p-component text-blue-700"
         />
       </div>
 
-      {/* Itens da comanda */}
-      <div className="mt-6 bg-gray-100 p-6 rounded-lg shadow-md">
-        <h2 className="text-lg font-bold mb-3">Itens na Comanda</h2>
-        {comanda.length === 0 ? (
-          <p className="text-gray-500">Nenhum produto adicionado.</p>
+      {/* Itens da Comanda */}
+      <div className="mt-12 bg-gray-50 p-8 rounded-lg shadow-inner">
+        <h2 className="font-semibold text-xl mb-6 text-gray-700 border-b pb-2">
+          Itens da Comanda
+        </h2>
+
+        {comandaItens.length === 0 ? (
+          <p className="text-gray-400 text-center">
+            Nenhum item adicionado na comanda.
+          </p>
         ) : (
-          <div className="w-full">
-            {comanda.map((produto, index) => (
+          <div className="divide-y">
+            {comandaItens.map((item) => (
               <div
-                key={produto.id || index}
-                className="flex justify-between items-center p-3 border-b"
+                key={item.id}
+                className="flex flex-wrap items-center justify-between py-4"
               >
-                <span className="text-gray-800 font-medium w-1/3">
-                  {produto.nome} x{produto.quantidade}
-                </span>
+                <div className="flex-1 min-w-[200px] text-gray-700 font-medium">
+                  {item.nome}{" "}
+                  <span className="text-gray-500">x {item.quantidade}</span>
+                </div>
 
                 <div className="flex items-center gap-2">
                   <button
-                    className="bg-white text-black px-3 py-2 rounded-md transition"
-                    onClick={() => decrementarQuantidade(produto.id)}
+                    onClick={() => decrementarQuantidade(item)}
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-transparent hover:bg-gray-100 transition text-xl font-semibold"
                   >
                     -
                   </button>
-                  <span className="text-gray-900 font-semibold">
-                    {produto.quantidade}
-                  </span>
                   <button
-                    className="bg-white text-black px-3 py-2 rounded-md transition"
-                    onClick={() => incrementarQuantidade(produto.id)}
+                    onClick={() => incrementarQuantidade(item)}
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-transparent hover:bg-gray-100 transition text-xl font-semibold"
                   >
                     +
                   </button>
                 </div>
 
-                <span className="text-gray-900 font-semibold w-1/3 text-right">
-                  R$ {(produto.preco * produto.quantidade).toFixed(2)}
-                </span>
+                <div className="min-w-[80px] text-right font-semibold text-gray-800">
+                  R$ {(item.preco * item.quantidade).toFixed(2)}
+                </div>
               </div>
             ))}
           </div>
         )}
 
-        {comanda.length > 0 && (
-          <>
-            <h2 className="text-lg font-bold mt-6">Forma de Pagamento</h2>
-            <PagamentoOptions
-              onSelect={(opcao) => {
-                console.log("Pagamento selecionado:", opcao);
-                setPagamentoSelecionado(opcao);
-              }}
-            />
-          </>
-        )}
-        {/* ✅ Seletor de Cliente */}
-        <SelecionarClientes
-          onSelectCliente={(cpf) => {
-            console.log("Cliente selecionado:", cpf);
-            setCpfCliente(cpf);
-          }}
-        />
+        {/* Cliente e Pagamento */}
+        <div className="mt-8">
+          <SelecionarClientes
+            onSelectCliente={(cliente) => setClienteSelecionado(cliente)}
+          />
+          <PagamentoOptions
+            onSelect={(pagamento) => setPagamentoSelecionado(pagamento)}
+          />
+        </div>
       </div>
 
-      {/* Total da comanda e botões */}
-      <div className="mt-6 flex flex-col items-center bg-gray-100 p-6 rounded-lg shadow-md">
-        <h3 className="text-lg font-bold mb-2">
-          Total: R$ {totalComanda.toFixed(2)}
+      {/* Fechar Comanda */}
+      <div className="mt-12 text-center">
+        <h3 className="text-xl font-bold text-gray-800 mb-4">
+          Total:{" "}
+          <span className="text-blue-600">R$ {totalComanda.toFixed(2)}</span>
         </h3>
-        <div className="flex gap-4 mt-2">
-          <button
-            className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition"
-            onClick={fecharComanda}
-          >
-            Fechar Comanda
-          </button>
-          <button
-            className="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition"
-            onClick={() => navigate("/iniciar-venda")}
-          >
-            Voltar
-          </button>
-        </div>
+
+        <button
+          onClick={fecharComanda}
+          className="bg-red-600 hover:bg-red-700 text-white px-10 py-3 rounded-lg transition font-semibold uppercase shadow-md"
+        >
+          Fechar Comanda
+        </button>
       </div>
     </motion.div>
   );

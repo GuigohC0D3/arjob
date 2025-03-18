@@ -184,27 +184,37 @@ def obter_comanda_por_code(code):
 
 
 def obter_comanda_por_mesa(mesa_id):
-    """Retorna a comanda aberta de uma mesa."""
-    
     conn = connect_db()
     if not conn:
+        print("❌ Erro ao conectar ao banco de dados")
         return None
 
     try:
         cur = conn.cursor()
-        # 🔥 Agora buscamos `status` como BOOLEAN corretamente
-        cur.execute("SELECT id, mesa_id, status, code FROM comandas WHERE mesa_id = %s AND status = TRUE LIMIT 1", (mesa_id,))
+
+        print(f"🔍 Buscando comanda para mesa_id={mesa_id}")
+
+        cur.execute("""
+            SELECT id, mesa_id, status, code
+            FROM comandas
+            WHERE mesa_id = %s AND status = TRUE
+            LIMIT 1
+        """, (mesa_id,))
+
         comanda = cur.fetchone()
 
         if comanda:
-            return {
+            comanda_dict = {
                 "id": comanda[0],
-                "mesa_id": comanda[1],  # ✅ Agora retornamos corretamente o ID da mesa
-                "status": comanda[2],   # ✅ `status` já vem como BOOLEAN do banco
+                "mesa_id": comanda[1],
+                "status": comanda[2],
                 "code": comanda[3]
             }
+            print(f"✅ Comanda encontrada: {comanda_dict}")
+            return comanda_dict
         else:
-            return None  # 🔥 Retorna `None` corretamente se não houver comanda
+            print(f"⚠️ Nenhuma comanda aberta para a mesa {mesa_id}")
+            return None
 
     except Exception as e:
         print(f"❌ Erro ao buscar comanda da mesa {mesa_id}: {e}")

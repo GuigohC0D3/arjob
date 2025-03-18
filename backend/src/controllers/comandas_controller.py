@@ -234,3 +234,27 @@ def fechar_comanda_por_id(comanda_id):
     except Exception as e:
         print(f"❌ Erro ao fechar comanda por id: {e}")
         return {"error": "Erro interno"}, 500
+
+
+from flask import jsonify
+from ..entities import comandas
+
+def obter_comanda_por_mesa(mesa_id):
+    try:
+        print(f"➡️ Controller: Buscando comanda aberta para mesa {mesa_id}")
+
+        comanda = comandas.obter_comanda_por_mesa(mesa_id)
+
+        if comanda:
+            print(f"✅ Controller: Comanda encontrada {comanda}")
+            return jsonify({"comanda": comanda}), 200
+
+        print(f"⚠️ Controller: Nenhuma comanda aberta para mesa {mesa_id}")
+        return jsonify({
+            "comanda": None,
+            "message": "Nenhuma comanda aberta encontrada para esta mesa"
+        }), 200
+
+    except Exception as e:
+        print(f"❌ Controller: Erro ao obter comanda por mesa {mesa_id}: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500

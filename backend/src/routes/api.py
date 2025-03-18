@@ -151,20 +151,10 @@ def atualizar_item_comanda(comanda_id, produto_id):
 
     return comandas_controller.atualizar_quantidade_item(comanda_id, produto_id, nova_quantidade)
 
-
 @main_bp.route('/comandas/mesa/<int:mesa_id>', methods=['GET'])
-def obter_comanda_por_mesa(mesa_id):
-    try:
-        comanda = comandas.obter_comanda_por_mesa(mesa_id)
-        if comanda:
-            return jsonify(comanda), 200
-        else:
-            return jsonify({"comanda": None, "message": "Nenhuma comanda aberta encontrada para esta mesa"}), 200
-    except Exception as e:
-        print(f"Erro ao obter comanda por mesa: {e}")
-        return jsonify({"error": "Erro interno no servidor"}), 500
-
-
+def obter_comanda_por_mesa_route(mesa_id):
+    from ..controllers import comandas_controller
+    return comandas_controller.obter_comanda_por_mesa(mesa_id)
 
 @main_bp.route("/comandas/fechadas", methods=["GET"])
 def listar_comandas_fechadas():
