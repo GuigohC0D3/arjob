@@ -518,3 +518,8 @@ def listar_categorias():
 @main_bp.route('/pagamentos/tipos', methods=['GET'])
 def get_tipos_pagamento():
     return pagamentos_controller.listar_tipos_pagamento()
+
+
+@main_bp.route('/comandas/id/<int:comanda_id>/fechar', methods=["POST"])
+def fechar_comanda_por_id(comanda_id):
+    return comandas_controller.fechar_comanda_por_id(comanda_id)
