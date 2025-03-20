@@ -78,7 +78,7 @@ const Sidebar = () => {
     },
     {
       name: "Histórico",
-      path: "/listagem",
+      path: "/historico",
       permissao: "historico",
       icon: "bi bi-list-ul",
     },

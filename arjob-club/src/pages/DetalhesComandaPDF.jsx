@@ -1,126 +1,167 @@
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet, Font } from "@react-pdf/renderer";
 import PropTypes from "prop-types";
 
-// Estilos para o PDF
+// (Opcional) Fonte monoespaçada para simular cupom
+Font.register({
+  family: "Courier",
+  fonts: [
+    {
+      src: "https://fonts.gstatic.com/s/courierprime/v1/u-480qWljRw-PdeL2uhquylEeQ5JZ-Y.woff2",
+    },
+  ],
+});
+
 const styles = StyleSheet.create({
   page: {
-    padding: 20,
+    padding: 10,
     fontSize: 10,
-    fontFamily: "Courier", // Fonte monoespaçada
+    fontFamily: "Courier",
   },
-  title: {
+  header: {
     textAlign: "center",
-    fontSize: 16,
-    fontWeight: "bold",
     marginBottom: 10,
   },
-  section: {
-    borderBottom: "1px dashed #000", // Linha pontilhada como separador
-    marginBottom: 10,
-    paddingBottom: 5,
+  divider: {
+    borderBottom: "1 solid #000",
+    marginVertical: 5,
   },
   row: {
-    display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 2,
-  },
-  item: {
-    fontSize: 10,
   },
   bold: {
     fontWeight: "bold",
   },
-  total: {
-    fontSize: 12,
-    fontWeight: "bold",
-    textAlign: "right",
+  itemHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    borderBottom: "1 solid #000",
+    marginBottom: 5,
+  },
+  itemRow: {
+    flexDirection: "column",
+    marginBottom: 5,
+  },
+  itemMain: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  itemObs: {
+    fontSize: 8,
+    color: "#333",
+    marginTop: 2,
+    marginLeft: 10,
+  },
+  footer: {
     marginTop: 10,
-    borderTop: "1px solid #000",
-    paddingTop: 5,
+    textAlign: "center",
   },
 });
 
 const DetalhesComandaPDF = ({ comanda }) => {
-  // Calcular o total
-  const total = comanda.consumido.reduce(
-    (acc, item) => acc + item.valor * item.quantidade,
-    0
-  );
+  // Pegando dados que você já tem na comanda
+  const {
+    mesa_id = "N/A",
+    cliente_nome = "Cliente não informado",
+    cliente_cpf = "CPF não informado",
+    atendente = "Atendente não informado",
+    data_fechamento,
+    total = 0,
+    pagamento = "Forma de pagamento não informada",
+    itens = [],
+  } = comanda;
+
+  const dataFechamentoFormatada = data_fechamento
+    ? new Date(data_fechamento).toLocaleString()
+    : "N/A";
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Título */}
-        <Text style={styles.title}>*** COMANDA ***</Text>
-
-        {/* Informações Principais */}
-        <View style={styles.section}>
-          <View style={styles.row}>
-            <Text style={styles.bold}>CPF:</Text>
-            <Text>{comanda.cpf}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.bold}>Filial:</Text>
-            <Text>{comanda.filial}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.bold}>Convênio:</Text>
-            <Text>{comanda.convenio}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.bold}>Colaborador:</Text>
-            <Text>{comanda.colaborador}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.bold}>Status:</Text>
-            <Text>{comanda.status}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.bold}>Conta Dividida:</Text>
-            <Text>{comanda.contaDividida ? "Sim" : "Não"}</Text>
-          </View>
+        {/* Cabeçalho da loja */}
+        <View style={styles.header}>
+          <Text style={styles.bold}>PIMENTA VERDE ALIMENTOS LTDA</Text>
+          <Text>RUA AUGUSTA, 1835 - CERVEJARIA CESAR</Text>
+          <Text>CNPJ: 00.000.000/0001-00 IE: 000000000000</Text>
+          <Text>SÃO PAULO - SP</Text>
         </View>
 
-        {/* Itens Consumidos */}
-        <View>
-          <Text style={styles.bold}>Itens Consumidos:</Text>
-          {comanda.consumido.map((item, index) => (
-            <View key={index} style={styles.row}>
-              <Text style={styles.item}>
-                {item.quantidade}x {item.item}
-              </Text>
-              <Text style={styles.item}>
-                R$ {(item.valor * item.quantidade).toFixed(2)}
+        <View style={styles.divider} />
+
+        {/* Info da comanda */}
+        <Text>CUPOM FISCAL</Text>
+        <View style={styles.divider} />
+
+        <Text>Data: {dataFechamentoFormatada}</Text>
+        <Text>Mesa: {mesa_id}</Text>
+        <Text>Cliente: {cliente_nome}</Text>
+        <Text>CPF: {cliente_cpf}</Text>
+        <Text>Garçom: {atendente}</Text>
+
+        <View style={styles.divider} />
+
+        {/* Itens */}
+        <View style={styles.itemHeader}>
+          <Text>ITEM</Text>
+          <Text>QTD x VL UNIT</Text>
+        </View>
+
+        {itens.map((item, idx) => (
+          <View key={idx} style={styles.itemRow}>
+            {/* Produto principal */}
+            <View style={styles.itemMain}>
+              <Text>{item.nome}</Text>
+              <Text>
+                {item.quantidade} x {parseFloat(item.preco).toFixed(2)}
               </Text>
             </View>
-          ))}
-        </View>
 
-        {/* Total */}
-        <Text style={styles.total}>Total: R$ {total.toFixed(2)}</Text>
+            {/* Observação do produto, se tiver */}
+            {item.observacao && item.observacao.trim() !== "" && (
+              <Text style={styles.itemObs}>Obs: {item.observacao}</Text>
+            )}
+          </View>
+        ))}
+
+        <View style={styles.divider} />
+
+        {/* Totais e pagamento */}
+        <Text style={styles.bold}>
+          TOTAL: R$ {parseFloat(total).toFixed(2)}
+        </Text>
+        <Text>PAGAMENTO: {pagamento}</Text>
+        <Text>IMPOSTOS APROXIMADOS: R$ 5,69</Text>
+
+        <View style={styles.divider} />
+
+        {/* Rodapé */}
+        <View style={styles.footer}>
+          <Text>OBRIGADO PELA PREFERÊNCIA!</Text>
+          <Text>05/12/2024 19:28:57</Text>
+        </View>
       </Page>
     </Document>
   );
 };
 
-// Validação de PropTypes
 DetalhesComandaPDF.propTypes = {
   comanda: PropTypes.shape({
-    cpf: PropTypes.string.isRequired,
-    filial: PropTypes.string.isRequired,
-    convenio: PropTypes.string.isRequired,
-    status: PropTypes.string.isRequired,
-    colaborador: PropTypes.string.isRequired,
-    contaDividida: PropTypes.bool.isRequired,
-    consumido: PropTypes.arrayOf(
+    mesa_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    cliente_nome: PropTypes.string,
+    cliente_cpf: PropTypes.string,
+    atendente: PropTypes.string,
+    data_fechamento: PropTypes.string,
+    total: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    pagamento: PropTypes.string,
+    itens: PropTypes.arrayOf(
       PropTypes.shape({
-        item: PropTypes.string.isRequired,
+        nome: PropTypes.string.isRequired,
         quantidade: PropTypes.number.isRequired,
-        valor: PropTypes.number.isRequired,
+        preco: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        observacao: PropTypes.string
       })
-    ).isRequired,
-  }).isRequired,
+    )
+  }).isRequired
 };
 
 export default DetalhesComandaPDF;

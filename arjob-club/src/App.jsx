@@ -52,7 +52,7 @@ const AppContent = () => {
           <Route element={<PrivateRoute />}>
             <Route path="/Home" element={<MainContent />} />
             <Route path="/iniciar-venda" element={<IniciarVenda />} />
-            <Route path="/listagem" element={<ListagemComandas />} />
+            <Route path="/historico" element={<ListagemComandas />} />
             <Route path="/Importar" element={<ImportarFinanceiros />} />
             <Route path="/Cliente" element={<CadastroCliente />} />
             <Route path="/produtos" element={<GerenciarProdutos />} />

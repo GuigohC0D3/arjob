@@ -165,10 +165,21 @@ def listar_comandas_fechadas():
         print(f"Erro no endpoint /comandas/fechadas: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
     
-@main_bp.route("/comandas/<int:comanda_id>/fechar", methods=["POST"])
-def fechar_comanda(comanda_id):
-    return comandas_controller.fechar_comanda(comanda_id)
+@main_bp.route('/comandas/<int:comanda_id>/fechar', methods=['POST'])
+def fechar_comanda_por_id_route(comanda_id):
+    return comandas_controller.fechar_comanda_por_id(comanda_id)
 
+@main_bp.route('/comandas/<int:comanda_id>', methods=['GET'])
+def obter_comanda_por_id(comanda_id):
+    try:
+        comanda = comandas.obter_comanda_por_id(comanda_id)
+        if comanda:
+            return jsonify({"comanda": comanda}), 200
+        else:
+            return jsonify({"comanda": None, "message": "Nenhuma comanda encontrada com esse ID"}), 404
+    except Exception as e:
+        print(f"Erro ao obter comanda por ID: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
 
 @main_bp.route("/comandas", methods=["GET"])
 def listar_comandas():
@@ -513,3 +524,5 @@ def get_tipos_pagamento():
 @main_bp.route('/comandas/id/<int:comanda_id>/fechar', methods=["POST"])
 def fechar_comanda_por_id(comanda_id):
     return comandas_controller.fechar_comanda_por_id(comanda_id)
+
+

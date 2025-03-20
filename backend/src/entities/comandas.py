@@ -87,60 +87,90 @@ def abrir_comanda(mesa_id, usuario_id):
         return {"error": "Erro ao conectar ao banco de dados"}, 500
 
 
-def atualizar_status_comanda(comanda_id, total, mesa_id, itens=[], pagamento_id=None, usuario_id=None):
+def atualizar_status_comanda(comanda_id, total, mesa_id, itens=None, pagamento_id=None, usuario_id=None, cliente_id=None):
+    if itens is None:
+        itens = []
+
     conn = connect_db()
     if conn:
         try:
             cur = conn.cursor()
 
-            # 1. Atualiza a comanda: status = True (fechada), total, data_fechamento, pagamento_id (opcional)
+            # Atualiza o cliente_id na comanda!
             cur.execute("""
                 UPDATE comandas
-                SET status = TRUE,
+                SET cliente_id = %s
+                WHERE id = %s
+            """, (cliente_id, comanda_id))
+
+            # Atualiza o status e informações
+            cur.execute("""
+                UPDATE comandas
+                SET status = FALSE,
                     total = %s,
-                    data_fechament = NOW(),
-                    pagamento_id = %s
+                    pagamento_id = %s,
+                    data_fechamento = NOW()
                 WHERE id = %s
             """, (total, pagamento_id, comanda_id))
 
-            # 2. Libera a mesa
+            # Libera a mesa
             cur.execute("""
                 UPDATE mesas
-                SET status = 'disponivel'
+                SET status = TRUE
                 WHERE id = %s
             """, (mesa_id,))
 
-            # 3. Cria histórico da comanda
+            # Agora insere no histórico com o cliente correto
             cur.execute("""
-                INSERT INTO historico_comandas (comanda_id, cliente_id, pagamento_id, total, data_fechament, usuario_id)
-                VALUES (%s, 
-                        (SELECT cliente_id FROM comandas WHERE id = %s),
-                        %s, %s, NOW(), %s)
+                INSERT INTO historico_comandas (
+                    comanda_id,
+                    cliente_id,
+                    pagamento_id,
+                    total,
+                    data_fechamento,
+                    usuario_id
+                ) VALUES (
+                    %s, %s, %s, %s, NOW(), %s
+                )
                 RETURNING id
-            """, (comanda_id, comanda_id, pagamento_id, total, usuario_id))
+            """, (comanda_id, cliente_id, pagamento_id, total, usuario_id))
 
             historico_id = cur.fetchone()[0]
 
-            # 4. Insere itens da comanda no histórico
+            # Insere itens no histórico
             for item in itens:
+                produto_id = item.get('id')
+                quantidade = item.get('quantidade')
+                preco_unitario = item.get('preco')
+
+                if produto_id is None or quantidade is None or preco_unitario is None:
+                    print(f"❌ Item inválido encontrado: {item}")
+                    continue
+
                 cur.execute("""
-                    INSERT INTO itens_comanda (comanda_id, produto_id, quantidade, preco_unitario, historico_comar)
-                    VALUES (%s, %s, %s, %s, %s)
+                    INSERT INTO itens_comanda (
+                        comanda_id,
+                        produto_id,
+                        quantidade,
+                        preco_unitario,
+                        historico_comanda_id
+                    ) VALUES (%s, %s, %s, %s, %s)
                 """, (
                     comanda_id,
-                    item['id'],
-                    item['quantidade'],
-                    item['preco'],
+                    produto_id,
+                    quantidade,
+                    preco_unitario,
                     historico_id
                 ))
 
             conn.commit()
 
+            print(f"✅ Comanda {comanda_id} fechada, histórico {historico_id} criado com sucesso.")
             return {"message": "Comanda fechada com sucesso!"}, 200
 
         except Exception as e:
             conn.rollback()
-            print(f"Erro ao fechar comanda no banco de dados: {e}")
+            print(f"❌ Erro ao fechar comanda no banco de dados: {e}")
             return {"error": "Erro ao fechar comanda no banco de dados"}, 500
 
         finally:
@@ -148,6 +178,7 @@ def atualizar_status_comanda(comanda_id, total, mesa_id, itens=[], pagamento_id=
             conn.close()
 
     else:
+        print("❌ Erro ao conectar ao banco de dados")
         return {"error": "Erro ao conectar ao banco de dados"}, 500
 
 
@@ -177,6 +208,34 @@ def obter_comanda_por_code(code):
             return None
         except Exception as e:
             print(f"❌ Erro ao buscar comanda por código: {e}")
+            return None
+    else:
+        print("Erro ao conectar ao banco de dados")
+        return None
+
+def obter_comanda_por_id(comanda_id):
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT id, numero, mesa_id, status FROM comandas
+                WHERE id = %s AND status = 'aberta'
+            """, (comanda_id,))
+            comanda = cur.fetchone()
+            cur.close()
+            conn.close()
+
+            if comanda:
+                return {
+                    "id": comanda[0],
+                    "numero": comanda[1],
+                    "mesa_id": comanda[2],
+                    "status": comanda[3]
+                }
+            return None
+        except Exception as e:
+            print(f"Erro ao buscar comanda por id: {e}")
             return None
     else:
         print("Erro ao conectar ao banco de dados")
@@ -255,6 +314,92 @@ def fechar_comanda(comanda_id):
     else:
         return {"error": "Erro ao conectar ao banco de dados"}, 500
 
+def fechar_comanda_completo(comanda_id, mesa_id, itens, total, pagamento_id, usuario_id, cliente_id):
+    conn = connect_db()
+
+    if not conn:
+        print("❌ Erro ao conectar ao banco de dados")
+        return {"error": "Erro ao conectar ao banco de dados"}, 500
+
+    try:
+        cur = conn.cursor()
+
+        # 1️⃣ Atualiza a comanda para "fechada" com os dados necessários
+        cur.execute("""
+            UPDATE comandas
+            SET status = FALSE,
+                total = %s,
+                pagamento_id = %s,
+                cliente_id = %s,
+                data_fechamento = NOW()
+            WHERE id = %s
+        """, (total, pagamento_id, cliente_id, comanda_id))
+
+        # 2️⃣ Libera a mesa para "disponível"
+        cur.execute("""
+            UPDATE mesas
+            SET status = TRUE
+            WHERE id = %s
+        """, (mesa_id,))
+
+        # 3️⃣ Cria o registro no histórico de comandas
+        cur.execute("""
+            INSERT INTO historico_comandas (
+                comanda_id,
+                cliente_id,
+                pagamento_id,
+                total,
+                data_fechamento,
+                usuario_id
+            )
+            VALUES (%s, %s, %s, %s, NOW(), %s)
+            RETURNING id
+        """, (comanda_id, cliente_id, pagamento_id, total, usuario_id))
+
+        historico_id = cur.fetchone()[0]
+        print(f"✅ Histórico da comanda criado! ID: {historico_id}")
+
+        # 4️⃣ Adiciona cada item da comanda no histórico e baixa estoque
+        for item in itens:
+            produto_id = item.get('id')
+            quantidade = item.get('quantidade')
+            preco_unitario = item.get('preco')
+
+            if not (produto_id and quantidade and preco_unitario):
+                print(f"❌ Dados de item inválido: {item}")
+                continue
+
+            # ➕ Insere no itens_comanda com referencia ao histórico
+            cur.execute("""
+                INSERT INTO itens_comanda (
+                    comanda_id,
+                    produto_id,
+                    quantidade,
+                    preco_unitario,
+                    historico_comanda_id
+                )
+                VALUES (%s, %s, %s, %s, %s)
+            """, (comanda_id, produto_id, quantidade, preco_unitario, historico_id))
+
+            # ➖ Baixa o estoque do produto
+            cur.execute("""
+                UPDATE produtos
+                SET estoque = estoque - %s
+                WHERE id = %s
+            """, (quantidade, produto_id))
+
+        conn.commit()
+        print(f"✅ Comanda {comanda_id} fechada com sucesso e histórico registrado.")
+        return {"message": "Comanda fechada, estoque baixado e histórico salvo!"}, 200
+
+    except Exception as e:
+        conn.rollback()
+        print(f"❌ Erro ao fechar comanda: {e}")
+        return {"error": "Erro ao fechar comanda"}, 500
+
+    finally:
+        cur.close()
+        conn.close()
 
 def adicionar_item_na_comanda(comanda_id, produto_id, quantidade, preco_unitario):
     conn = connect_db()

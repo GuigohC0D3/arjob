@@ -2,85 +2,111 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const IniciarVenda = () => {
-  const [mesas, setMesas] = useState([]); // Estado das mesas
+  const [mesas, setMesas] = useState([]);
   const navigate = useNavigate();
 
-  // 🔥 Função para buscar as mesas e verificar comandas abertas
+  // ✅ Função para buscar mesas e verificar se há comanda aberta para cada uma
   const fetchMesas = async () => {
     try {
       const response = await fetch("http://127.0.0.1:5000/mesas");
       if (!response.ok) throw new Error("Erro ao carregar mesas");
-      
+
       const mesasData = await response.json();
-      
-      // 🔥 Busca comandas abertas para cada mesa
+
+      // 🔍 Busca se cada mesa tem uma comanda aberta
       const mesasAtualizadas = await Promise.all(
         mesasData.map(async (mesa) => {
-          const comandaResponse = await fetch(`http://127.0.0.1:5000/comandas/mesa/${mesa.id}`);
-          const comanda = await comandaResponse.json();
-          return {
-            ...mesa,
-            status: comanda && comanda.id && comanda.status === true, // Se houver comanda aberta, status será true
-          };
+          try {
+            const comandaResponse = await fetch(
+              `http://127.0.0.1:5000/comandas/mesa/${mesa.id}`
+            );
+
+            if (!comandaResponse.ok) {
+              console.warn(`⚠️ Mesa ${mesa.id} sem resposta de comanda`);
+              return mesa; // Sem comanda, sem alteração
+            }
+
+            const comandaData = await comandaResponse.json();
+
+            const temComandaAberta =
+              comandaData &&
+              comandaData.comanda &&
+              comandaData.comanda.status === true;
+
+            return {
+              ...mesa,
+              status: temComandaAberta, // true = mesa ocupada (vermelha)
+              comandaId: temComandaAberta ? comandaData.comanda.id : null, // Armazena o id da comanda se aberta
+            };
+          } catch (error) {
+            console.error(
+              `❌ Erro ao buscar comanda da mesa ${mesa.id}:`,
+              error
+            );
+            return mesa; // Continua sem modificação se der erro
+          }
         })
       );
 
-      // 🔥 Ordena as mesas pelo número
+      // Atualiza estado das mesas no frontend
       setMesas(mesasAtualizadas.sort((a, b) => a.numero - b.numero));
     } catch (error) {
-      console.error("❌ Erro ao conectar ao servidor:", error);
+      console.error("❌ Erro ao buscar mesas:", error);
     }
   };
 
+  // ✅ Ao montar componente, busca as mesas
   useEffect(() => {
     fetchMesas();
   }, []);
 
-  // 🔥 Função para selecionar mesa e abrir comanda
+  // ✅ Função para clicar em uma mesa
   const handleSelecionarMesa = async (mesa) => {
-    console.log(`🖱️ Clicou na mesa ${mesa.id}, verificando status...`);
+    console.log(`🖱️ Clicou na mesa ${mesa.numero}`);
 
-    try {
-      const response = await fetch(`http://127.0.0.1:5000/comandas/mesa/${mesa.id}`);
-      const comanda = await response.json();
-
-      if (!response.ok) {
-        console.error(`❌ Erro ao buscar comanda da mesa ${mesa.id}:`, comanda);
-        return;
-      }
-
-      if (comanda && comanda.id && comanda.status === true) {
-        console.log(`✅ Mesa ${mesa.id} já tem comanda aberta. Redirecionando...`);
-        navigate(`/comanda-aberta/${comanda.id}`);
-        return;
-      }
-
-      console.log(`🔄 Nenhuma comanda encontrada para a mesa ${mesa.id}. Criando nova.`);
+    if (mesa.status && mesa.comandaId) {
+      console.log(
+        `✅ Mesa ${mesa.numero} já tem comanda aberta, id: ${mesa.comandaId}`
+      );
+      navigate(`/comanda-aberta/${mesa.comandaId}`);
+    } else {
+      console.log(
+        `🆕 Mesa ${mesa.numero} sem comanda, iniciando fluxo de abertura.`
+      );
       navigate(`/nova-comanda/${mesa.id}`);
 
-      // 🔥 Atualiza estado para refletir a mudança imediatamente
+      // Atualiza localmente o status da mesa pra ocupada 
       setMesas((prevMesas) =>
         prevMesas.map((m) => (m.id === mesa.id ? { ...m, status: true } : m))
       );
-    } catch (error) {
-      console.error(`❌ Erro ao conectar ao servidor para mesa ${mesa.id}:`, error);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 max-w-screen-lg mx-auto">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 max-w-screen-lg mx-auto">
         {mesas.map((mesa) => (
           <button
             key={mesa.id}
-            className={`w-24 h-24 md:w-28 md:h-28 text-lg font-semibold border rounded-lg shadow-md transition-transform ${
-              mesa.status ? "bg-red-500 text-white" : "bg-green-500 text-white"
-            } hover:scale-105`}
             onClick={() => handleSelecionarMesa(mesa)}
+            className={`w-24 h-24 md:w-28 md:h-28 flex items-center justify-center text-lg font-semibold border rounded-lg shadow-md transition-transform hover:scale-105 ${
+              mesa.status
+                ? "bg-red-600 text-white hover:bg-red-700"
+                : "bg-green-500 text-white hover:bg-green-600"
+            }`}
           >
             Mesa {mesa.numero}
           </button>
         ))}
+      </div>
+
+      <div className="fixed bottom-6 right-6">
+        <button
+          onClick={fetchMesas}
+          className="bg-blue-600 text-white px-4 py-2 rounded shadow-md hover:bg-blue-700 transition"
+        >
+          Atualizar Mesas
+        </button>
       </div>
     </div>
   );

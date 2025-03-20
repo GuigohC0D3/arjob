@@ -1,15 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import PropTypes from "prop-types";
 import Select from "react-select";
+import debounce from "lodash.debounce"; // Debounce para otimizar a busca
 
 const SelecionarClientes = ({ onSelectCliente }) => {
   const [clientes, setClientes] = useState([]);
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
+  const [searchInput, setSearchInput] = useState("");
 
   useEffect(() => {
     const fetchClientes = async () => {
       try {
         const response = await fetch("http://127.0.0.1:5000/clientes");
+
         if (response.ok) {
           const data = await response.json();
 
@@ -24,7 +27,12 @@ const SelecionarClientes = ({ onSelectCliente }) => {
             return;
           }
 
-          setClientes(clientesArray);
+          // Ordena por nome para melhorar a UX
+          const clientesOrdenados = clientesArray.sort((a, b) =>
+            a.nome.localeCompare(b.nome)
+          );
+
+          setClientes(clientesOrdenados);
         } else {
           console.error(
             "Erro na resposta da API de clientes:",
@@ -39,16 +47,29 @@ const SelecionarClientes = ({ onSelectCliente }) => {
     fetchClientes();
   }, []);
 
-  // ✅ Mapeando os clientes para opções do Select
-  const options = clientes.map((cliente) => ({
-    value: cliente.cpf,
-    label: `${cliente.nome} - ${cliente.cpf}`,
-    data: cliente, // pra usar no onChange depois
-  }));
+  // ✅ Debounced search input (caso queira fazer buscas remotas depois)
+  const debouncedSearch = useMemo(() => debounce(setSearchInput, 300), []);
+
+  // ✅ Mapeando os clientes para opções do Select, filtrados por searchInput
+  const options = useMemo(() => {
+    return clientes
+      .filter((cliente) =>
+        cliente.nome.toLowerCase().includes(searchInput.toLowerCase())
+      )
+      .map((cliente) => ({
+        value: cliente.cpf,
+        label: `${cliente.nome} - ${cliente.cpf}`,
+        data: cliente, // pra usar no onChange depois
+      }));
+  }, [clientes, searchInput]);
 
   const handleChange = (selectedOption) => {
     setClienteSelecionado(selectedOption);
-    onSelectCliente(selectedOption.data); // devolve o cliente completo
+    onSelectCliente(selectedOption?.data || null); // devolve o cliente completo
+  };
+
+  const handleInputChange = (inputValue) => {
+    debouncedSearch(inputValue);
   };
 
   return (
@@ -61,25 +82,48 @@ const SelecionarClientes = ({ onSelectCliente }) => {
         options={options}
         value={clienteSelecionado}
         onChange={handleChange}
-        placeholder="Digite o nome ou CPF..."
+        onInputChange={handleInputChange}
+        placeholder="Digite o nome ou CPF do cliente..."
         isSearchable
-        noOptionsMessage={() => "Nenhum cliente encontrado"}
+        noOptionsMessage={() =>
+          searchInput
+            ? "Nenhum cliente encontrado com esse nome/CPF"
+            : "Nenhum cliente disponível"
+        }
         styles={{
-          control: (provided) => ({
+          control: (provided, state) => ({
             ...provided,
             borderRadius: "0.375rem",
             padding: "2px",
-            borderColor: "#d1d5db",
+            borderColor: state.isFocused ? "#2563eb" : "#d1d5db",
             boxShadow: "none",
             "&:hover": { borderColor: "#2563eb" },
+            fontSize: "0.875rem",
           }),
           option: (provided, state) => ({
             ...provided,
-            backgroundColor: state.isSelected ? "#2563eb" : "#ffffff",
+            backgroundColor: state.isSelected
+              ? "#2563eb"
+              : state.isFocused
+              ? "#bfdbfe"
+              : "#ffffff",
             color: state.isSelected ? "#ffffff" : "#1f2937",
-            "&:hover": { backgroundColor: "#bfdbfe" },
+            cursor: "pointer",
+          }),
+          menu: (provided) => ({
+            ...provided,
+            zIndex: 50,
           }),
         }}
+        theme={(theme) => ({
+          ...theme,
+          borderRadius: 6,
+          colors: {
+            ...theme.colors,
+            primary25: "#bfdbfe",
+            primary: "#2563eb",
+          },
+        })}
       />
     </div>
   );

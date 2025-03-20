@@ -21,6 +21,7 @@ def abrir_comanda(mesa_id, atendente_id):
         print(f"❌ Erro ao abrir comanda: {e}")
         return {"error": "Erro interno no servidor"}, 500
 
+
 # ✅ Fechar comanda usando o CODE como identificador
 def fechar_comanda(code):
     try:
@@ -29,12 +30,12 @@ def fechar_comanda(code):
 
         total = dados.get("total")
         mesa_id = dados.get("mesa_id")
-        cliente_id = dados.get("cliente_id")
         pagamento_id = dados.get("pagamento_id")
         itens = dados.get("itens")
+        usuario_id = dados.get("usuario_id")  # Opcional, se estiver enviando o atendente/usuario
 
         # Validação
-        if not (total and mesa_id and cliente_id and pagamento_id):
+        if not (total and mesa_id and pagamento_id):
             return {
                 "error": "Dados insuficientes para fechar a comanda",
                 "recebido": dados
@@ -51,9 +52,9 @@ def fechar_comanda(code):
             comanda_id=comanda_id,
             total=total,
             mesa_id=mesa_id,
-            cliente_id=cliente_id,
             pagamento_id=pagamento_id,
-            itens=itens
+            itens=itens,
+            usuario_id=usuario_id  # ou coloca um ID fixo se ainda não está passando isso
         )
 
         if status_code != 200:
@@ -73,66 +74,73 @@ def fechar_comanda(code):
         print(f"❌ Erro ao fechar comanda pelo código: {e}")
         return {"error": "Erro interno no servidor"}, 500
 
-# ✅ Fechar comanda pelo número (obsoleto se você usa o code)
+
+# ✅ Fechar comanda pelo número (opcional)
 def fechar_comanda_por_numero(numero_comanda):
     try:
-        # Validação do formato do numero_comanda
-        if not isinstance(numero_comanda, str) or len(numero_comanda) != 6:
-            return {"error": "Formato do número da comanda inválido"}, 400
-
+        # ✅ Busca a comanda pelo número
         comanda = comandas.obter_comanda_por_numero(numero_comanda)
+
         if not comanda:
             return {"error": "Comanda não encontrada"}, 404
 
         comanda_id = comanda["id"]
         mesa_id = comanda["mesa_id"]
 
-        # Dados recebidos do frontend
+        # ✅ Pega os dados enviados do frontend
         dados = request.json
         total = dados.get("total")
-        itens = dados.get("itens", [])
-        pagamento_id = dados.get("pagamento_id", 1)  # Exemplo: pagamento_id padrão 1
-        usuario_id = dados.get("usuario_id", 1)      # Exemplo: usuário fixo 1 (pode ser via session ou token depois)
+        itens = dados.get("itens")
+        pagamento_id = dados.get("pagamento_id")
+        usuario_id = dados.get("usuario_id")
+        cliente_id = dados.get("cliente_id")
 
-        if total is None:
-            return {"error": "Total não fornecido"}, 400
+        # ✅ Validação simples dos dados obrigatórios
+        if not all([total, itens, pagamento_id, usuario_id, cliente_id]):
+            return {"error": "Faltam dados para fechar a comanda"}, 400
 
-        response, status_code = comandas.atualizar_status_comanda(
+        # ✅ Chama a função completa que fecha a comanda
+        return comandas.fechar_comanda_completo(
+            comanda_id=comanda_id,
+            mesa_id=mesa_id,
+            itens=itens,
+            total=total,
+            pagamento_id=pagamento_id,
+            usuario_id=usuario_id,
+            cliente_id=cliente_id
+        )
+
+    except Exception as e:
+        print(f"❌ Erro no fechamento da comanda: {e}")
+        return {"error": "Erro interno no servidor"}, 500
+
+
+# ✅ Fechar comanda pelo ID
+def fechar_comanda_por_id(comanda_id):
+    try:
+        dados = request.json
+        total = dados.get("total")
+        mesa_id = dados.get("mesa_id")
+        pagamento_id = dados.get("pagamento_id")
+        itens = dados.get("itens")
+        usuario_id = dados.get("usuario_id")  # Adiciona se já tiver usuário logado
+
+        if not all([total, mesa_id, pagamento_id]):
+            return {"error": "Dados insuficientes"}, 400
+
+        return comandas.atualizar_status_comanda(
             comanda_id=comanda_id,
             total=total,
             mesa_id=mesa_id,
-            itens=itens,
             pagamento_id=pagamento_id,
+            itens=itens,
             usuario_id=usuario_id
         )
 
-        return response, status_code
-
     except Exception as e:
-        print(f"Erro ao fechar comanda pelo número: {e}")
-        return {"error": "Erro interno no servidor"}, 500
+        print(f"❌ Erro ao fechar comanda por id: {e}")
+        return {"error": "Erro interno"}, 500
 
-# ✅ Criar comanda antiga (opcional, você pode remover se estiver usando abrir_comanda)
-def criar_comanda():
-    try:
-        dados = request.json
-        mesa_id = dados.get("mesa_id")
-        cliente_cpf = dados.get("cliente_cpf")
-
-        if not mesa_id or not cliente_cpf:
-            return jsonify({"error": "Dados insuficientes para criar a comanda"}), 400
-
-        numero_comanda = comandas.gerar_numero_comanda()
-        sucesso = comandas.criar_comanda(mesa_id, numero_comanda)
-
-        if sucesso:
-            return jsonify({"id": numero_comanda, "mesa_id": mesa_id}), 201
-        else:
-            return jsonify({"error": "Erro ao criar comanda no banco de dados"}), 500
-
-    except Exception as e:
-        print(f"❌ Erro ao criar comanda: {e}")
-        return jsonify({"error": "Erro ao criar comanda"}), 500
 
 # ✅ Listar todas as comandas
 def listar_comandas():
@@ -140,6 +148,7 @@ def listar_comandas():
     if resultado is not None:
         return jsonify(resultado), 200
     return jsonify({"error": "Erro ao listar comandas"}), 500
+
 
 # ✅ Buscar cliente por CPF
 def buscar_clinete_por_cpf():
@@ -161,13 +170,16 @@ def buscar_clinete_por_cpf():
         print(f"❌ Erro ao buscar cliente: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
 
+
 # ✅ Adicionar item à comanda
 def add_item_comanda(comanda_id, produto_id, quantidade, preco_unitario):
     return comandas.adicionar_item_na_comanda(comanda_id, produto_id, quantidade, preco_unitario)
 
+
 # ✅ Obter itens da comanda
 def obter_itens_comanda(comanda_id):
     return comandas.obter_itens_comanda(comanda_id)
+
 
 # ✅ Atualizar quantidade de item
 def atualizar_quantidade_item(comanda_id, produto_id, nova_quantidade):
@@ -175,6 +187,7 @@ def atualizar_quantidade_item(comanda_id, produto_id, nova_quantidade):
         return {"error": "Quantidade inválida"}, 400
 
     return comandas.atualizar_quantidade_item(comanda_id, produto_id, nova_quantidade)
+
 
 # ✅ Remover item da comanda
 def remover_item_da_comanda(comanda_id, item_id):
@@ -184,6 +197,7 @@ def remover_item_da_comanda(comanda_id, item_id):
         print(f"❌ Erro ao remover item da comanda: {e}")
         return {"error": "Erro interno no servidor"}, 500
 
+
 # ✅ Listar itens de uma comanda
 def listar_itens_da_comanda(comanda_id):
     try:
@@ -192,6 +206,7 @@ def listar_itens_da_comanda(comanda_id):
     except Exception as e:
         print(f"❌ Erro ao listar itens da comanda: {e}")
         return jsonify({"error": "Erro ao listar itens da comanda"}), 500
+
 
 # ✅ Atualizar item da comanda
 def atualizar_item_da_comanda(comanda_id, item_id):
@@ -210,35 +225,7 @@ def atualizar_item_da_comanda(comanda_id, item_id):
         return jsonify({"error": "Erro interno no servidor"}), 500
 
 
-def fechar_comanda_por_id(comanda_id):
-    try:
-        dados = request.json
-        total = dados.get("total")
-        mesa_id = dados.get("mesa_id")
-        cliente_id = dados.get("cliente_id")
-        pagamento_id = dados.get("pagamento_id")
-        itens = dados.get("itens")
-
-        if not all([total, mesa_id, cliente_id, pagamento_id]):
-            return {"error": "Dados insuficientes"}, 400
-
-        return comandas.atualizar_status_comanda(
-            comanda_id=comanda_id,
-            total=total,
-            mesa_id=mesa_id,
-            cliente_id=cliente_id,
-            pagamento_id=pagamento_id,
-            itens=itens
-        )
-
-    except Exception as e:
-        print(f"❌ Erro ao fechar comanda por id: {e}")
-        return {"error": "Erro interno"}, 500
-
-
-from flask import jsonify
-from ..entities import comandas
-
+# ✅ Buscar comanda por mesa
 def obter_comanda_por_mesa(mesa_id):
     try:
         print(f"➡️ Controller: Buscando comanda aberta para mesa {mesa_id}")
