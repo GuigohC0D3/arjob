@@ -126,3 +126,38 @@ def listar_clientes():
     else:
         print("Erro ao conectar ao banco de dados")
         return []
+    
+
+def listar_clientes_status():
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT id, nome FROM status_cliente")
+            status_list = [{"id": row[0], "nome": row[1]} for row in cur.fetchall()]
+            cur.close()
+            conn.close()
+            return status_list, 200
+        except Exception as e:
+            print(f"Erro ao listar status de clientes: {e}")
+            return {"error": "Erro ao listar status de clientes"}, 500
+
+        
+
+def atualizar_status_cliente(cliente_id, novo_status_id):
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                UPDATE clientes
+                SET status_id = %s
+                WHERE id = %s
+            """, (novo_status_id, cliente_id))
+            conn.commit()
+            cur.close()
+            conn.close()
+            return {"message": "Status atualizado com sucesso!"}, 200
+        except Exception as e:
+            print(f"Erro ao atualizar status do cliente: {e}")
+            return {"error": "Erro ao atualizar status do cliente"}, 500

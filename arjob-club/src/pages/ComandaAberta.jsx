@@ -206,7 +206,6 @@ const ComandaAberta = () => {
         header: "Sucesso",
         icon: "pi pi-check",
         acceptLabel: "Ok",
-        rejectVisible: false,
         accept: () => navigate("/historico"),
       });
     } catch (err) {
@@ -368,13 +367,13 @@ const ComandaAberta = () => {
                   <div className="flex items-center gap-4">
                     <button
                       onClick={() => decrementarQuantidade(item)}
-                      className="w-8 h-8 flex items-center justify-center rounded-full bg-transparent text-5xl text-red-400 hover:bg-gray-100 transition text-xl font-semibold"
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-transparent text-5xl text-red-400 hover:bg-gray-100 transition font-semibold"
                     >
                       -
                     </button>
                     <button
                       onClick={() => incrementarQuantidade(item)}
-                      className="w-8 h-8 flex items-center justify-center rounded-full bg-transparent text-5xl text-green-400 hover:bg-gray-100 transition text-xl font-semibold"
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-transparent text-5xl text-green-400 hover:bg-gray-100 transition font-semibold"
                     >
                       +
                     </button>
@@ -402,9 +401,7 @@ const ComandaAberta = () => {
         <div className="mt-12 text-center">
           <h3 className="text-xl font-bold text-gray-800 mb-4">
             Total:{" "}
-            <span className="text-blue-600">
-              R$ {totalComanda.toFixed(2)}
-            </span>
+            <span className="text-blue-600">R$ {totalComanda.toFixed(2)}</span>
           </h3>
 
           <button

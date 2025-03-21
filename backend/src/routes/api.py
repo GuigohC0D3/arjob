@@ -319,6 +319,30 @@ def listar_clientes_painel():
         print(f"Erro no endpoint /admin/clientes: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
 
+@main_bp.route('/admin/clientes/status', methods=['GET'])
+def listar_status_clientes():
+    try:
+        status_list, status_code = clientes_controller.listar_clientes_status()
+        return jsonify(status_list), status_code
+    except Exception as e:
+        print(f"Erro no endpoint /admin/clientes/status: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
+
+
+@main_bp.route('/admin/clientes/<int:cliente_id>/status', methods=['PUT'])
+def atualizar_status_cliente(cliente_id):
+    try:
+        data = request.get_json()
+        status_id = data.get("status_id")
+        if not status_id:
+            return jsonify({"error": "ID do status é obrigatório"}), 400
+        response, status_code = clientes_controller.atualizar_status_cliente(cliente_id, status_id)
+        return jsonify(response), status_code
+    except Exception as e:
+        print(f"Erro no endpoint /admin/clientes/{cliente_id}/status: {e}")
+        return jsonify({"error": "Erro interno no servidor"}), 500
+
+
 # Remover cliente
 @main_bp.route('/admin/clientes/<int:cliente_id>', methods=['DELETE'])
 def remover_cliente_painel(cliente_id):

@@ -11,6 +11,7 @@ import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 
 // Importando componentes adicionais
 import EditCargo from "./actionsaAdmin/EditCargo";
+import EditStatus from "./actionsaAdmin/EditStatusCliente"; // ✅ Modal de edição de status
 import ViewProfile from "./actionsaAdmin/ViewProfile";
 import Dashboard from "./DashboardAdmin";
 import Logs from "./Filters";
@@ -22,15 +23,15 @@ const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState("usuarios");
   const [usuarios, setUsuarios] = useState([]);
   const [clientes, setClientes] = useState([]);
+  const [usuariosStatus, setUsuariosStatus] = useState([]);  // ✅ Lista de status para usuários
+  const [clientesStatus, setClientesStatus] = useState([]);  // ✅ Lista de status para clientes
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const toast = useRef(null);
 
   // Páginação
-  // Estado para paginação
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 4; // Número de usuários por página
+  const itemsPerPage = 4;
 
   const [editCargoModal, setEditCargoModal] = useState({
     open: false,
@@ -43,6 +44,13 @@ const AdminPanel = () => {
     user: null,
   });
 
+  const [editStatusModal, setEditStatusModal] = useState({
+    open: false,
+    entityId: null,
+    currentStatusId: null,
+    entityType: "", // "usuarios" ou "clientes"
+  });
+
   useEffect(() => {
     if (activeTab === "usuarios") {
       fetchUsuarios();
@@ -53,29 +61,24 @@ const AdminPanel = () => {
 
   const fetchUsuarios = async () => {
     setLoading(true);
-    setError(null);
     try {
       const response = await api.get("/admin/usuarios");
       const statusResponse = await api.get("/admin/usuarios/status");
 
-      console.log("Usuários:", response.data);
-      console.log("Status dos usuários:", statusResponse.data);
-
-      // Criar um mapa com os status
       const statusMap = statusResponse.data.reduce((acc, user) => {
         acc[user.id] = user.status;
         return acc;
       }, {});
 
-      // Atualizar os usuários com o status correspondente
       const usuariosAtualizados = response.data[0].map((usuario) => ({
         ...usuario,
         status: statusMap[usuario.id] || "Desconhecido",
       }));
 
       setUsuarios(usuariosAtualizados);
+      setUsuariosStatus(statusResponse.data);  // ✅ Armazena lista de status de usuários
     } catch (err) {
-      setError("Erro ao carregar usuários. Tente novamente.");
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -83,18 +86,25 @@ const AdminPanel = () => {
 
   const fetchClientes = async () => {
     setLoading(true);
-    setError(null);
     try {
       const response = await api.get("/admin/clientes");
-      setClientes(response.data || []);
+      const statusResponse = await api.get("/admin/clientes/status");
+
+      const statusMap = statusResponse.data.reduce((acc, status) => {
+        acc[status.id] = status.nome;
+        return acc;
+      }, {});
+
+      const clientesAtualizados = response.data.map((cliente) => ({
+        ...cliente,
+        status_id: cliente.status_id,
+        status: statusMap[cliente.status_id] || "Desconhecido",
+      }));
+
+      setClientes(clientesAtualizados);
+      setClientesStatus(statusResponse.data);  // ✅ Armazena lista de status de clientes
     } catch (err) {
-      setError("Erro ao carregar clientes.");
-      toast.current.show({
-        severity: "error",
-        summary: "Erro",
-        detail: "Erro ao carregar clientes.",
-        life: 3000,
-      });
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -123,7 +133,7 @@ const AdminPanel = () => {
 
           await api.delete(`/admin/usuarios/${userId}`, {
             headers: {
-              Authorization: `Bearer ${token}`, // ✅ Enviando o token corretamente
+              Authorization: `Bearer ${token}`,
             },
           });
 
@@ -134,18 +144,35 @@ const AdminPanel = () => {
             life: 3000,
           });
 
-          fetchUsuarios(); // 🔄 Atualiza a lista de usuários após a exclusão
+          fetchUsuarios();
         } catch (error) {
-          console.error("❌ Erro ao excluir usuário:", error);
+          console.error(error);
           toast.current.show({
             severity: "error",
             summary: "Erro",
-            detail: "Erro ao excluir usuário. Verifique suas permissões.",
+            detail: "Erro ao excluir usuário.",
             life: 3000,
           });
         }
       },
     });
+  };
+
+  const handleEditCargo = (userId, currentCargo) => {
+    setEditCargoModal({ open: true, userId, currentCargo });
+  };
+
+  const handleEditStatus = (entityId, currentStatusId, entityType) => {
+    setEditStatusModal({
+      open: true,
+      entityId,
+      currentStatusId,
+      entityType,
+    });
+  };
+
+  const handleView = (user) => {
+    setViewProfileModal({ open: true, user });
   };
 
   const statusLabels = {
@@ -162,19 +189,11 @@ const AdminPanel = () => {
     Bloqueado: "bg-red-500",
   };
 
-  const handleEditCargo = (userId, currentCargo) => {
-    setEditCargoModal({ open: true, userId, currentCargo });
-  };
-
-  const handleView = (user) => {
-    setViewProfileModal({ open: true, user });
-  };
-
   const dataToDisplay = activeTab === "usuarios" ? usuarios : clientes;
-  const filteredData = dataToDisplay?.filter((item) =>
+  const filteredData = dataToDisplay.filter((item) =>
     item?.nome?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  // Paginação corrigida
+
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -185,7 +204,6 @@ const AdminPanel = () => {
       <Toast ref={toast} />
       <ConfirmDialog />
 
-      {/* Cabeçalho de ações */}
       <div className="flex justify-between items-center mb-4">
         <input
           type="text"
@@ -196,16 +214,8 @@ const AdminPanel = () => {
         />
       </div>
 
-      {/* Tabs */}
       <div className="flex space-x-4 mb-4">
-        {[
-          "usuarios",
-          "clientes",
-          "dashboard",
-          "logs",
-          "notificações",
-          "configuirações",
-        ].map((tab) => (
+        {["usuarios", "clientes", "dashboard", "logs", "notificações", "configurações"].map((tab) => (
           <button
             key={tab}
             className={`flex-1 py-2 px-4 font-bold text-sm rounded-md transition ${
@@ -221,7 +231,6 @@ const AdminPanel = () => {
         ))}
       </div>
 
-      {/* Tabela */}
       <table className="w-full border-collapse shadow-md">
         <thead>
           <tr className="bg-black text-white text-left">
@@ -239,14 +248,14 @@ const AdminPanel = () => {
                 <p className="text-gray-600 text-sm">{item.email}</p>
                 <p className="text-gray-500 text-xs">CPF: {item.cpf}</p>
               </td>
-              <td className="py-3 px-4 text-gray-600">{item.criado_em} </td>
+              <td className="py-3 px-4 text-gray-600">{item.criado_em}</td>
               <td className="py-3 px-4">
                 <span
                   className={`px-3 py-1 rounded-full text-white text-xs font-bold ${
                     statusColors[statusLabels[item.status]] || "bg-gray-400"
                   }`}
                 >
-                  {statusLabels[item.status] || "Desconhecido"}
+                  {statusLabels[item.status] || item.status || "Desconhecido"}
                 </span>
               </td>
               <td className="py-3 px-4 flex space-x-2">
@@ -257,38 +266,47 @@ const AdminPanel = () => {
                   <FaEye />
                 </button>
 
-                <button
-                  className="bg-yellow-500 text-white p-2 rounded-md hover:bg-yellow-600"
-                  onClick={() => handleEditCargo(item.id, item.cargo)}
-                >
-                  <FaEdit />
-                </button>
-                <button
-                  className="bg-red-500 text-white p-2 rounded-md hover:bg-red-600"
-                  onClick={() => handleDelete(item.id, activeTab)}
-                >
-                  <FaTrash />
-                </button>
+                {activeTab === "usuarios" && (
+                  <>
+                    <button
+                      className="bg-yellow-500 text-white p-2 rounded-md hover:bg-yellow-600"
+                      onClick={() => handleEditCargo(item.id, item.cargo)}
+                    >
+                      <FaEdit />
+                    </button>
+                    <button
+                      className="bg-purple-500 text-white p-2 rounded-md hover:bg-purple-600"
+                      onClick={() =>
+                        handleEditStatus(item.id, item.status_id, "usuarios")
+                      }
+                    >
+                      Status
+                    </button>
+                    <button
+                      className="bg-red-500 text-white p-2 rounded-md hover:bg-red-600"
+                      onClick={() => handleDelete(item.id)}
+                    >
+                      <FaTrash />
+                    </button>
+                  </>
+                )}
+
+                {activeTab === "clientes" && (
+                  <button
+                    className="bg-purple-500 text-white p-2 rounded-md hover:bg-purple-600"
+                    onClick={() =>
+                      handleEditStatus(item.id, item.status_id, "clientes")
+                    }
+                  >
+                    Status
+                  </button>
+                )}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      {/* Paginação */}
-      <div className="flex justify-between items-center mt-4">
-        <p>
-          Results 1 to {filteredData.length} of {dataToDisplay.length}
-        </p>
-      </div>
-
-      {/* Componentes extras */}
-      {activeTab === "dashboard" && <Dashboard />}
-      {activeTab === "logs" && <Logs />}
-      {activeTab === "filters" && <Filters />}
-      {activeTab === "notifications" && <Notifications />}
-      {activeTab === "settings" && <Settings />}
-      {/* Paginação */}
       <div className="flex justify-between items-center mt-4">
         <button
           disabled={currentPage === 1}
@@ -306,6 +324,13 @@ const AdminPanel = () => {
           Próximo
         </button>
       </div>
+
+      {activeTab === "dashboard" && <Dashboard />}
+      {activeTab === "logs" && <Logs />}
+      {activeTab === "filters" && <Filters />}
+      {activeTab === "notifications" && <Notifications />}
+      {activeTab === "settings" && <Settings />}
+
       {editCargoModal.open && (
         <EditCargo
           userId={editCargoModal.userId}
@@ -316,12 +341,40 @@ const AdminPanel = () => {
           onUpdate={fetchUsuarios}
         />
       )}
-      {/* Modal de Visualizar Perfil */}
+
       {viewProfileModal.open && (
         <ViewProfile
           user={viewProfileModal.user}
           onClose={() => setViewProfileModal({ open: false, user: null })}
           onUpdate={fetchUsuarios}
+        />
+      )}
+
+      {editStatusModal.open && (
+        <EditStatus
+          entityId={editStatusModal.entityId}
+          currentStatusId={editStatusModal.currentStatusId}
+          entityType={editStatusModal.entityType}
+          statusOptions={
+            editStatusModal.entityType === "usuarios"
+              ? usuariosStatus
+              : clientesStatus
+          }
+          onClose={() =>
+            setEditStatusModal({
+              open: false,
+              entityId: null,
+              currentStatusId: null,
+              entityType: "",
+            })
+          }
+          onUpdate={() => {
+            if (editStatusModal.entityType === "usuarios") {
+              fetchUsuarios();
+            } else {
+              fetchClientes();
+            }
+          }}
         />
       )}
     </div>

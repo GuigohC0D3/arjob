@@ -603,3 +603,58 @@ def baixar_estoque(comanda_id):
         return {"error": "Erro ao conectar no banco de dados"}
 
 
+def listar_comandas():
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+
+            query = """
+                SELECT 
+                    c.id,
+                    c.code,
+                    m.numero AS mesa_numero,
+                    cl.nome AS cliente_nome,
+                    cl.cpf AS cliente_cpf,
+                    u.nome AS atendente_nome,
+                    c.total,
+                    c.status,
+                    c.data_abertura,
+                    c.data_fechamento
+                FROM comandas c
+                JOIN mesas m ON c.mesa_id = m.id
+                LEFT JOIN clientes cl ON c.cliente_id = cl.id
+                LEFT JOIN usuarios u ON c.usuario_id = u.id
+                WHERE c.status = FALSE
+                ORDER BY c.data_fechamento DESC
+            """
+
+            cur.execute(query)
+            registros = cur.fetchall()
+
+            cur.close()
+            conn.close()
+
+            comandas_listadas = []
+            for comanda in registros:
+                comandas_listadas.append({
+                    "id": comanda[0],
+                    "code": comanda[1],
+                    "mesa": comanda[2],
+                    "cliente": comanda[3] or "Não informado",
+                    "cpf": comanda[4] or "Não informado",
+                    "atendente": comanda[5] or "Não informado",
+                    "total": float(comanda[6]) if comanda[6] else 0.00,
+                    "status": comanda[7],
+                    "data_abertura": comanda[8].isoformat() if comanda[8] else None,
+                    "data_fechamento": comanda[9].isoformat() if comanda[9] else None
+                })
+
+            return comandas_listadas
+
+        except Exception as e:
+            print(f"Erro ao listar comandas fechadas: {e}")
+            return []
+    else:
+        print("Erro ao conectar ao banco de dados")
+        return []

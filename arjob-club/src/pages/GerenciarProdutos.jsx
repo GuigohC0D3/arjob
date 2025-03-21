@@ -104,7 +104,7 @@ const GerenciarProdutos = () => {
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-6">
       <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-4xl">
         <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center flex items-center justify-center gap-2">
-          🛍️ Gerenciar Produtos
+           Gerenciar Produtos
         </h1>
 
         {/* Formulário de Adição */}
@@ -158,12 +158,12 @@ const GerenciarProdutos = () => {
           onClick={adicionarProduto}
           className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
         >
-          ➕ Adicionar Produto
+          Adicionar Produto
         </button>
 
         {/* Lista de Produtos */}
         <h2 className="text-2xl font-semibold text-gray-700 mt-8 mb-4 text-center">
-          📋 Lista de Produtos
+           Lista de Produtos
         </h2>
 
         {produtos.length === 0 ? (

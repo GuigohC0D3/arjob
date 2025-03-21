@@ -44,3 +44,12 @@ def remover_cliente(cliente_id):
     except Exception as e:
         print(f"Erro ao remover cliente: {e}")
         return {"error": "Erro ao remover cliente"}, 500
+
+
+def listar_clientes_status():
+    return clientes.listar_clientes_status()  # ✅ CERTO
+
+def atualizar_status_cliente(cliente_id, status_id):
+    if not cliente_id or not status_id:
+        return {"error": "Dados insuficientes para atualizar status"}, 400
+    return clientes.atualizar_status_cliente(cliente_id, status_id)
