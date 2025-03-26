@@ -548,5 +548,3 @@ def get_tipos_pagamento():
 @main_bp.route('/comandas/id/<int:comanda_id>/fechar', methods=["POST"])
 def fechar_comanda_por_id(comanda_id):
     return comandas_controller.fechar_comanda_por_id(comanda_id)
-
-

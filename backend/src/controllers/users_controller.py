@@ -163,7 +163,7 @@ def atualizar_status_usuario(usuario_id):
 
     except Exception as e:
         print(f"❌ Erro ao atualizar status: {e}")
-        return jsonify({"error": "Erro interno no servidor"}), 5
+        return jsonify({"error": "Erro interno no servidor"}), 500
 
 
 def listar_atendentes():

@@ -115,11 +115,11 @@ def listar_clientes():
     if conn:
         try:
             cur = conn.cursor()
-            cur.execute("SELECT id, nome, cpf, to_char(criado_em, 'DD/MM/YYYY') FROM clientes")
+            cur.execute("SELECT id, nome, cpf, to_char(criado_em, 'DD/MM/YYYY'), status_id FROM clientes")
             clientes = cur.fetchall()
             cur.close()
             conn.close()
-            return [{"id": c[0], "nome": c[1], "cpf": c[2], "criado_em": c[3]} for c in clientes]
+            return [{"id": c[0], "nome": c[1], "cpf": c[2], "criado_em": c[3], "status_id": c[4]} for c in clientes]
         except Exception as e:
             print(f"Erro ao buscar clientes no banco de dados: {e}")
             return []
@@ -145,19 +145,16 @@ def listar_clientes_status():
         
 
 def atualizar_status_cliente(cliente_id, novo_status_id):
-    conn = connect_db()
-    if conn:
-        try:
-            cur = conn.cursor()
-            cur.execute("""
-                UPDATE clientes
-                SET status_id = %s
-                WHERE id = %s
-            """, (novo_status_id, cliente_id))
-            conn.commit()
-            cur.close()
-            conn.close()
-            return {"message": "Status atualizado com sucesso!"}, 200
-        except Exception as e:
-            print(f"Erro ao atualizar status do cliente: {e}")
-            return {"error": "Erro ao atualizar status do cliente"}, 500
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+
+        cur.execute("UPDATE clientes SET status_id = %s WHERE id = %s", (novo_status_id, cliente_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return {"message": "Status do cliente atualizado com sucesso"}
+    except Exception as e:
+        print(f"❌ Erro ao atualizar status do cliente: {e}")
+        return {"error": "Erro ao atualizar status do cliente"}

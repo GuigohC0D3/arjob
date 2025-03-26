@@ -52,4 +52,9 @@ def listar_clientes_status():
 def atualizar_status_cliente(cliente_id, status_id):
     if not cliente_id or not status_id:
         return {"error": "Dados insuficientes para atualizar status"}, 400
-    return clientes.atualizar_status_cliente(cliente_id, status_id)
+
+    sucesso = clientes.atualizar_status_cliente(cliente_id, status_id)
+    if sucesso:
+        return {"message": "Status atualizado com sucesso"}, 200
+    else:
+        return {"error": "Erro ao atualizar status do cliente"}, 500
