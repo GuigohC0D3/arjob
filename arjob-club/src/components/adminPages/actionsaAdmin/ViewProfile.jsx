@@ -15,11 +15,19 @@ const ViewProfile = ({ user, onClose, onUpdate, isCliente }) => {
     confirm: false,
   });
 
-  const statusOptions = [
-    { id: 1, label: "Ativo" },
-    { id: 2, label: "Inativo" },
-    { id: 4, label: "Bloqueado" },
-  ];
+  const statusOptions = isCliente
+  ? [
+      { id: 1, label: "Ativo" },
+      { id: 2, label: "Inativo" },
+      { id: 3, label: "Bloqueado" },
+    ]
+  : [
+      { id: 1, label: "Ativo" },
+      { id: 2, label: "Inativo" },
+      { id: 3, label: "Pendente" },
+      { id: 4, label: "Bloqueado" },
+    ];
+
 
   const handleSave = async () => {
     try {

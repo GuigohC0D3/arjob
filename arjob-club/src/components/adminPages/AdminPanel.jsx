@@ -1,5 +1,5 @@
 // Importações essenciais
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo  } from "react";
 import api from "../../apiConfig";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
@@ -33,12 +33,13 @@ const AdminPanel = () => {
   const [editCargoModal, setEditCargoModal] = useState({ open: false, userId: null, currentCargo: null });
   const [viewProfileModal, setViewProfileModal] = useState({ open: false, user: null });
 
-  const statusLabels = {
+  const statusLabels = useMemo(() => ({
     1: "Ativo",
     2: "Inativo",
     3: "Pendente",
     4: "Bloqueado",
-  };
+  }), []);
+  
 
   const statusColors = {
     Ativo: "bg-green-500",
@@ -64,10 +65,10 @@ const AdminPanel = () => {
       }));
 
       setUsuarios(usuariosAtualizados);
-    } catch (err) {
+    } catch  {
       setError("Erro ao carregar usuários. Tente novamente.");
     }
-  }, []);
+  }, [statusLabels]);
 
   const fetchClientes = async () => {
     setLoading(true);
