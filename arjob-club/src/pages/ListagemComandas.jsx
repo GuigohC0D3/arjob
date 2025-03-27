@@ -15,11 +15,22 @@ const ListagemComandas = () => {
   useEffect(() => {
     const fetchComandas = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:5000/comandas?status=fechada");
+        const response = await fetch(
+          "http://127.0.0.1:5000/comandas?status=fechada"
+        );
         if (response.ok) {
-          setComandas(await response.json());
+          const dados = await response.json();
+
+          const ordenadas = dados.sort(
+            (a, b) => new Date(b.data_fechamento) - new Date(a.data_fechamento)
+          );
+
+          setComandas(ordenadas);
         } else {
-          console.error("Erro ao carregar comandas fechadas:", await response.json());
+          console.error(
+            "Erro ao carregar comandas fechadas:",
+            await response.json()
+          );
         }
       } catch (error) {
         console.error("Erro ao conectar ao servidor:", error);
@@ -32,8 +43,12 @@ const ListagemComandas = () => {
   const itensPorPagina = 6;
 
   const comandasFiltradas = comandas.filter((comanda) => {
-    const clienteMatch = comanda.cliente?.toLowerCase().includes(filtroCliente.toLowerCase());
-    const atendenteMatch = comanda.atendente?.toLowerCase().includes(filtroAtendente.toLowerCase());
+    const clienteMatch = comanda.cliente
+      ?.toLowerCase()
+      .includes(filtroCliente.toLowerCase());
+    const atendenteMatch = comanda.atendente
+      ?.toLowerCase()
+      .includes(filtroAtendente.toLowerCase());
     const mesaMatch = filtroMesa
       ? String(comanda.mesa).includes(filtroMesa.trim())
       : true;
@@ -224,19 +239,37 @@ const ListagemComandas = () => {
 
             <h2 className="text-2xl font-semibold mb-4">Detalhes da Comanda</h2>
             <div className="space-y-2">
-              <p><strong>Mesa:</strong> {comandaSelecionada.mesa}</p>
-              <p><strong>Cliente:</strong> {comandaSelecionada.cliente}</p>
-              <p><strong>CPF:</strong> {comandaSelecionada.cpf}</p>
-              <p><strong>Atendente:</strong> {comandaSelecionada.atendente || "Não informado"}</p>
-              <p><strong>Total:</strong> R$ {parseFloat(comandaSelecionada.total).toFixed(2)}</p>
-              <p><strong>Data de Fechamento:</strong> {new Date(comandaSelecionada.data_fechamento).toLocaleString()}</p>
+              <p>
+                <strong>Mesa:</strong> {comandaSelecionada.mesa}
+              </p>
+              <p>
+                <strong>Cliente:</strong> {comandaSelecionada.cliente}
+              </p>
+              <p>
+                <strong>CPF:</strong> {comandaSelecionada.cpf}
+              </p>
+              <p>
+                <strong>Atendente:</strong>{" "}
+                {comandaSelecionada.atendente || "Não informado"}
+              </p>
+              <p>
+                <strong>Total:</strong> R${" "}
+                {parseFloat(comandaSelecionada.total).toFixed(2)}
+              </p>
+              <p>
+                <strong>Data de Fechamento:</strong>{" "}
+                {new Date(comandaSelecionada.data_fechamento).toLocaleString()}
+              </p>
 
               <h3 className="text-lg font-semibold mt-4">Itens:</h3>
-              {comandaSelecionada.itens && comandaSelecionada.itens.length > 0 ? (
+              {comandaSelecionada.itens &&
+              comandaSelecionada.itens.length > 0 ? (
                 <ul className="list-disc pl-5 space-y-1">
                   {comandaSelecionada.itens.map((item, idx) => (
                     <li key={idx} className="text-gray-700">
-                      {item.nome} - R$ {parseFloat(item.preco_unitario).toFixed(2)} x {item.quantidade}
+                      {item.nome} - R${" "}
+                      {parseFloat(item.preco_unitario).toFixed(2)} x{" "}
+                      {item.quantidade}
                     </li>
                   ))}
                 </ul>
