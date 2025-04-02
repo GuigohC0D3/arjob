@@ -109,14 +109,13 @@ const Sidebar = () => {
     {
       name: "Sair",
       path: "/",
-      permissao: "logout",
       icon: "bi bi-arrow-bar-left",
     },
   ];
 
   // Filtrar itens do menu com base nas permissões
   const filteredItems = menuItems.filter((item) =>
-    permissoes.includes(item.permissao)
+   !item.permissao || permissoes.includes(item.permissao)
   );
 
   return (

@@ -112,7 +112,7 @@ const Login = () => {
           <button
             type="button"
             onClick={handleRegister}
-            className="w-full bg-gray-200 text-gray-700 py-3 rounded-md shadow-md hover:bg-gray-300 transition-all duration-300 transform hover:scale-105"
+            className="w-full bg-blue-600 text-white py-3 rounded-md shadow-md hover:bg-blue-700 transition-all duration-300 transform hover:scale-105"
           >
             Registrar
           </button>

@@ -40,7 +40,6 @@ const AdminPanel = () => {
     4: "Bloqueado",
   }), []);
   
-
   const statusColors = {
     Ativo: "bg-green-500",
     Inativo: "bg-gray-500",

@@ -24,7 +24,7 @@ const ComandaAberta = () => {
   const [loading, setLoading] = useState(true);
 
   // ✅ Adicionado o usuário logado (simulação)
-  const [usuarioLogado, setUsuarioLogado] = useState({
+  const [usuarioLogado] = useState({
     id: 1,
     nome: "Atendente Exemplo",
   });
@@ -49,6 +49,7 @@ const ComandaAberta = () => {
         icon: "pi pi-info-circle",
         acceptLabel: "Ok",
         rejectVisible: false,
+        
       });
       return;
     }
@@ -187,6 +188,17 @@ const ComandaAberta = () => {
   };
 
   const fecharComanda = async () => {
+    const dadosParaEnviar = {
+      cliente_id: clienteSelecionado.id,
+      pagamento_id: pagamentoSelecionado.id,
+      total: totalComanda,
+      mesa_id: mesaId,
+      itens: comandaItens,
+      usuario_id: usuarioLogado.id,
+    };
+  
+    console.log("📦 Enviando dados para histórico de comanda:", dadosParaEnviar);
+
     try {
       await fetch(`http://127.0.0.1:5000/comandas/${mesaId}/fechar`, {
         method: "POST",
@@ -220,6 +232,7 @@ const ComandaAberta = () => {
       });
     }
   };
+  
 
   const produtosFiltrados = produtos
     .filter(

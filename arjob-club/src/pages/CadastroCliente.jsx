@@ -64,6 +64,10 @@ const CadastroCliente = () => {
     // Restringir entrada para números no campo "Filial"
     if (name === "filial" && !/^\d*$/.test(value)) return;
 
+    if (name === "matricula" && !/^\d*$/.test(value)) return;
+
+    if (name === "limite" && !/^\d*\.?\d{0,2}$/.test(value)) return;
+
     setCliente((prevCliente) => ({
       ...prevCliente,
       [name]: value,
@@ -189,6 +193,8 @@ const CadastroCliente = () => {
               { label: "Email", name: "email", type: "email" },
               { label: "Telefone", name: "telefone", type: "text" },
               { label: "Filial", name: "filial", type: "text" },
+              { label: "Matrícula", name: "matricula", type: "text" },
+              { label: "Limite do Convênio", name: "limite", type: "text" },
             ].map(({ label, name, type }) => (
               <div key={name} className="flex flex-col">
                 <label className="text-sm font-semibold text-gray-700">
@@ -233,6 +239,9 @@ const CadastroCliente = () => {
               onChange={handleDepartamentoChange}
               placeholder="Selecione um departamento"
               className="w-full border border-gray-300 rounded-lg"
+              filter
+              showClear
+              filterBy="label"
             />
           </div>
 

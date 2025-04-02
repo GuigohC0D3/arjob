@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import DetalhesComandaPDF from "./DetalhesComandaPDF";
+import DetalhesComandaParcialPDF from "./DetalhesComandaParcialPDF"; // Novo componente para comanda parcial
 
 const ListagemComandas = () => {
   const [comandas, setComandas] = useState([]);
@@ -87,7 +88,7 @@ const ListagemComandas = () => {
   const fecharModal = () => setComandaSelecionada(null);
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
+    <div className="min-h-screen bg-gray-100 px-4 py-6">
       <header className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800">
           Histórico de Comandas Fechadas
@@ -95,88 +96,95 @@ const ListagemComandas = () => {
       </header>
 
       {/* Filtros */}
-      <section className="mb-6 bg-white p-4 rounded shadow flex flex-wrap gap-4 justify-center">
-        <input
-          type="text"
-          placeholder="Buscar por cliente"
-          value={filtroCliente}
-          onChange={(e) => {
-            setPaginaAtual(1);
-            setFiltroCliente(e.target.value);
-          }}
-          className="border px-3 py-2 rounded w-52"
-        />
-        <input
-          type="text"
-          placeholder="Buscar por atendente"
-          value={filtroAtendente}
-          onChange={(e) => {
-            setPaginaAtual(1);
-            setFiltroAtendente(e.target.value);
-          }}
-          className="border px-3 py-2 rounded w-52"
-        />
-        <input
-          type="text"
-          placeholder="Buscar por número da mesa"
-          value={filtroMesa}
-          onChange={(e) => {
-            setPaginaAtual(1);
-            setFiltroMesa(e.target.value);
-          }}
-          className="border px-3 py-2 rounded w-40"
-        />
-        <div className="flex gap-2 items-center">
-          <label className="text-sm text-gray-600">De:</label>
+      <section className="mb-6 bg-white p-4 rounded shadow-md max-w-screen-lg mx-auto">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4 justify-center">
           <input
-            type="date"
-            value={dataInicio}
+            type="text"
+            placeholder="Buscar por cliente"
+            value={filtroCliente}
             onChange={(e) => {
               setPaginaAtual(1);
-              setDataInicio(e.target.value);
+              setFiltroCliente(e.target.value);
             }}
-            className="border px-2 py-1 rounded"
+            className="border px-3 py-2 rounded w-full sm:w-52"
           />
-        </div>
-        <div className="flex gap-2 items-center">
-          <label className="text-sm text-gray-600">Até:</label>
           <input
-            type="date"
-            value={dataFim}
+            type="text"
+            placeholder="Buscar por atendente"
+            value={filtroAtendente}
             onChange={(e) => {
               setPaginaAtual(1);
-              setDataFim(e.target.value);
+              setFiltroAtendente(e.target.value);
             }}
-            className="border px-2 py-1 rounded"
+            className="border px-3 py-2 rounded w-full sm:w-52"
           />
+          <input
+            type="text"
+            placeholder="Buscar por número da mesa"
+            value={filtroMesa}
+            onChange={(e) => {
+              setPaginaAtual(1);
+              setFiltroMesa(e.target.value);
+            }}
+            className="border px-3 py-2 rounded w-full sm:w-40"
+          />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+            <label className="text-sm text-gray-600">De:</label>
+            <input
+              type="date"
+              value={dataInicio}
+              onChange={(e) => {
+                setPaginaAtual(1);
+                setDataInicio(e.target.value);
+              }}
+              className="border px-2 py-1 rounded"
+            />
+          </div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+            <label className="text-sm text-gray-600">Até:</label>
+            <input
+              type="date"
+              value={dataFim}
+              onChange={(e) => {
+                setPaginaAtual(1);
+                setDataFim(e.target.value);
+              }}
+              className="border px-2 py-1 rounded"
+            />
+          </div>
         </div>
       </section>
 
       {/* Lista */}
-      <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <main className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-screen-lg mx-auto">
         {comandasExibidas.length > 0 ? (
           comandasExibidas.map((comanda, index) => (
             <div
               key={index}
-              className="bg-white shadow-lg rounded-lg p-6 transition-transform hover:scale-105"
+              className="bg-white shadow-md rounded-lg p-6 flex flex-col justify-between hover:shadow-lg transition-transform hover:scale-[1.02]"
             >
-              <h3 className="text-xl font-semibold mb-2">
-                Mesa: {comanda.mesa}
-              </h3>
-              <p className="text-gray-600">Cliente: {comanda.cliente}</p>
-              <p className="text-gray-600">CPF: {comanda.cpf}</p>
-              <p className="text-gray-600">
-                Atendente: {comanda.atendente || "Não informado"}
-              </p>
-              <p className="text-gray-800 font-medium">
-                Total: R$ {parseFloat(comanda.total).toFixed(2)}
-              </p>
-              <p className="text-gray-500 text-sm">
-                Data Fechamento:{" "}
-                {comanda.data_fechamento
-                  ? new Date(comanda.data_fechamento).toLocaleString()
-                  : "Não informada"}
-              </p>
+              <div>
+                <h3 className="text-xl font-semibold mb-1">
+                  Mesa: {comanda.mesa}
+                </h3>
+                <p className="text-gray-600">Cliente: {comanda.cliente}</p>
+                <p className="text-gray-600">CPF: {comanda.cpf}</p>
+                <p className="text-gray-600">
+                  Atendente: {comanda.atendente || "Não informado"}
+                </p>
+                <p className="text-gray-600">
+                  Forma de Pagamento: {comanda.tipos_pagamento}
+                </p>
+                <p className="text-gray-800 font-medium mt-1">
+                  Total: R$ {parseFloat(comanda.total).toFixed(2)}
+                </p>
+                <p className="text-gray-500 text-sm">
+                  Data Fechamento:{" "}
+                  {comanda.data_fechamento
+                    ? new Date(comanda.data_fechamento).toLocaleString()
+                    : "Não informada"}
+                </p>
+              </div>
 
               <button
                 onClick={() => abrirDetalhesComanda(comanda)}
@@ -226,10 +234,10 @@ const ListagemComandas = () => {
         </footer>
       )}
 
-      {/* Modal */}
+      {/* Modal com os detalhes da comanda */}
       {comandaSelecionada && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-lg relative">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md sm:max-w-lg relative overflow-y-auto max-h-[90vh]">
             <button
               onClick={fecharModal}
               className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
@@ -238,7 +246,7 @@ const ListagemComandas = () => {
             </button>
 
             <h2 className="text-2xl font-semibold mb-4">Detalhes da Comanda</h2>
-            <div className="space-y-2">
+            <div className="space-y-2 text-sm">
               <p>
                 <strong>Mesa:</strong> {comandaSelecionada.mesa}
               </p>
@@ -262,12 +270,11 @@ const ListagemComandas = () => {
               </p>
 
               <h3 className="text-lg font-semibold mt-4">Itens:</h3>
-              {comandaSelecionada.itens &&
-              comandaSelecionada.itens.length > 0 ? (
+              {comandaSelecionada.itens?.length > 0 ? (
                 <ul className="list-disc pl-5 space-y-1">
                   {comandaSelecionada.itens.map((item, idx) => (
-                    <li key={idx} className="text-gray-700">
-                      {item.nome} - R${" "}
+                    <li key={idx}>
+                      {item.nome} - R$
                       {parseFloat(item.preco_unitario).toFixed(2)} x{" "}
                       {item.quantidade}
                     </li>
@@ -278,18 +285,30 @@ const ListagemComandas = () => {
               )}
             </div>
 
-            <div className="mt-6 flex justify-between">
+            <div className="mt-6 flex flex-col sm:flex-row gap-3">
               <PDFDownloadLink
                 document={<DetalhesComandaPDF comanda={comandaSelecionada} />}
                 fileName={`Detalhes_Comanda_${comandaSelecionada.mesa}.pdf`}
-                className="inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
+                className="bg-green-500 text-white px-4 py-2 rounded text-center hover:bg-green-600"
               >
-                {({ loading }) => (loading ? "Gerando PDF..." : "Baixar PDF")}
+                {({ loading }) =>
+                  loading ? "Gerando PDF..." : "Imprimir Comanda Completa"
+                }
+              </PDFDownloadLink>
+
+              <PDFDownloadLink
+                document={<DetalhesComandaParcialPDF comanda={comandaSelecionada} />}
+                fileName={`Parcial_Comanda_${comandaSelecionada.mesa}.pdf`}
+                className="bg-yellow-500 text-white px-4 py-2 rounded text-center hover:bg-yellow-600"
+              >
+                {({ loading }) =>
+                  loading ? "Gerando Parcial..." : "Imprimir Comanda Parcial"
+                }
               </PDFDownloadLink>
 
               <button
                 onClick={fecharModal}
-                className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 transition-colors"
+                className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
               >
                 Fechar
               </button>
