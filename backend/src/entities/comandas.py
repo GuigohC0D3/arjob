@@ -620,11 +620,13 @@ def listar_comandas():
                     c.total,
                     c.status,
                     c.data_abertura,
-                    c.data_fechamento
+                    c.data_fechamento,
+                    tp.descricao AS tipos_pagamento
                 FROM comandas c
                 JOIN mesas m ON c.mesa_id = m.id
                 LEFT JOIN clientes cl ON c.cliente_id = cl.id
                 LEFT JOIN usuarios u ON c.usuario_id = u.id
+                LEFT JOIN tipos_pagamento tp ON c.pagamento_id = tp.id
                 WHERE c.status = FALSE
                 ORDER BY c.data_fechamento DESC
             """
@@ -647,7 +649,8 @@ def listar_comandas():
                     "total": float(comanda[6]) if comanda[6] else 0.00,
                     "status": comanda[7],
                     "data_abertura": comanda[8].isoformat() if comanda[8] else None,
-                    "data_fechamento": comanda[9].isoformat() if comanda[9] else None
+                    "data_fechamento": comanda[9].isoformat() if comanda[9] else None,
+                    "tipos_pagamento": comanda[10] or "Não informado"
                 })
 
             return comandas_listadas

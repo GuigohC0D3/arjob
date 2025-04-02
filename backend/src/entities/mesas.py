@@ -116,3 +116,35 @@ def excluir_mesa(mesa_id):
     else:
         print("❌ Erro ao conectar ao banco de dados")
         return False
+
+
+def adicionar_mesas(quantidade):
+    conn = connect_db()
+    if not conn:
+        print("❌ Erro ao conectar ao banco de dados")
+        return {"error": "Erro ao conectar ao banco"}, 500
+
+    try:
+        cur = conn.cursor()
+
+        # Pega o maior número de mesa atual
+        cur.execute("SELECT MAX(numero) FROM mesas")
+        max_num = cur.fetchone()[0] or 0
+
+        for i in range(1, quantidade + 1):
+            novo_numero = max_num + i
+            cur.execute("INSERT INTO mesas (numero, status) VALUES (%s, FALSE)", (novo_numero,))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+        return {"message": f"{quantidade} mesas adicionadas com sucesso"}, 201
+
+    except Exception as e:
+        print(f"❌ Erro ao adicionar mesas: {e}")
+        conn.rollback()
+        return {"error": "Erro ao adicionar mesas"}, 500
+
+    finally:
+        if conn:
+            conn.close()

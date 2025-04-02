@@ -293,22 +293,38 @@ def get_user_permissions(user_id):
     if conn:
         try:
             cur = conn.cursor()
+
+            # Primeiro tenta buscar permissões específicas do usuário
             cur.execute("""
                 SELECT p.nome
                 FROM permissoes_usuario pu
                 JOIN permissoes p ON pu.permissao_id = p.id
                 WHERE pu.usuario_id = %s
             """, (user_id,))
-            permissoes = [row[0] for row in cur.fetchall()]
+            permissoes_usuario = [row[0] for row in cur.fetchall()]
+
+            # Se o usuário não tiver permissões diretas, buscar pelo cargo
+            if not permissoes_usuario:
+                cur.execute("SELECT cargo_id FROM usuarios WHERE id = %s", (user_id,))
+                cargo = cur.fetchone()
+                if cargo:
+                    cargo_id = cargo[0]
+                    cur.execute("SELECT permissoes FROM nome WHERE cargo_id = %s", (cargo_id,))
+                    permissoes_cargo = [row[0] for row in cur.fetchall()]
+                    cur.close()
+                    conn.close()
+                    return permissoes_cargo
+
             cur.close()
             conn.close()
-            return permissoes
+            return permissoes_usuario
         except Exception as e:
             print(f"Erro ao buscar permissões no banco de dados: {e}")
             return []
     else:
         print("Erro ao conectar ao banco de dados")
         return []
+
 
 def authenticate_user(cpf, senha):
     conn = connect_db()
@@ -318,7 +334,7 @@ def authenticate_user(cpf, senha):
     try:
         cur = conn.cursor()
         cur.execute("""
-            SELECT u.id, u.nome, u.senha, c.nome AS cargo
+            SELECT u.id, u.nome, u.senha, c.nome AS cargo, u.status_id
             FROM usuarios u
             LEFT JOIN cargo_usuario cu ON u.id = cu.usuario_id
             LEFT JOIN cargos c ON cu.cargo_id = c.id
@@ -329,17 +345,28 @@ def authenticate_user(cpf, senha):
         conn.close()
 
         if user:
-            # Verificar se a senha é válida
             if bcrypt.checkpw(senha.encode('utf-8'), user[2].encode('utf-8')):
-                return {
-                    'id': user[0],
-                    'nome': user[1],
-                    'cargo': user[3]  # Cargo pode ser None se não existir
-                }
+                status_id = user[4]
+
+                # ✅ Checagem do status do usuário
+                if status_id == 1:  # Ativo
+                    return {
+                        'id': user[0],
+                        'nome': user[1],
+                        'cargo': user[3]  
+                    }
+                elif status_id == 2:
+                    return {"error": "Sua conta está pendente de ativação. Verifique seu e-mail."}
+                elif status_id == 3:
+                    return {"error": "Sua conta está inativa. Contate o suporte."}
+                elif status_id == 4:
+                    return {"error": "Sua conta foi bloqueada. Contate o administrador."}
+
         return None
     except Exception as e:
         print(f"Erro ao autenticar usuário: {e}")
         return None
+
 
 def check_user(cpf, email):
     try:

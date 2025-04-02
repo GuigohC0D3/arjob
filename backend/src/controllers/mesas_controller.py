@@ -42,3 +42,17 @@ def excluir_mesa(mesa_id):
     if excluido:
         return jsonify({"message": "Mesa excluída com sucesso"}), 200
     return jsonify({"error": "Erro ao excluir mesa"}), 500
+
+def adicionar_mesas():
+    """Adiciona múltiplas mesas dinamicamente"""
+    data = request.json
+    quantidade = data.get("quantidade")
+
+    if not isinstance(quantidade, int) or quantidade <= 0:
+        return jsonify({"error": "Quantidade inválida"}), 400
+
+    resultado = mesas.adicionar_mesas(quantidade)
+
+    if resultado:
+        return jsonify({"message": f"{quantidade} mesas adicionadas com sucesso"}), 201
+    return jsonify({"error": "Erro ao adicionar mesas"}), 500

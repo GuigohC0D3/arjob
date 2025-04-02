@@ -98,6 +98,11 @@ def get_mesa(id):
 def excluir_mesa(mesa_id):
     return mesas_controller.excluir_mesa(mesa_id)
 
+@main_bp.route("/mesas/adicionar", methods=["POST"])
+def adicionar_mesas_route():
+    return mesas_controller.adicionar_mesas()
+
+
 @main_bp.route('/comandas', methods=['POST'])
 def criar_comanda():
     """Cria uma nova comanda."""
@@ -217,7 +222,8 @@ def listar_cargos():
 @main_bp.route('/login', methods=['POST'])
 def login_user_route():
     try:
-        data = request.json
+        # Usa get_json() para obter o corpo da requisição
+        data = request.get_json()
         cpf = data.get('cpf')
         senha = data.get('senha')
 
@@ -225,8 +231,15 @@ def login_user_route():
             return jsonify({'error': 'CPF e senha são obrigatórios'}), 400
 
         user_data = authenticate_user(cpf, senha)
+
         if user_data:
+            # Se houver um erro no retorno (ex: conta pendente/inativa/bloqueada), devolve a mensagem com status 403
+            if "error" in user_data:
+                return jsonify(user_data), 403
+
+            # Caso contrário, gera o token e retorna os dados do usuário e suas permissões
             access_token = create_access_token(identity=str(user_data['id']))
+            permissions = get_user_permissions(user_data['id'])
             return jsonify({
                 'token': access_token,
                 'user': {
@@ -234,14 +247,13 @@ def login_user_route():
                     'nome': user_data['nome'],
                     'cargo': user_data['cargo']
                 },
-                'permissions': get_user_permissions(user_data['id'])
+                'permissions': permissions
             }), 200
         else:
             return jsonify({'error': 'Usuário ou senha inválidos'}), 401
     except Exception as e:
         print(f"Erro no login: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500
-
 
 
 # @main_bp.route('/corrigir-senhas', methods=['POST'])

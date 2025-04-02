@@ -32,10 +32,11 @@ def fechar_comanda(code):
         mesa_id = dados.get("mesa_id")
         pagamento_id = dados.get("pagamento_id")
         itens = dados.get("itens")
-        usuario_id = dados.get("usuario_id")  # Opcional, se estiver enviando o atendente/usuario
+        usuario_id = dados.get("usuario_id")
+        cliente_id = dados.get("cliente_id")  # ✅ Adicionado aqui
 
         # Validação
-        if not (total and mesa_id and pagamento_id):
+        if not (total and mesa_id and pagamento_id and cliente_id):
             return {
                 "error": "Dados insuficientes para fechar a comanda",
                 "recebido": dados
@@ -54,7 +55,8 @@ def fechar_comanda(code):
             mesa_id=mesa_id,
             pagamento_id=pagamento_id,
             itens=itens,
-            usuario_id=usuario_id  # ou coloca um ID fixo se ainda não está passando isso
+            usuario_id=usuario_id,
+            cliente_id=cliente_id  # ✅ Aqui também
         )
 
         if status_code != 200:
@@ -78,7 +80,6 @@ def fechar_comanda(code):
 # ✅ Fechar comanda pelo número (opcional)
 def fechar_comanda_por_numero(numero_comanda):
     try:
-        # ✅ Busca a comanda pelo número
         comanda = comandas.obter_comanda_por_numero(numero_comanda)
 
         if not comanda:
@@ -87,19 +88,18 @@ def fechar_comanda_por_numero(numero_comanda):
         comanda_id = comanda["id"]
         mesa_id = comanda["mesa_id"]
 
-        # ✅ Pega os dados enviados do frontend
         dados = request.json
         total = dados.get("total")
         itens = dados.get("itens")
         pagamento_id = dados.get("pagamento_id")
         usuario_id = dados.get("usuario_id")
-        cliente_id = dados.get("cliente_id")
+        cliente_id = dados.get("cliente_id")  # ✅ Já estava aqui
 
-        # ✅ Validação simples dos dados obrigatórios
+        print(f"📥 Dados recebidos (fechar por número): {dados}")
+
         if not all([total, itens, pagamento_id, usuario_id, cliente_id]):
             return {"error": "Faltam dados para fechar a comanda"}, 400
 
-        # ✅ Chama a função completa que fecha a comanda
         return comandas.fechar_comanda_completo(
             comanda_id=comanda_id,
             mesa_id=mesa_id,
@@ -107,7 +107,7 @@ def fechar_comanda_por_numero(numero_comanda):
             total=total,
             pagamento_id=pagamento_id,
             usuario_id=usuario_id,
-            cliente_id=cliente_id
+            cliente_id=cliente_id  # ✅ Já estava aqui
         )
 
     except Exception as e:
@@ -115,22 +115,27 @@ def fechar_comanda_por_numero(numero_comanda):
         return {"error": "Erro interno no servidor"}, 500
 
 
+
 # ✅ Fechar comanda pelo ID
 def fechar_comanda_por_id(comanda_id):
     try:
         dados = request.json
         total = dados.get("total")
+        cliente_id = dados.get("cliente_id")
         mesa_id = dados.get("mesa_id")
         pagamento_id = dados.get("pagamento_id")
         itens = dados.get("itens")
-        usuario_id = dados.get("usuario_id")  # Adiciona se já tiver usuário logado
+        usuario_id = dados.get("usuario_id")
 
-        if not all([total, mesa_id, pagamento_id]):
+        print(f"📥 Dados recebidos (fechar por ID): {dados}")
+
+        if not all([total, mesa_id, pagamento_id, cliente_id]):
             return {"error": "Dados insuficientes"}, 400
 
         return comandas.atualizar_status_comanda(
             comanda_id=comanda_id,
             total=total,
+            cliente_id=cliente_id,
             mesa_id=mesa_id,
             pagamento_id=pagamento_id,
             itens=itens,
