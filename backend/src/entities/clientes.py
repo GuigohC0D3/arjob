@@ -30,7 +30,7 @@ def get_clientes():
         return {"error": "Erro ao buscar clientes"}, 500
 
 
-def add_cliente(nome, cpf, email, telefone, filial, convenio, departamento_id):
+def add_cliente(nome, cpf, email, telefone, filial, convenio, departamento_id, matricula, limite):
     conn = connect_db()
     if conn:
         try:
@@ -43,15 +43,17 @@ def add_cliente(nome, cpf, email, telefone, filial, convenio, departamento_id):
                 "email": email,
                 "telefone": telefone,
                 "filial": filial,
-                "convenio": convenio
+                "convenio": convenio,
+                "matricula": matricula,
+                "limite": limite
             })
 
             # Inserir cliente e retornar o ID
             cur.execute("""
-                INSERT INTO clientes (nome, cpf, email, telefone, filial, convenio)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                INSERT INTO clientes (nome, cpf, email, telefone, filial, convenio, matricula, limite)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
-            """, (nome, cpf, email, telefone, filial, convenio))
+            """, (nome, cpf, email, telefone, filial, convenio, matricula, limite))
             cliente_id = cur.fetchone()[0]
 
             # Log do ID do cliente gerado

@@ -479,7 +479,9 @@ def obter_itens_comanda(comanda_id):
                 SELECT ic.produto_id, p.nome, ic.quantidade, ic.preco_unitario
                 FROM itens_comanda ic
                 JOIN produtos p ON ic.produto_id = p.id
-                WHERE ic.comanda_id = %s
+                WHERE ic.historico_comanda_id = (
+                SELECT id FROM historico_comandas WHERE comanda_id = %s LIMIT 1
+                )
             """, (comanda_id,))
 
             itens = cur.fetchall()

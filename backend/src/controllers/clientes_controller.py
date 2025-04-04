@@ -1,14 +1,14 @@
 from ..entities import clientes
 import json
 
-def add_client(nome=None, cpf=None, email=None, telefone=None, filial=None, convenio=None, departamento=None):
+def add_client(nome=None, cpf=None, email=None, telefone=None, filial=None, convenio=None, departamento=None, matricula=None, limite=None):
     try:
         # Validação básica dos campos obrigatórios
         if not nome or not cpf or not departamento:
             return json.dumps({'error': 'Campos obrigatórios: nome, cpf e departamento'}), 400
 
         # Chamar a entidade que processa o cadastro
-        res = clientes.add_cliente(nome, cpf, email, telefone, filial, convenio, departamento)
+        res = clientes.add_cliente(nome, cpf, email, telefone, filial, convenio, departamento, matricula, limite)
         return json.dumps(res), res['status']
     except Exception as e:
         print("Erro no controlador add_client:", e)

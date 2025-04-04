@@ -164,7 +164,7 @@ def obter_comanda_por_mesa_route(mesa_id):
 @main_bp.route("/comandas/fechadas", methods=["GET"])
 def listar_comandas_fechadas():
     try:
-        comandas_fechadas = comandas.listar_comandas_fechadas()
+        comandas_fechadas = listar_comandas_fechadas()
         return jsonify(comandas_fechadas), 200
     except Exception as e:
         print(f"Erro no endpoint /comandas/fechadas: {e}")
@@ -189,6 +189,10 @@ def obter_comanda_por_id(comanda_id):
 @main_bp.route("/comandas", methods=["GET"])
 def listar_comandas():
     return comandas_controller.listar_comandas()
+
+@main_bp.route("/historico/<string:code>/itens", methods=["GET"])
+def get_itens_da_comanda(code):
+    return comandas_controller.obter_itens_comanda(code)
 
 @main_bp.route("/produtos", methods=["GET"])
 def listar_produtos():

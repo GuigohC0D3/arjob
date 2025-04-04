@@ -182,8 +182,21 @@ def add_item_comanda(comanda_id, produto_id, quantidade, preco_unitario):
 
 
 # ✅ Obter itens da comanda
-def obter_itens_comanda(comanda_id):
-    return comandas.obter_itens_comanda(comanda_id)
+def obter_itens_comanda(code):
+    try:
+        comanda = comandas.obter_comanda_por_code(code)
+
+        if not comanda:
+            return jsonify({"error": "Comanda não encontrada"}), 404
+
+        comanda_id = comanda["id"]  # 💡 Aqui convertemos o code para ID
+        itens, status = comandas.obter_itens_comanda(comanda_id)
+
+        return jsonify(itens), status
+
+    except Exception as e:
+        print(f"❌ Erro ao obter itens da comanda histórica: {e}")
+        return jsonify({"error": "Erro ao buscar itens"}), 500
 
 
 # ✅ Atualizar quantidade de item
