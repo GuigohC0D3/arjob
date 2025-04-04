@@ -18,10 +18,21 @@ const CadastroCliente = () => {
     filial: "",
     convenio: "",
     departamento: "",
+    matricula: "",
+    limite: "",
   });
 
   const [departamentos, setDepartamentos] = useState([]);
   const toast = useRef(null);
+
+  const formatBRL = (value) => {
+    const onlyNumbers = value.replace(/\D/g, "");
+    const numericValue = Number(onlyNumbers) / 100;
+    return numericValue.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+  };
 
   // Função para carregar os departamentos do backend
   useEffect(() => {
@@ -66,7 +77,11 @@ const CadastroCliente = () => {
 
     if (name === "matricula" && !/^\d*$/.test(value)) return;
 
-    if (name === "limite" && !/^\d*\.?\d{0,2}$/.test(value)) return;
+    if (name === "limite") {
+      const formatted = formatBRL(value);
+      setCliente((prev) => ({ ...prev, limite: formatted }));
+      return;
+    }
 
     setCliente((prevCliente) => ({
       ...prevCliente,
@@ -97,7 +112,9 @@ const CadastroCliente = () => {
       !cliente.telefone ||
       !cliente.filial ||
       !cliente.convenio ||
-      !cliente.departamento
+      !cliente.departamento ||
+      !cliente.matricula ||
+      !cliente.limite
     ) {
       toast.current.show({
         severity: "warn",
@@ -133,6 +150,8 @@ const CadastroCliente = () => {
           filial: "",
           convenio: "",
           departamento: "",
+          matricula: "",
+          limite: "",
         });
       } else {
         const errorData = await response.json();

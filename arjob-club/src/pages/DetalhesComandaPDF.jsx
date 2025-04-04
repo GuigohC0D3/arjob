@@ -1,4 +1,11 @@
-import { Document, Page, Text, View, StyleSheet, Font } from "@react-pdf/renderer";
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+  Font,
+} from "@react-pdf/renderer";
 import PropTypes from "prop-types";
 
 // (Opcional) Fonte monoespaçada para simular cupom
@@ -68,8 +75,12 @@ const DetalhesComandaPDF = ({ comanda }) => {
     data_fechamento,
     total = 0,
     pagamento = "Forma de pagamento não informada",
-    itens = [],
+    itens: rawItens = [],
   } = comanda;
+
+  const itens = Array.isArray(rawItens)
+    ? rawItens
+    : Object.values(rawItens || {});
 
   const dataFechamentoFormatada = data_fechamento
     ? new Date(data_fechamento).toLocaleString()
@@ -157,11 +168,12 @@ DetalhesComandaPDF.propTypes = {
       PropTypes.shape({
         nome: PropTypes.string.isRequired,
         quantidade: PropTypes.number.isRequired,
-        preco: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-        observacao: PropTypes.string
+        preco: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+          .isRequired,
+        observacao: PropTypes.string,
       })
-    )
-  }).isRequired
+    ),
+  }).isRequired,
 };
 
 export default DetalhesComandaPDF;

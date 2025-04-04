@@ -12,6 +12,7 @@ const ListagemComandas = () => {
   const [filtroMesa, setFiltroMesa] = useState("");
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
+  const [, setModalAberto] = useState(false);
 
   useEffect(() => {
     const fetchComandas = async () => {
@@ -69,20 +70,30 @@ const ListagemComandas = () => {
     paginaAtual * itensPorPagina
   );
 
-  const abrirDetalhesComanda = async (comanda) => {
-    try {
-      const response = await fetch(
-        `http://127.0.0.1:5000/historico/${comanda.historico_id}/itens`
-      );
-      const itens = await response.json();
-
-      setComandaSelecionada({
-        ...comanda,
-        itens: itens || [],
-      });
-    } catch (error) {
-      console.error("Erro ao buscar itens da comanda:", error);
+  const abrirDetalhesComanda = (comanda) => {
+    if (!comanda || !comanda.code) {
+      console.error("Código da comanda não está definido:", comanda);
+      return;
     }
+
+    fetch(`http://127.0.0.1:5000/historico/${comanda.code}/itens`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Erro na requisição: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((itens) => {
+        console.log("Itens da comanda:", itens);
+        setComandaSelecionada({
+          ...comanda,
+          itens: Array.isArray(itens) ? itens : [],
+        });
+        setModalAberto(true);
+      })
+      .catch((err) => {
+        console.error("Erro ao buscar itens da comanda:", err);
+      });
   };
 
   const fecharModal = () => setComandaSelecionada(null);
@@ -237,7 +248,7 @@ const ListagemComandas = () => {
       {/* Modal com os detalhes da comanda */}
       {comandaSelecionada && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md sm:max-w-lg relative overflow-y-auto max-h-[90vh]">
+          <div className="bg-gray-100 rounded-lg shadow-lg p-6 w-full max-w-md sm:max-w-lg relative overflow-y-auto max-h-[90vh]">
             <button
               onClick={fecharModal}
               className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
@@ -275,8 +286,7 @@ const ListagemComandas = () => {
                   {comandaSelecionada.itens.map((item, idx) => (
                     <li key={idx}>
                       {item.nome} - R$
-                      {parseFloat(item.preco_unitario).toFixed(2)} x{" "}
-                      {item.quantidade}
+                      {parseFloat(item.preco).toFixed(2)} x{item.quantidade}
                     </li>
                   ))}
                 </ul>
@@ -285,33 +295,30 @@ const ListagemComandas = () => {
               )}
             </div>
 
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <PDFDownloadLink
-                document={<DetalhesComandaPDF comanda={comandaSelecionada} />}
-                fileName={`Detalhes_Comanda_${comandaSelecionada.mesa}.pdf`}
-                className="bg-green-500 text-white px-4 py-2 rounded text-center hover:bg-green-600"
-              >
-                {({ loading }) =>
-                  loading ? "Gerando PDF..." : "Imprimir Comanda Completa"
-                }
-              </PDFDownloadLink>
+            <div className="mt-6 flex flex-col items-center gap-2">
+              <span className="text-base font-medium">Imprimir Comanda:</span>
 
-              <PDFDownloadLink
-                document={<DetalhesComandaParcialPDF comanda={comandaSelecionada} />}
-                fileName={`Parcial_Comanda_${comandaSelecionada.mesa}.pdf`}
-                className="bg-yellow-500 text-white px-4 py-2 rounded text-center hover:bg-yellow-600"
-              >
-                {({ loading }) =>
-                  loading ? "Gerando Parcial..." : "Imprimir Comanda Parcial"
-                }
-              </PDFDownloadLink>
+              <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+                <PDFDownloadLink
+                  document={<DetalhesComandaPDF comanda={comandaSelecionada} />}
+                  fileName={`Detalhes_Comanda_${comandaSelecionada.mesa}.pdf`}
+                  className="bg-green-600 text-white px-6 py-2.5 rounded-lg font-semibold text-base text-center hover:bg-green-700 hover:scale-105 transition-transform duration-200 shadow-sm"
+                >
+                  {({ loading }) => (loading ? "Gerando PDF..." : "Completa")}
+                </PDFDownloadLink>
 
-              <button
-                onClick={fecharModal}
-                className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
-              >
-                Fechar
-              </button>
+                <PDFDownloadLink
+                  document={
+                    <DetalhesComandaParcialPDF comanda={comandaSelecionada} />
+                  }
+                  fileName={`Parcial_Comanda_${comandaSelecionada.mesa}.pdf`}
+                  className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-semibold text-base text-center hover:bg-blue-700 hover:scale-105 transition-transform duration-200 shadow-sm"
+                >
+                  {({ loading }) =>
+                    loading ? "Gerando Parcial..." : "Parcial"
+                  }
+                </PDFDownloadLink>
+              </div>
             </div>
           </div>
         </div>

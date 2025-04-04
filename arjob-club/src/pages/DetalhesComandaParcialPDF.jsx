@@ -41,9 +41,11 @@ const DetalhesComandaParcialPDF = ({ comanda }) => {
     mesa = "N/A",
     cliente = "Cliente não informado",
     atendente = "Atendente não informado",
-    itens = [],
+    itens: rawItens = [],
     total = 0,
   } = comanda;
+
+  const itens = Array.isArray(rawItens) ? rawItens : Object.values(rawItens || {});
 
   return (
     <Document>
