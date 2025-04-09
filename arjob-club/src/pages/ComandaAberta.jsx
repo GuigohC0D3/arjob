@@ -11,7 +11,7 @@ import SelecionarClientes from "../components/selecionarClientes/SelecionarClien
 
 const ComandaAberta = () => {
   // Usar 'comandaId' vindo da URL
-  const { mesaId, comandaId } = useParams();
+  const { comandaId } = useParams();
   const navigate = useNavigate();
   const { state } = useLocation();
 

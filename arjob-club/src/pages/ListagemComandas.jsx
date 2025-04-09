@@ -98,6 +98,22 @@ const ListagemComandas = () => {
 
   const fecharModal = () => setComandaSelecionada(null);
 
+  // Função para agrupar itens duplicados
+  const deduplicateItems = (items) => {
+    return Object.values(
+      items.reduce((acc, item) => {
+        // Utilize item.id ou item.produto_id (se item.id for único para cada linha) como chave
+        const key = item.id;
+        if (acc[key]) {
+          acc[key].quantidade += item.quantidade;
+        } else {
+          acc[key] = { ...item };
+        }
+        return acc;
+      }, {})
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 px-4 py-6">
       <header className="text-center mb-8">
@@ -283,7 +299,7 @@ const ListagemComandas = () => {
               <h3 className="text-lg font-semibold mt-4">Itens:</h3>
               {comandaSelecionada.itens?.length > 0 ? (
                 <ul className="list-disc pl-5 space-y-1">
-                  {comandaSelecionada.itens.map((item, idx) => (
+                  {deduplicateItems(comandaSelecionada.itens).map((item, idx) => (
                     <li key={idx}>
                       {item.nome} - R$
                       {parseFloat(item.preco).toFixed(2)} x{item.quantidade}
