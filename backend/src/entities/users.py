@@ -531,15 +531,15 @@ def verificar_se_usuario_eh_atendente(usuario_id):
 
     try:
         cur = conn.cursor()
-        cur.execute ("""
-                SELECT id FROM usuarios 
-                WHERE id = %s AND cargo_id = 5
-            """, (usuario_id,))
+        cur.execute("""
+            SELECT u.id 
+            FROM usuarios u
+            JOIN cargos c ON u.cargo_id = c.id
+            WHERE u.id = %s AND LOWER(c.nome) = 'atendente'
+        """, (usuario_id,))
         resultado = cur.fetchone()
 
-        if resultado:
-            return True  # ✅ O usuário é um atendente
-        return False  # ❌ O usuário não é um atendente
+        return bool(resultado)
 
     except Exception as e:
         print(f"❌ Erro ao verificar cargo do usuário {usuario_id}: {e}")

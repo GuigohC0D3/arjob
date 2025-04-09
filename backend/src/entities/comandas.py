@@ -219,8 +219,8 @@ def obter_comanda_por_id(comanda_id):
         try:
             cur = conn.cursor()
             cur.execute("""
-                SELECT id, numero, mesa_id, status FROM comandas
-                WHERE id = %s AND status = 'aberta'
+                SELECT id, code, mesa_id, status FROM comandas
+                WHERE id = %s AND status = true
             """, (comanda_id,))
             comanda = cur.fetchone()
             cur.close()
@@ -229,7 +229,7 @@ def obter_comanda_por_id(comanda_id):
             if comanda:
                 return {
                     "id": comanda[0],
-                    "numero": comanda[1],
+                    "code": comanda[1],
                     "mesa_id": comanda[2],
                     "status": comanda[3]
                 }
@@ -479,15 +479,12 @@ def obter_itens_comanda(comanda_id):
                 SELECT ic.produto_id, p.nome, ic.quantidade, ic.preco_unitario
                 FROM itens_comanda ic
                 JOIN produtos p ON ic.produto_id = p.id
-                WHERE ic.historico_comanda_id = (
-                SELECT id FROM historico_comandas WHERE comanda_id = %s LIMIT 1
-                )
+                WHERE ic.comanda_id = %s
             """, (comanda_id,))
-
             itens = cur.fetchall()
             cur.close()
             conn.close()
-
+            
             return [
                 {"id": item[0], "nome": item[1], "quantidade": item[2], "preco": float(item[3])}
                 for item in itens
@@ -497,6 +494,7 @@ def obter_itens_comanda(comanda_id):
             return {"error": "Erro ao obter itens da comanda"}, 500
     else:
         return {"error": "Erro ao conectar ao banco de dados"}, 500
+
 
 
 def remover_item_da_comanda(comanda_id, produto_id):

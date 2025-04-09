@@ -132,7 +132,7 @@ def adicionar_item_comanda(comanda_id):
     quantidade = data.get("quantidade")
     preco_unitario = data.get("preco_unitario")
 
-    if not produto_id or not quantidade or not preco_unitario:
+    if produto_id is None or quantidade is None or preco_unitario is None:
         return jsonify({"error": "Todos os campos são obrigatórios"}), 400
 
     return comandas_controller.add_item_comanda(comanda_id, produto_id, quantidade, preco_unitario) 
@@ -158,7 +158,6 @@ def atualizar_item_comanda(comanda_id, produto_id):
 
 @main_bp.route('/comandas/mesa/<int:mesa_id>', methods=['GET'])
 def obter_comanda_por_mesa_route(mesa_id):
-    from ..controllers import comandas_controller
     return comandas_controller.obter_comanda_por_mesa(mesa_id)
 
 @main_bp.route("/comandas/fechadas", methods=["GET"])
@@ -564,3 +563,4 @@ def get_tipos_pagamento():
 @main_bp.route('/comandas/id/<int:comanda_id>/fechar', methods=["POST"])
 def fechar_comanda_por_id(comanda_id):
     return comandas_controller.fechar_comanda_por_id(comanda_id)
+
