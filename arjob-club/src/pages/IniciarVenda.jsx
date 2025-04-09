@@ -22,11 +22,6 @@ const IniciarVenda = () => {
               `http://127.0.0.1:5000/comandas/mesa/${mesa.id}`
             );
 
-            if (!comandaResponse.ok) {
-              console.warn(`⚠️ Mesa ${mesa.id} sem resposta de comanda`);
-              return mesa;
-            }
-
             const comandaData = await comandaResponse.json();
 
             const temComandaAberta =
@@ -59,23 +54,11 @@ const IniciarVenda = () => {
     fetchMesas();
   }, []);
 
-  const handleSelecionarMesa = async (mesa) => {
-    console.log(`🖱️ Clicou na mesa ${mesa.numero}`);
-
+  const handleSelecionarMesa = (mesa) => {
     if (mesa.status && mesa.comandaId) {
-      console.log(
-        `✅ Mesa ${mesa.numero} já tem comanda aberta, id: ${mesa.comandaId}`
-      );
       navigate(`/comanda-aberta/${mesa.comandaId}`);
     } else {
-      console.log(
-        `🆕 Mesa ${mesa.numero} sem comanda, iniciando fluxo de abertura.`
-      );
       navigate(`/nova-comanda/${mesa.id}`);
-
-      setMesas((prevMesas) =>
-        prevMesas.map((m) => (m.id === mesa.id ? { ...m, status: true } : m))
-      );
     }
   };
 
@@ -102,7 +85,6 @@ const IniciarVenda = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
-      {/* Botão para abrir modal */}
       <button
         onClick={abrirModal}
         className="mb-6 px-6 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition"
@@ -110,7 +92,6 @@ const IniciarVenda = () => {
         + Adicionar Mesas
       </button>
 
-      {/* Modal */}
       <Modal
         isOpen={modalAberto}
         onRequestClose={fecharModal}
@@ -143,7 +124,6 @@ const IniciarVenda = () => {
         </div>
       </Modal>
 
-      {/* Mesas */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 max-w-screen-lg mx-auto">
         {mesas.map((mesa) => (
           <button

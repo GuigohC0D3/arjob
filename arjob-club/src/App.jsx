@@ -64,7 +64,10 @@ const AppContent = () => {
 
             {/* ✅ Nova rota para visualizar comandas abertas */}
             {/* Comanda aberta */}
-            <Route path="/comanda-aberta/:mesaId" element={<ComandaAberta />} />
+            <Route
+              path="/comanda-aberta/:comandaId"
+              element={<ComandaAberta />}
+            />
           </Route>
         </Routes>
       </div>

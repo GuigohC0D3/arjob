@@ -1,5 +1,6 @@
+// ComandaAberta.jsx
 import { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Paginator } from "primereact/paginator";
 import { motion } from "framer-motion";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
@@ -9,8 +10,10 @@ import PagamentoOptions from "../components/pagamento/PagamentoOptions";
 import SelecionarClientes from "../components/selecionarClientes/SelecionarClientes";
 
 const ComandaAberta = () => {
-  const { mesaId } = useParams();
+  // Usar 'comandaId' vindo da URL
+  const { mesaId, comandaId } = useParams();
   const navigate = useNavigate();
+  const { state } = useLocation();
 
   const [produtos, setProdutos] = useState([]);
   const [categorias, setCategorias] = useState([]);
@@ -22,13 +25,171 @@ const ComandaAberta = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const produtosPorPagina = 8;
   const [loading, setLoading] = useState(true);
+  const [usuarioLogado, setUsuarioLogado] = useState({ id: null, nome: "" });
 
-  // ✅ Adicionado o usuário logado (simulação)
-  const [usuarioLogado] = useState({
-    id: 1,
-    nome: "Atendente Exemplo",
-  });
+  // Se o objeto atendente foi passado pelo state, use-o; senão, tente buscar detalhes da comanda
+  useEffect(() => {
+    if (state && state.atendente) {
+      setUsuarioLogado(state.atendente);
+    } else if (comandaId) {
+      // Caso seu endpoint de detalhes da comanda retorne os dados do atendente,
+      // faça a requisição e ajuste conforme a resposta da API (ex: data.atendente ou data.usuario)
+      const fetchComandaDetails = async () => {
+        try {
+          const res = await fetch(
+            `http://127.0.0.1:5000/comandas/${comandaId}`
+          );
+          const data = await res.json();
+          // Supondo que a API retorne 'atendente' com os dados completos
+          if (data && data.atendente) {
+            setUsuarioLogado(data.atendente);
+          }
+        } catch (err) {
+          console.error("Erro ao buscar detalhes da comanda:", err);
+        }
+      };
+      fetchComandaDetails();
+    }
+  }, [state, comandaId]);
 
+  // Buscar produtos disponíveis
+  const fetchProdutos = useCallback(async () => {
+    try {
+      const res = await fetch("http://127.0.0.1:5000/produtos");
+      const data = await res.json();
+      let produtosData = Array.isArray(data) ? data : data.produtos || [];
+      if (Array.isArray(produtosData[0])) {
+        produtosData = produtosData[0];
+      }
+      const produtosFormatados = produtosData.map((p) => ({
+        id: p.id,
+        nome: p.nome || "Sem Nome",
+        preco: p.preco || 0,
+        categoria: p.categoria || "Sem Categoria",
+        estoque: p.estoque || 0,
+      }));
+      setProdutos(produtosFormatados);
+      const categoriasUnicas = [
+        ...new Set(produtosFormatados.map((p) => p.categoria).filter(Boolean)),
+      ];
+      setCategorias(categoriasUnicas);
+    } catch (err) {
+      console.error("Erro ao carregar produtos:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Buscar os itens da comanda
+  const fetchItensComanda = useCallback(async () => {
+    if (!comandaId) return;
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:5000/comandas/${comandaId}/itens`
+      );
+      const data = await res.json();
+      if (!Array.isArray(data)) {
+        console.warn("Itens de comanda inválidos:", data);
+        return;
+      }
+      setComandaItens(data);
+    } catch (err) {
+      console.error("Erro ao buscar itens da comanda:", err);
+    }
+  }, [comandaId]);
+
+  useEffect(() => {
+    fetchProdutos();
+    fetchItensComanda();
+  }, [fetchProdutos, fetchItensComanda]);
+
+  // Função para adicionar produto
+  const adicionarProduto = async (produto) => {
+    if (!comandaId) return;
+
+    const payload = {
+      produto_id: Number(produto.id),
+      quantidade: 1,
+      preco_unitario: Number(produto.preco),
+    };
+
+    console.log("Payload enviado:", payload);
+
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:5000/comandas/${comandaId}/itens`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error("Erro ao adicionar produto:", errorData);
+        alert("Erro ao adicionar produto. Verifique o console.");
+        return;
+      }
+
+      console.log("Produto adicionado com sucesso!");
+      // Aqui você precisa atualizar a lista de itens para que a UI seja atualizada.
+      // Por exemplo:
+      await fetchItensComanda(); // Atualiza o estado com os itens novos.
+    } catch (err) {
+      console.error("Erro ao adicionar produto:", err);
+    }
+  };
+
+  const incrementarQuantidade = async (item) => {
+    if (!comandaId) return;
+    try {
+      await fetch(
+        `http://127.0.0.1:5000/comandas/${comandaId}/itens/${item.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ quantidade: item.quantidade + 1 }),
+        }
+      );
+      await fetchItensComanda();
+    } catch (err) {
+      console.error("Erro ao incrementar quantidade:", err);
+    }
+  };
+
+  const decrementarQuantidade = async (item) => {
+    if (!comandaId) return;
+    try {
+      if (item.quantidade === 1) {
+        await fetch(
+          `http://127.0.0.1:5000/comandas/${comandaId}/itens/${item.id}`,
+          {
+            method: "DELETE",
+          }
+        );
+      } else {
+        await fetch(
+          `http://127.0.0.1:5000/comandas/${comandaId}/itens/${item.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ quantidade: item.quantidade - 1 }),
+          }
+        );
+      }
+      await fetchItensComanda();
+    } catch (err) {
+      console.error("Erro ao decrementar quantidade:", err);
+    }
+  };
+
+  const totalComanda = comandaItens.reduce(
+    (acc, item) => acc + item.preco * item.quantidade,
+    0
+  );
+
+  // Lógica para fechamento da comanda
   const handleFecharComanda = () => {
     if (comandaItens.length === 0) {
       confirmDialog({
@@ -49,7 +210,6 @@ const ComandaAberta = () => {
         icon: "pi pi-info-circle",
         acceptLabel: "Ok",
         rejectVisible: false,
-        
       });
       return;
     }
@@ -70,149 +230,22 @@ const ComandaAberta = () => {
     });
   };
 
-  const fetchProdutos = useCallback(async () => {
-    try {
-      const res = await fetch("http://127.0.0.1:5000/produtos");
-      const data = await res.json();
-      let produtosData = Array.isArray(data) ? data : data.produtos || [];
-
-      if (Array.isArray(produtosData[0])) {
-        produtosData = produtosData[0];
-      }
-
-      const produtosFormatados = produtosData.map((p) => ({
-        id: p.id,
-        nome: p.nome || "Sem Nome",
-        preco: p.preco || 0,
-        categoria: p.categoria || "Sem Categoria",
-        estoque: p.estoque || 0,
-      }));
-
-      setProdutos(produtosFormatados);
-
-      const categoriasUnicas = [
-        ...new Set(produtosFormatados.map((p) => p.categoria).filter(Boolean)),
-      ];
-
-      setCategorias(categoriasUnicas);
-    } catch (err) {
-      console.error("Erro ao carregar produtos:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const fetchItensComanda = useCallback(async () => {
-    try {
-      const res = await fetch(`http://127.0.0.1:5000/comandas/${mesaId}/itens`);
-      const data = await res.json();
-
-      if (!Array.isArray(data)) {
-        console.warn("Itens de comanda inválidos:", data);
-        return;
-      }
-
-      setComandaItens(data);
-    } catch (err) {
-      console.error("Erro ao buscar itens da comanda:", err);
-    }
-  }, [mesaId]);
-
-  useEffect(() => {
-    fetchProdutos();
-    fetchItensComanda();
-  }, [fetchProdutos, fetchItensComanda]);
-
-  const adicionarProduto = async (produto) => {
-    if (!mesaId) return;
-
-    try {
-      await fetch(`http://127.0.0.1:5000/comandas/${mesaId}/itens`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          produto_id: produto.id,
-          quantidade: 1,
-          preco_unitario: produto.preco,
-        }),
-      });
-
-      await fetchItensComanda();
-    } catch (err) {
-      console.error("Erro ao adicionar produto:", err);
-    }
-  };
-
-  const incrementarQuantidade = async (item) => {
-    if (!mesaId) return;
-
-    try {
-      await fetch(`http://127.0.0.1:5000/comandas/${mesaId}/itens/${item.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quantidade: item.quantidade + 1 }),
-      });
-
-      await fetchItensComanda();
-    } catch (err) {
-      console.error("Erro ao incrementar quantidade:", err);
-    }
-  };
-
-  const decrementarQuantidade = async (item) => {
-    if (!mesaId) return;
-
-    try {
-      if (item.quantidade === 1) {
-        await fetch(
-          `http://127.0.0.1:5000/comandas/${mesaId}/itens/${item.id}`,
-          {
-            method: "DELETE",
-          }
-        );
-      } else {
-        await fetch(
-          `http://127.0.0.1:5000/comandas/${mesaId}/itens/${item.id}`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ quantidade: item.quantidade - 1 }),
-          }
-        );
-      }
-
-      await fetchItensComanda();
-    } catch (err) {
-      console.error("Erro ao decrementar quantidade:", err);
-    }
-  };
-
   const fecharComanda = async () => {
     const dadosParaEnviar = {
       cliente_id: clienteSelecionado.id,
       pagamento_id: pagamentoSelecionado.id,
       total: totalComanda,
-      mesa_id: mesaId,
+      mesa_id: comandaId,
       itens: comandaItens,
       usuario_id: usuarioLogado.id,
     };
-  
-    console.log("📦 Enviando dados para histórico de comanda:", dadosParaEnviar);
 
     try {
-      await fetch(`http://127.0.0.1:5000/comandas/${mesaId}/fechar`, {
+      await fetch(`http://127.0.0.1:5000/comandas/${comandaId}/fechar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          cliente_id: clienteSelecionado.id,
-          pagamento_id: pagamentoSelecionado.id,
-          total: totalComanda,
-          mesa_id: mesaId,
-          itens: comandaItens,
-          usuario_id: usuarioLogado.id, // ✅ Adicionado o usuario_id aqui!
-        }),
+        body: JSON.stringify(dadosParaEnviar),
       });
-
       confirmDialog({
         message: "Comanda fechada com sucesso!",
         header: "Sucesso",
@@ -222,7 +255,6 @@ const ComandaAberta = () => {
       });
     } catch (err) {
       console.error("Erro ao fechar comanda:", err);
-
       confirmDialog({
         message: "Erro ao fechar comanda. Tente novamente!",
         header: "Erro",
@@ -232,8 +264,8 @@ const ComandaAberta = () => {
       });
     }
   };
-  
 
+  // Filtragem e paginação dos produtos
   const produtosFiltrados = produtos
     .filter(
       (p) => !categoriaSelecionada || p.categoria === categoriaSelecionada
@@ -247,11 +279,6 @@ const ComandaAberta = () => {
     (currentPage + 1) * produtosPorPagina
   );
 
-  const totalComanda = comandaItens.reduce(
-    (acc, item) => acc + item.preco * item.quantidade,
-    0
-  );
-
   if (loading) {
     return (
       <p className="text-center text-gray-500 text-lg py-8">
@@ -263,7 +290,7 @@ const ComandaAberta = () => {
   return (
     <>
       <motion.div className="p-6 md:p-10 max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
-        {/* Botão Voltar */}
+        {/* Botão para voltar para mesas */}
         <div className="flex justify-start mb-6">
           <button
             onClick={() => navigate("/iniciar-venda")}
@@ -274,11 +301,14 @@ const ComandaAberta = () => {
         </div>
 
         {/* Cabeçalho */}
-        <h1 className="text-3xl font-bold mb-8 text-center text-gray-800">
-          Comanda da Mesa {mesaId}
+        <h1 className="text-3xl font-bold mb-2 text-center text-gray-800">
+          Comanda da Mesa {comandaId}
         </h1>
+        <p className="text-center text-gray-500 mb-6">
+          Atendente: {usuarioLogado.nome || "Não informado"}
+        </p>
 
-        {/* Input de Busca */}
+        {/* Input de busca */}
         <div className="mb-6">
           <input
             type="text"
@@ -289,15 +319,15 @@ const ComandaAberta = () => {
           />
         </div>
 
-        {/* Categorias */}
+        {/* Botões de categorias */}
         <div className="flex flex-wrap justify-center gap-3 mb-8">
           <button
             className={`px-4 py-2 rounded-full border transition 
-          ${
-            !categoriaSelecionada
-              ? "bg-blue-600 text-white shadow"
-              : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100"
-          }`}
+              ${
+                !categoriaSelecionada
+                  ? "bg-blue-600 text-white shadow"
+                  : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100"
+              }`}
             onClick={() => setCategoriaSelecionada(null)}
           >
             Todas
@@ -306,11 +336,11 @@ const ComandaAberta = () => {
             <button
               key={`${cat}-${idx}`}
               className={`px-4 py-2 rounded-full border transition
-            ${
-              categoriaSelecionada === cat
-                ? "bg-blue-600 text-white shadow"
-                : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100"
-            }`}
+                ${
+                  categoriaSelecionada === cat
+                    ? "bg-blue-600 text-white shadow"
+                    : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100"
+                }`}
               onClick={() => setCategoriaSelecionada(cat)}
             >
               {cat}
@@ -318,7 +348,7 @@ const ComandaAberta = () => {
           ))}
         </div>
 
-        {/* Produtos */}
+        {/* Lista de produtos */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {produtosPaginados.map((produto) => (
             <motion.div
@@ -410,7 +440,7 @@ const ComandaAberta = () => {
           </div>
         </div>
 
-        {/* Fechar Comanda */}
+        {/* Fechamento da Comanda */}
         <div className="mt-12 text-center">
           <h3 className="text-xl font-bold text-gray-800 mb-4">
             Total:{" "}
