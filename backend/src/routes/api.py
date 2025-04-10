@@ -564,3 +564,7 @@ def get_tipos_pagamento():
 def fechar_comanda_por_id(comanda_id):
     return comandas_controller.fechar_comanda_por_id(comanda_id)
 
+@main_bp.route("/clientes/<int:cliente_id>/limite", methods=["GET"])
+def rota_verificar_limite_cliente(cliente_id):
+    res, status_code = clientes_controller.verificar_limite_cliente(cliente_id)
+    return jsonify(res), status_code

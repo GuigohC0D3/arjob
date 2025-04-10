@@ -117,11 +117,30 @@ def listar_clientes():
     if conn:
         try:
             cur = conn.cursor()
-            cur.execute("SELECT id, nome, cpf, to_char(criado_em, 'DD/MM/YYYY'), status_id FROM clientes")
+            cur.execute("""
+              SELECT id, nome, cpf, 
+                     to_char(criado_em, 'DD/MM/YYYY') AS criado_em, 
+                     status_id, 
+                     limite,
+                     saldo
+              FROM clientes
+            """)
             clientes = cur.fetchall()
             cur.close()
             conn.close()
-            return [{"id": c[0], "nome": c[1], "cpf": c[2], "criado_em": c[3], "status_id": c[4]} for c in clientes]
+            # Mapeia os valores para um dicionário
+            return [
+                {
+                    "id": c[0],
+                    "nome": c[1],
+                    "cpf": c[2],
+                    "criado_em": c[3],
+                    "status_id": c[4],
+                    "limite": c[5],
+                    "saldo": c[6]
+                }
+                for c in clientes
+            ]
         except Exception as e:
             print(f"Erro ao buscar clientes no banco de dados: {e}")
             return []
@@ -160,3 +179,50 @@ def atualizar_status_cliente(cliente_id, novo_status_id):
     except Exception as e:
         print(f"❌ Erro ao atualizar status do cliente: {e}")
         return {"error": "Erro ao atualizar status do cliente"}
+    
+
+def verificar_limite(cliente_id):
+    """
+    Consulta o cliente e retorna o limite, quanto foi consumido, o valor disponível e o status de bloqueio.
+    """
+    conn = connect_db()
+    if not conn:
+        return {"error": "Erro ao conectar ao banco de dados"}
+    try:
+        cur = conn.cursor()
+        # Busca os valores do limite, quanto já foi consumido e se está bloqueado
+        cur.execute("""
+            SELECT limite, consumido, bloqueado
+            FROM clientes
+            WHERE id = %s
+        """, (cliente_id,))
+        row = cur.fetchone()
+        if not row:
+            cur.close()
+            conn.close()
+            return {"error": "Cliente não encontrado"}
+        
+        limite, consumido, bloqueado = row
+        # Converter para float, se necessário
+        limite = float(limite)
+        consumido = float(consumido)
+        disponivel = limite - consumido
+
+        status = "bloqueado" if bloqueado or disponivel <= 0 else "ok"
+        mensagem = "Limite esgotado. Cliente bloqueado para convênio." if status == "bloqueado" else f"Limite disponível: R$ {disponivel:.2f}"
+        
+        cur.close()
+        conn.close()
+
+        return {
+            "cliente_id": cliente_id,
+            "limite": limite,
+            "consumido": consumido,
+            "disponivel": disponivel,
+            "status": status,
+            "mensagem": mensagem
+        }
+    except Exception as e:
+        print("Erro ao verificar limite:", e)
+        return {"error": "Erro interno no servidor"}
+         

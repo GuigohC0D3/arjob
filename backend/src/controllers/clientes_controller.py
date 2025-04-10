@@ -58,3 +58,15 @@ def atualizar_status_cliente(cliente_id, status_id):
         return {"message": "Status atualizado com sucesso"}, 200
     else:
         return {"error": "Erro ao atualizar status do cliente"}, 500
+
+def verificar_limite_cliente(cliente_id):
+    try:
+        result = clientes.verificar_limite(cliente_id)
+
+        if "error" in result:
+            status_code = 404 if result.get("error") == "Cliente não encontrado" else 400
+            return result, status_code
+        return result, 200
+    except Exception as e:
+        print("Erro no controlador verificar_limite_cliente", e)
+        return {"error": "Erro ao verificar limite do cliente"}, 500
