@@ -388,6 +388,23 @@ def fechar_comanda_completo(comanda_id, mesa_id, itens, total, pagamento_id, usu
                 WHERE id = %s
             """, (quantidade, produto_id))
 
+
+        # Aqui você pode assumir que o 'pagamento_id' específico identifica o convênio (ex.: pagamento_id == 99)
+        if pagamento_id == 5:
+            # Atualiza o consumo e o saldo
+            cur.execute("""
+                UPDATE clientes
+                SET consumido = consumido + %s,
+                    saldo = saldo - %s
+                WHERE id = %s
+                RETURNING saldo
+            """, (total, total, cliente_id))
+            novo_saldo = cur.fetchone()[0]
+            if novo_saldo <= 0:
+                # Bloqueia o cliente caso o saldo não seja suficiente
+                cur.execute("UPDATE clientes SET bloqueado = TRUE WHERE id = %s", (cliente_id,))
+
+
         conn.commit()
         print(f"✅ Comanda {comanda_id} fechada com sucesso e histórico registrado.")
         return {"message": "Comanda fechada, estoque baixado e histórico salvo!"}, 200
