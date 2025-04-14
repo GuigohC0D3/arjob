@@ -45,7 +45,6 @@ const VerificarLimiteCliente = ({ clienteId }) => {
       <p>
         <strong>Status:</strong> {limiteInfo.status}
       </p>
-      <p>{limiteInfo.mensagem}</p>
     </div>
   );
 };

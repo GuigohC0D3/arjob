@@ -1,31 +1,28 @@
 import { useState, useEffect } from "react";
+import { FaSyncAlt } from "react-icons/fa"; // 🔁 Ícone de atualizar
 
 const GerenciarProdutos = () => {
   const [produtos, setProdutos] = useState([]);
-  const [categorias, setCategorias] = useState([]); // 🔥 Adicionado estado para categorias
+  const [categorias, setCategorias] = useState([]);
   const [nome, setNome] = useState("");
   const [preco, setPreco] = useState("");
   const [categoria, setCategoria] = useState("");
   const [estoque, setEstoque] = useState("");
+  const [arquivo, setArquivo] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [filtroPesquisa, setFiltroPesquisa] = useState("");
   const produtosPorPagina = 5;
 
   useEffect(() => {
     fetchProdutos();
-    fetchCategorias(); // 🔥 Busca categorias disponíveis no banco
+    fetchCategorias();
   }, []);
 
   const fetchProdutos = async () => {
     try {
       const response = await fetch("http://localhost:5000/produtos");
       let data = await response.json();
-      console.log("Produtos recebidos do backend:", data); // Debug
-
-      // 🔥 Corrige se a API retornar um array dentro de outro array
-      if (Array.isArray(data) && Array.isArray(data[0])) {
-        data = data[0];
-      }
-
+      if (Array.isArray(data) && Array.isArray(data[0])) data = data[0];
       setProdutos(data);
     } catch (error) {
       console.error("Erro ao buscar produtos:", error);
@@ -34,10 +31,8 @@ const GerenciarProdutos = () => {
 
   const fetchCategorias = async () => {
     try {
-      const response = await fetch("http://localhost:5000/categorias"); // 🔥 Endpoint para categorias
-      let data = await response.json();
-      console.log("Categorias recebidas do backend:", data); // Debug
-
+      const response = await fetch("http://localhost:5000/categorias");
+      const data = await response.json();
       setCategorias(data);
     } catch (error) {
       console.error("Erro ao buscar categorias:", error);
@@ -50,7 +45,12 @@ const GerenciarProdutos = () => {
       return;
     }
 
-    const produto = { nome, preco: parseFloat(preco), categoria, estoque };
+    const produto = {
+      nome,
+      preco: parseFloat(preco),
+      categoria,
+      estoque: parseInt(estoque),
+    };
 
     try {
       const response = await fetch("http://localhost:5000/produtos", {
@@ -75,67 +75,66 @@ const GerenciarProdutos = () => {
     }
   };
 
-  // Cálculo para paginação
+  const importarPlanilha = async () => {
+    if (!arquivo) return alert("Selecione um arquivo .xlsx para importar.");
+    const formData = new FormData();
+    formData.append("file", arquivo);
+
+    try {
+      const response = await fetch("http://localhost:5000/produtos/importar", {
+        method: "POST",
+        body: formData,
+      });
+      if (response.ok) {
+        alert("Produtos importados com sucesso!");
+        window.location.reload();
+      } else {
+        alert("Erro ao importar planilha.");
+      }
+    } catch (error) {
+      alert("Erro ao enviar planilha.");
+    }
+  };
+
+  const produtosFiltrados = produtos.filter((produto) =>
+    produto.nome.toLowerCase().includes(filtroPesquisa.toLowerCase())
+  );
   const indexUltimoProduto = currentPage * produtosPorPagina;
   const indexPrimeiroProduto = indexUltimoProduto - produtosPorPagina;
-  const produtosAtuais = produtos.slice(
-    indexPrimeiroProduto,
-    indexUltimoProduto
-  );
-  const totalPaginas = Math.ceil(produtos.length / produtosPorPagina);
-
-  const irParaPagina = (pageNumber) => {
-    setCurrentPage(pageNumber);
-  };
-
-  const proximaPagina = () => {
-    if (currentPage < totalPaginas) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
-
-  const paginaAnterior = () => {
-    if (currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
-    }
-  };
+  const produtosAtuais = produtosFiltrados.slice(indexPrimeiroProduto, indexUltimoProduto);
+  const totalPaginas = Math.ceil(produtosFiltrados.length / produtosPorPagina);
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-6">
-      <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-4xl">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center flex items-center justify-center gap-2">
-           Gerenciar Produtos
+      <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-5xl">
+        <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
+          Gerenciar Produtos
         </h1>
 
-        {/* Formulário de Adição */}
+        {/* Formulário */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <input
             type="text"
             placeholder="Nome"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            className="border border-gray-300 p-3 rounded-lg focus:ring focus:ring-blue-300"
+            className="border border-gray-300 p-3 rounded-lg"
           />
           <input
             type="text"
             placeholder="Preço"
             value={preco}
             onChange={(e) => {
-              let value = e.target.value.replace(/\D/g, ""); // 🔥 Remove tudo que não for número
-              if (value.lenght > 8) return;
-              value = (parseFloat(value) / 100).toFixed(2); // 🔥 Divide por 100 para manter duas casas decimais
-              if (!isNaN(value)) {
-                setPreco(value);
-              }
+              let value = e.target.value.replace(/\D/g, "");
+              value = (parseFloat(value) / 100).toFixed(2);
+              if (!isNaN(value)) setPreco(value);
             }}
-            className="border border-gray-300 p-3 rounded-lg focus:ring focus:ring-blue-300"
+            className="border border-gray-300 p-3 rounded-lg"
           />
-
-          {/* 🔥 Dropdown para selecionar categoria */}
           <select
             value={categoria}
             onChange={(e) => setCategoria(e.target.value)}
-            className="border border-gray-300 p-3 rounded-lg focus:ring focus:ring-blue-300"
+            className="border border-gray-300 p-3 rounded-lg"
           >
             <option value="">Selecione a categoria</option>
             {categorias.map((cat) => (
@@ -144,59 +143,85 @@ const GerenciarProdutos = () => {
               </option>
             ))}
           </select>
-
           <input
             type="number"
             placeholder="Estoque"
             value={estoque}
             onChange={(e) => setEstoque(e.target.value)}
-            className="border border-gray-300 p-3 rounded-lg focus:ring focus:ring-blue-300"
+            className="border border-gray-300 p-3 rounded-lg"
           />
         </div>
 
         <button
           onClick={adicionarProduto}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
+          className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition mb-4"
         >
           Adicionar Produto
         </button>
 
-        {/* Lista de Produtos */}
-        <h2 className="text-2xl font-semibold text-gray-700 mt-8 mb-4 text-center">
-           Lista de Produtos
-        </h2>
+        {/* Importação */}
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <input
+            type="file"
+            accept=".xlsx"
+            onChange={(e) => setArquivo(e.target.files[0])}
+            className="border p-2 rounded"
+          />
+          <button
+            onClick={importarPlanilha}
+            className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition"
+          >
+            Importar Planilha
+          </button>
+        </div>
 
-        {produtos.length === 0 ? (
-          <p className="text-gray-500 text-center">
-            Nenhum produto cadastrado.
-          </p>
+        {/* Cabeçalho + atualizar */}
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-semibold text-gray-700">
+            Lista de Produtos
+          </h2>
+
+          <button
+            onClick={() => window.location.reload()}
+            title="Atualizar página"
+            className="flex items-center gap-2 px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition"
+          >
+            <FaSyncAlt className="text-gray-600" />
+            Atualizar
+          </button>
+        </div>
+
+        {/* Pesquisa */}
+        <input
+          type="text"
+          placeholder="Pesquisar produto..."
+          value={filtroPesquisa}
+          onChange={(e) => setFiltroPesquisa(e.target.value)}
+          className="w-full mb-4 p-2 border border-gray-300 rounded"
+        />
+
+        {produtosFiltrados.length === 0 ? (
+          <p className="text-gray-500 text-center">Nenhum produto encontrado.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse bg-white shadow-md rounded-lg overflow-hidden">
-              <thead>
-                <tr className="bg-gray-200 text-gray-700">
-                  <th className="text-left px-4 py-3 w-1/3">Nome</th>
-                  <th className="text-center px-4 py-3 w-1/4">Preço</th>
-                  <th className="text-center px-4 py-3 w-1/4">Categoria</th>
-                  <th className="text-center px-4 py-3 w-1/4">Estoque</th>
+            <table className="w-full table-auto bg-white border rounded-lg shadow">
+              <thead className="bg-gray-200">
+                <tr>
+                  <th className="p-3 text-left">Nome</th>
+                  <th className="p-3 text-center">Preço</th>
+                  <th className="p-3 text-center">Categoria</th>
+                  <th className="p-3 text-center">Estoque</th>
                 </tr>
               </thead>
               <tbody>
-                {produtosAtuais.map((produto, index) => (
-                  <tr
-                    key={produto.id || index}
-                    className="border-b hover:bg-gray-100"
-                  >
-                    <td className="text-left px-4 py-3 whitespace-nowrap">
-                      {produto.nome}
-                    </td>
-                    <td className="text-center px-4 py-3 font-semibold text-blue-600">
+                {produtosAtuais.map((produto) => (
+                  <tr key={produto.id} className="border-b hover:bg-gray-100">
+                    <td className="p-3">{produto.nome}</td>
+                    <td className="p-3 text-center">
                       R$ {Number(produto.preco).toFixed(2)}
                     </td>
-                    <td className="text-center px-4 py-3">
-                      {produto.categoria}
-                    </td>
-                    <td className="text-center px-4 py-3">{produto.estoque}</td>
+                    <td className="p-3 text-center">{produto.categoria}</td>
+                    <td className="p-3 text-center">{produto.estoque}</td>
                   </tr>
                 ))}
               </tbody>
@@ -204,19 +229,19 @@ const GerenciarProdutos = () => {
           </div>
         )}
 
-        {/* Controles de Paginação */}
-        <div className="flex justify-center items-center mt-6 space-x-2">
+        {/* Paginação */}
+        <div className="flex justify-center items-center gap-2 mt-6">
           <button
-            onClick={paginaAnterior}
+            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+            className="bg-gray-300 px-4 py-1 rounded disabled:opacity-50"
             disabled={currentPage === 1}
-            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
           >
             Anterior
           </button>
           {Array.from({ length: totalPaginas }, (_, i) => (
             <button
-              key={i + 1}
-              onClick={() => irParaPagina(i + 1)}
+              key={i}
+              onClick={() => setCurrentPage(i + 1)}
               className={`px-3 py-1 rounded ${
                 currentPage === i + 1
                   ? "bg-blue-600 text-white"
@@ -227,9 +252,9 @@ const GerenciarProdutos = () => {
             </button>
           ))}
           <button
-            onClick={proximaPagina}
+            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPaginas))}
+            className="bg-gray-300 px-4 py-1 rounded disabled:opacity-50"
             disabled={currentPage === totalPaginas}
-            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
           >
             Próxima
           </button>

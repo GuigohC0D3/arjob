@@ -201,10 +201,10 @@ const AdminPanel = () => {
         {[
           "usuarios",
           "clientes",
-          "dashboard",
-          "logs",
-          "notificações",
-          "configuirações",
+          // "dashboard",
+          // "logs",
+          // "notificações",
+          // "configuirações",
         ].map((tab) => (
           <button
             key={tab}

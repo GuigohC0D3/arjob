@@ -1,4 +1,3 @@
-// ComandaAberta.jsx
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Paginator } from "primereact/paginator";
@@ -8,6 +7,7 @@ import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.min.css";
 import PagamentoOptions from "../components/pagamento/PagamentoOptions";
 import SelecionarClientes from "../components/selecionarClientes/SelecionarClientes";
+import VerificarLimiteCliente from "./VerificarLimiteCliente";
 
 const ComandaAberta = () => {
   // Usar 'comandaId' vindo da URL
@@ -437,6 +437,12 @@ const ComandaAberta = () => {
             <PagamentoOptions
               onSelect={(pagamento) => setPagamentoSelecionado(pagamento)}
             />
+
+            {clienteSelecionado &&
+              pagamentoSelecionado &&
+              pagamentoSelecionado.nome === "Convênio" && (
+                <VerificarLimiteCliente clienteId={clienteSelecionado.id} />
+              )}
           </div>
         </div>
 
