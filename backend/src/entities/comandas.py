@@ -120,7 +120,7 @@ def atualizar_status_comanda(comanda_id, total, mesa_id, itens=None, pagamento_i
                 WHERE id = %s
             """, (mesa_id,))
 
-            # Agora insere no histórico com o cliente correto
+            # Cria histórico
             cur.execute("""
                 INSERT INTO historico_comandas (
                     comanda_id,
@@ -137,7 +137,7 @@ def atualizar_status_comanda(comanda_id, total, mesa_id, itens=None, pagamento_i
 
             historico_id = cur.fetchone()[0]
 
-            # Insere itens no histórico
+            # Insere os itens no histórico
             for item in itens:
                 produto_id = item.get('id')
                 quantidade = item.get('quantidade')
@@ -163,6 +163,13 @@ def atualizar_status_comanda(comanda_id, total, mesa_id, itens=None, pagamento_i
                     historico_id
                 ))
 
+                # ✅ Atualiza o estoque do produto
+                cur.execute("""
+                    UPDATE produtos
+                    SET estoque = estoque - %s
+                    WHERE id = %s AND estoque >= %s
+                """, (quantidade, produto_id, quantidade))
+
             conn.commit()
 
             print(f"✅ Comanda {comanda_id} fechada, histórico {historico_id} criado com sucesso.")
@@ -180,7 +187,6 @@ def atualizar_status_comanda(comanda_id, total, mesa_id, itens=None, pagamento_i
     else:
         print("❌ Erro ao conectar ao banco de dados")
         return {"error": "Erro ao conectar ao banco de dados"}, 500
-
 
 def obter_comanda_por_code(code):
     conn = connect_db()

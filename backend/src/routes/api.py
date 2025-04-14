@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request, session, render_template, url_for, redirect, send_from_directory
 from flask_login import UserMixin, login_user, login_required, logout_user, current_user
+import pandas as pd
 from flask_cors import cross_origin, CORS
 from math import ceil
 from datetime import datetime
@@ -568,3 +569,56 @@ def fechar_comanda_por_id(comanda_id):
 def rota_verificar_limite_cliente(cliente_id):
     res, status_code = clientes_controller.verificar_limite_cliente(cliente_id)
     return jsonify(res), status_code
+
+@main_bp.route("/produtos/importar", methods=["POST"])
+def importar_produtos():
+    try:
+        file = request.files["file"]
+        if not file:
+            return jsonify({"error": "Nenhum arquivo enviado"}), 400
+
+        import pandas as pd
+        df = pd.read_excel(file)
+
+        conn = connect_db()
+        cur = conn.cursor()
+
+        # 🔍 Buscar todas as categorias no banco e criar um dicionário
+        cur.execute("SELECT id, nome FROM categoria_produto")
+        categorias = {nome.strip().lower(): id for id, nome in cur.fetchall()}
+
+        erros = []
+
+        for _, row in df.iterrows():
+            nome_produto = row["nome"]
+            preco = row["preco"]
+            estoque = row["estoque"]
+            nome_categoria = row["categoria"].strip().lower()
+
+            categoria_id = categorias.get(nome_categoria)
+
+            if not categoria_id:
+                erros.append(f"Categoria '{row['categoria']}' não encontrada.")
+                continue
+
+            cur.execute(
+                "INSERT INTO produtos (nome, preco, categoria_id, estoque) VALUES (%s, %s, %s, %s)",
+                (nome_produto, preco, categoria_id, estoque)
+            )
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        if erros:
+            return jsonify({
+                "message": "Importação concluída com avisos.",
+                "erros": erros
+            }), 207  # Código 207: Multi-Status (parcial sucesso)
+
+        return jsonify({"message": "Produtos importados com sucesso!"}), 201
+
+    except Exception as e:
+        print(f"Erro ao importar produtos: {e}")
+        return jsonify({"error": "Erro interno"}), 500
+
