@@ -8,7 +8,7 @@ from ..controllers import dashboard_controller
 from ..controllers import clientes_controller, departamento_cliente_controller, departamentos_controller,  mesas_controller, comandas_controller, produtos_controller, buscar_produtos_controller, users_controller, permissoes_controller, cargos_controller, pagamentos_controller
 from ..entities import comandas, produtos, pagamentos
 from ..classes.user import User
-from ..entities.users import authenticate_user, get_user_permissions, get_user_cargo, send_verification_email
+from ..entities.users import authenticate_user, get_user_permissions, get_user_cargo, send_verification_email, corrigir_senhas
 from ..entities.clientes import get_clientes 
 from flask_mail import Message
 from src.extensions import mail
@@ -16,7 +16,10 @@ from itsdangerous import URLSafeTimedSerializer
 from src.utils.token_utils import generate_token, verify_token  # Importa utilitários de token
 from datetime import timedelta
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
+from ..utils.hash_utils import gerar_hash_md5  # se estiver em um módulo separado
 from ..entities import movimentacao_caixa
+import re
+from werkzeug.security import generate_password_hash
 # from ..entities.users import corrigir_senhas
 from ..connection.config import connect_db 
 import os
@@ -260,15 +263,15 @@ def login_user_route():
         return jsonify({"error": "Erro interno no servidor"}), 500
 
 
-# @main_bp.route('/corrigir-senhas', methods=['POST'])
-# def corrigir_senhas_route():
-#     corrigir_senhas()
-#     return {"message": "Senhas corrigidas com sucesso"}, 200
+@main_bp.route('/corrigir-senhas', methods=['POST'])
+def corrigir_senhas_route():
+    corrigir_senhas()
+    return {"message": "Senhas corrigidas com sucesso"}, 200
 
 # @main_bp.route('/corrigir-cpf', methods=['POST'])
 # def corrigir_cpf_route():
 #     corrigir_cpfs()
-#     return {"message": "CPFS corrigidos com sucesso"}, 200
+    # return {"message": "CPFS corrigidos com sucesso"}, 200
 
 # Listar usuários com permissões
 @main_bp.route('/admin/usuarios', methods=['GET'])
@@ -622,3 +625,96 @@ def importar_produtos():
         print(f"Erro ao importar produtos: {e}")
         return jsonify({"error": "Erro interno"}), 500
 
+
+
+@main_bp.route("/solicitar-redefinicao", methods=["POST"])
+def solicitar_redefinicao():
+    data = request.json
+    email = data.get("email")
+
+    if not email:
+        return jsonify({"error": "E-mail é obrigatório"}), 400
+
+    # Gera o token com expiração de 10 minutos
+    token = create_access_token(identity=email, expires_delta=timedelta(minutes=10))
+
+    # 🔗 Link para o frontend (ajuste se estiver em produção)
+    link_redefinicao = f"http://localhost:5173/nova-senha?token={token}"
+
+    try:
+        msg = Message(
+            subject="Redefinição de Senha",
+            recipients=[email],
+            body=f"""
+Olá!
+
+Você solicitou a redefinição da sua senha.
+
+Clique no link abaixo para definir uma nova senha (válido por 10 minutos):
+
+{link_redefinicao}
+
+Se você não solicitou isso, apenas ignore este e-mail.
+
+Atenciosamente,
+Equipe do Sistema
+""",
+        )
+        mail.send(msg)
+        return jsonify({"message": "Link de redefinição enviado para seu e-mail."}), 200
+    except Exception as e:
+        print(f"Erro ao enviar e-mail: {e}")
+        return jsonify({"error": "Erro ao enviar e-mail"}), 500
+
+
+@main_bp.route("/redefinir-senha", methods=["POST"])
+def redefinir_senha():
+    data = request.json
+    token = data.get("token")
+    nova_senha = data.get("novaSenha")
+
+    if not token or not nova_senha:
+        return jsonify({"error": "Token e nova senha são obrigatórios"}), 400
+
+    email = verify_token(token)
+    if not email:
+        return jsonify({"error": "Token inválido ou expirado"}), 400
+
+    if not senha_forte(nova_senha):  # sua verificação de força
+        return jsonify({"error": "Senha fraca ou média."}), 400
+
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+        senha_md5 = gerar_hash_md5(nova_senha)
+        cur.execute("UPDATE usuarios SET senha = %s WHERE email = %s", (senha_md5, email))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"message": "Senha redefinida com sucesso!"}), 200
+    except Exception as e:
+        print(f"Erro ao redefinir senha: {e}")
+        return jsonify({"error": "Erro interno"}), 500
+    
+def senha_forte(senha):
+    """Verifica se a senha é forte ou muito forte"""
+    comprimento = len(senha) >= 8
+    maiuscula = re.search(r"[A-Z]", senha)
+    minuscula = re.search(r"[a-z]", senha)
+    numero = re.search(r"[0-9]", senha)
+    simbolo = re.search(r"[!@#$%^&*(),.?\":{}|<>]", senha)
+
+    # Classificação forte ou muito forte
+    requisitos = sum(bool(x) for x in [maiuscula, minuscula, numero, simbolo])
+    return comprimento and requisitos >= 3
+
+
+
+@main_bp.route("/test-token", methods=["GET"])
+@jwt_required()
+def test_token():
+    from flask_jwt_extended import get_jwt_identity
+    return jsonify({
+        "message": "Token válido!",
+        "user_id": get_jwt_identity()
+    }), 200

@@ -115,31 +115,37 @@ def check_user(cpf, email):
 def atualizar_cargo_usuario(usuario_id):
     try:
         data = request.json
-        cargo_id = data.get("cargo_id")
-
-        print(f"🛠 Atualizando cargo para usuário {usuario_id}, novo cargo: {cargo_id}")
-
-        if not cargo_id:
-            print("❌ Erro: Cargo não fornecido!")
-            return jsonify({"error": "Cargo não fornecido"}), 400
+        novo_cargo_id = data.get("cargo_id")
 
         conn = connect_db()
         cur = conn.cursor()
 
-        cur.execute(
-            "UPDATE usuarios SET cargo_id = %s WHERE id = %s",
-            (cargo_id, usuario_id)
-        )
+        # 🔁 Atualiza cargo
+        cur.execute("DELETE FROM cargo_usuario WHERE usuario_id = %s", (usuario_id,))
+        cur.execute("INSERT INTO cargo_usuario (usuario_id, cargo_id) VALUES (%s, %s)", (usuario_id, novo_cargo_id))
+
+        # 🧹 Remove permissões atuais do usuário
+        cur.execute("DELETE FROM permissoes_usuario WHERE usuario_id = %s", (usuario_id,))
+
+        # ✅ Copia permissões do cargo para o usuário (com ID)
+        cur.execute("""
+            INSERT INTO permissoes_usuario (usuario_id, permissao_id)
+            SELECT %s, p.id
+            FROM permissoes p
+            JOIN permissoes_cargo pc ON p.nome = pc.permissao
+            WHERE pc.cargo_id = %s
+        """, (usuario_id, novo_cargo_id))
+
         conn.commit()
         cur.close()
         conn.close()
 
-        print("✅ Cargo atualizado com sucesso!")
-        return jsonify({"message": "Cargo atualizado com sucesso"}), 200
+        return {"message": "Cargo e permissões atribuídos com sucesso!"}, 200
 
     except Exception as e:
         print(f"❌ Erro ao atualizar cargo do usuário: {e}")
-        return jsonify({"error": "Erro interno no servidor"}), 500
+        return {"error": "Erro ao atualizar cargo do usuário"}, 500
+
 
 
 def atualizar_status_usuario(usuario_id):

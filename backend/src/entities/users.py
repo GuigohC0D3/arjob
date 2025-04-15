@@ -2,11 +2,11 @@ import psycopg2
 from flask import jsonify
 from ..connection.config import connect_db 
 from src.utils import hash_utils
-from src.utils.hash_utils import bcrypt
 from src.utils import cryptography_utils
 from flask_jwt_extended import create_access_token
 from datetime import timedelta
 from flask_mail import Message
+import hashlib
 from src.extensions import mail
 import os
 
@@ -92,25 +92,30 @@ def create_user(nome, cpf, email, senha):
     conn = connect_db()
     if conn:
         try:
-            senha_hash = bcrypt.hashpw(senha.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+            # 👉 Gera hash MD5 da senha
+            senha_hash = hashlib.md5(senha.encode("utf-8")).hexdigest()
+
             cur = conn.cursor()
 
-            # Inserir usuário com status "Pendente"
+            # Inserir usuário com status "Pendente" (status_id = 3)
             cur.execute(
                 """
                 INSERT INTO usuarios (nome, cpf, email, senha, ativo, criado_em, status_id)
                 VALUES (%s, %s, %s, %s, %s, NOW(), %s)
                 RETURNING id
                 """,
-                (nome, cpf, email, senha_hash, True, 3),  # 3 = "Pendente"
+                (nome, cpf, email, senha_hash, True, 3),
             )
-            usuario_id = cur.fetchone()[0]
 
+            usuario_id = cur.fetchone()[0]
             conn.commit()
             cur.close()
             conn.close()
 
-            return {"message": "Usuário registrado! Verifique seu e-mail para ativar a conta.", "id": usuario_id}, 201
+            return {
+                "message": "Usuário registrado! Verifique seu e-mail para ativar a conta.",
+                "id": usuario_id,
+            }, 201
         except Exception as e:
             conn.rollback()
             print(f"❌ Erro ao registrar usuário: {e}")
@@ -210,24 +215,35 @@ def definir_permissoes(usuario_id, permissoes):
     if conn:
         try:
             cur = conn.cursor()
-            for permissao in permissoes:
-                cur.execute(
-                    """
-                    INSERT INTO permissoes_usuario (usuario_id, permissao)
-                    VALUES (%s, %s)
-                    """,
-                    (usuario_id, permissao),
-                )
+
+            for permissao_nome in permissoes:
+                # Busca o ID da permissão pelo nome
+                cur.execute("SELECT id FROM permissoes WHERE nome = %s", (permissao_nome,))
+                permissao = cur.fetchone()
+
+                if permissao:
+                    permissao_id = permissao[0]
+                    cur.execute(
+                        """
+                        INSERT INTO permissoes_usuario (usuario_id, permissao_id)
+                        VALUES (%s, %s)
+                        """,
+                        (usuario_id, permissao_id),
+                    )
+                else:
+                    print(f"⚠️ Permissão não encontrada: {permissao_nome}")
+
             conn.commit()
             cur.close()
             conn.close()
             return True
+
         except Exception as e:
             conn.rollback()
-            print(f"Erro ao definir permissões: {e}")
+            print(f"❌ Erro ao definir permissões: {e}")
             return False
     else:
-        print("Erro ao conectar ao banco de dados.")
+        print("❌ Erro ao conectar ao banco de dados.")
         return False
 
 
@@ -248,14 +264,16 @@ def get_user_by_cpf_and_password(cpf, senha):
             cur.close()
             conn.close()
 
-            if user and bcrypt.checkpw(senha.encode("utf-8"), user[4].encode("utf-8")):
-                return {
-                    "id": user[0],
-                    "nome": user[1],
-                    "cpf": user[2],
-                    "email": user[3],
-                    "cargo": user[5],
-                }
+            if user:
+                senha_md5 = hashlib.md5(senha.encode("utf-8")).hexdigest()
+                if senha_md5 == user[4]:
+                    return {
+                        "id": user[0],
+                        "nome": user[1],
+                        "cpf": user[2],
+                        "email": user[3],
+                        "cargo": user[5],
+                    }
             return None
         except Exception as e:
             print(f"Erro ao buscar usuário no banco de dados: {e}")
@@ -294,7 +312,7 @@ def get_user_permissions(user_id):
         try:
             cur = conn.cursor()
 
-            # Primeiro tenta buscar permissões específicas do usuário
+            # 🔍 Primeiro tenta buscar permissões específicas do usuário
             cur.execute("""
                 SELECT p.nome
                 FROM permissoes_usuario pu
@@ -303,14 +321,26 @@ def get_user_permissions(user_id):
             """, (user_id,))
             permissoes_usuario = [row[0] for row in cur.fetchall()]
 
-            # Se o usuário não tiver permissões diretas, buscar pelo cargo
+            # ✅ Se o usuário não tiver permissões diretas, buscar pelas permissões do cargo
             if not permissoes_usuario:
-                cur.execute("SELECT cargo_id FROM usuarios WHERE id = %s", (user_id,))
+                cur.execute("""
+                    SELECT cu.cargo_id
+                    FROM cargo_usuario cu
+                    WHERE cu.usuario_id = %s
+                """, (user_id,))
                 cargo = cur.fetchone()
                 if cargo:
                     cargo_id = cargo[0]
-                    cur.execute("SELECT permissoes FROM nome WHERE cargo_id = %s", (cargo_id,))
+
+                    # Faz join entre permissoes_cargo e permissoes
+                    cur.execute("""
+                        SELECT p.nome
+                        FROM permissoes p
+                        JOIN permissoes_cargo pc ON p.nome = pc.permissao
+                        WHERE pc.cargo_id = %s
+                    """, (cargo_id,))
                     permissoes_cargo = [row[0] for row in cur.fetchall()]
+
                     cur.close()
                     conn.close()
                     return permissoes_cargo
@@ -324,6 +354,7 @@ def get_user_permissions(user_id):
     else:
         print("Erro ao conectar ao banco de dados")
         return []
+
 
 
 def authenticate_user(cpf, senha):
@@ -345,7 +376,10 @@ def authenticate_user(cpf, senha):
         conn.close()
 
         if user:
-            if bcrypt.checkpw(senha.encode('utf-8'), user[2].encode('utf-8')):
+            import hashlib
+            senha_md5 = hashlib.md5(senha.encode()).hexdigest()
+
+            if senha_md5 == user[2]:
                 status_id = user[4]
 
                 # ✅ Checagem do status do usuário
@@ -548,3 +582,36 @@ def verificar_se_usuario_eh_atendente(usuario_id):
     finally:
         cur.close()
         conn.close()
+
+
+def corrigir_senhas():
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+
+            # Buscar usuários com senha em formato bcrypt (inicia com $2b$)
+            cur.execute("SELECT id FROM usuarios WHERE senha LIKE '$2b$%';")
+            usuarios = cur.fetchall()
+
+            if not usuarios:
+                print("✅ Nenhum usuário com senha bcrypt encontrado.")
+                return
+
+            # Hash da nova senha padrão (ex: 123456)
+            senha_padrao = "123456"
+            senha_md5 = hashlib.md5(senha_padrao.encode()).hexdigest()
+
+            for user in usuarios:
+                user_id = user[0]
+                cur.execute("UPDATE usuarios SET senha = %s WHERE id = %s;", (senha_md5, user_id))
+
+            conn.commit()
+            cur.close()
+            conn.close()
+
+            print(f"✅ Corrigido {len(usuarios)} usuários para senha MD5.")
+        except Exception as e:
+            print(f"❌ Erro ao corrigir senhas: {e}")
+    else:
+        print("❌ Erro ao conectar ao banco.")

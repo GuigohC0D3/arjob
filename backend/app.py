@@ -17,7 +17,7 @@ def create_app():
     app.config['MAIL_PORT'] = 587
     app.config['MAIL_USE_TLS'] = True
     app.config['MAIL_USERNAME'] = 'thundergametm@gmail.com'
-    app.config['MAIL_PASSWORD'] = 'lcrw hhuj ggus sfey'
+    app.config['MAIL_PASSWORD'] = 'oyhoezeizdybnajm'
     app.config['MAIL_DEFAULT_SENDER'] = 'thundergametm@gmail.com'
 
     # Configurações do Flask-JWT-Extended
