@@ -101,7 +101,10 @@ const GerenciarProdutos = () => {
   );
   const indexUltimoProduto = currentPage * produtosPorPagina;
   const indexPrimeiroProduto = indexUltimoProduto - produtosPorPagina;
-  const produtosAtuais = produtosFiltrados.slice(indexPrimeiroProduto, indexUltimoProduto);
+  const produtosAtuais = produtosFiltrados.slice(
+    indexPrimeiroProduto,
+    indexUltimoProduto
+  );
   const totalPaginas = Math.ceil(produtosFiltrados.length / produtosPorPagina);
 
   return (
@@ -112,7 +115,7 @@ const GerenciarProdutos = () => {
         </h1>
 
         {/* Formulário */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
           <input
             type="text"
             placeholder="Nome"
@@ -150,14 +153,13 @@ const GerenciarProdutos = () => {
             onChange={(e) => setEstoque(e.target.value)}
             className="border border-gray-300 p-3 rounded-lg"
           />
+          <button
+            onClick={adicionarProduto}
+            className="bg-blue-600 text-white p-3 w-3 rounded-lg text-sm font-semibold hover:bg-blue-700 transition"
+          >
+            Adicionar Produto
+          </button>
         </div>
-
-        <button
-          onClick={adicionarProduto}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition mb-4"
-        >
-          Adicionar Produto
-        </button>
 
         {/* Importação */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -201,7 +203,9 @@ const GerenciarProdutos = () => {
         />
 
         {produtosFiltrados.length === 0 ? (
-          <p className="text-gray-500 text-center">Nenhum produto encontrado.</p>
+          <p className="text-gray-500 text-center">
+            Nenhum produto encontrado.
+          </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full table-auto bg-white border rounded-lg shadow">
