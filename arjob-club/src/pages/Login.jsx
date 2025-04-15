@@ -58,6 +58,10 @@ const Login = () => {
     navigate("/Register");
   };
 
+  const handleForgotPassword = () => {
+    navigate("/forgot-password"); // redireciona para página de recuperação
+  };
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 px-4">
       <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
@@ -115,6 +119,14 @@ const Login = () => {
             className="w-full bg-blue-600 text-white py-3 rounded-md shadow-md hover:bg-blue-700 transition-all duration-300 transform hover:scale-105"
           >
             Registrar
+          </button>
+
+          <button
+            type="button"
+            onClick={handleForgotPassword}
+            className="w-full bg-gray-200 text-blue-700 py-2 rounded-md text-sm font-medium mt-2 hover:bg-gray-300 transition-all"
+          >
+            Esqueci minha senha
           </button>
         </form>
       </div>

@@ -21,6 +21,8 @@ import VerifyAccount from "./pages/VerifyAccount";
 import NovaComanda from "./components/NovaComanda";
 import ComandaAberta from "./pages/ComandaAberta";
 import GerenciarProdutos from "./pages/GerenciarProdutos";
+import ForgotPassword from "./pages/ForgotPassword"
+import NovaSenha from "./pages/NovaSenha"
 
 const PrivateRoute = () => {
   const authToken = sessionStorage.getItem("authToken");
@@ -47,6 +49,8 @@ const AppContent = () => {
           <Route path="/Preloading" element={<Preloading />} />
           <Route path="/Register" element={<RegisterUser />} />
           <Route path="/verify" element={<VerifyAccount />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/nova-senha" element={<NovaSenha />} />
 
           {/* Rotas protegidas */}
           <Route element={<PrivateRoute />}>
