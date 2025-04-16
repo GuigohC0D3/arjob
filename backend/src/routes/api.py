@@ -708,8 +708,6 @@ def senha_forte(senha):
     requisitos = sum(bool(x) for x in [maiuscula, minuscula, numero, simbolo])
     return comprimento and requisitos >= 3
 
-
-
 @main_bp.route("/test-token", methods=["GET"])
 @jwt_required()
 def test_token():
@@ -718,3 +716,7 @@ def test_token():
         "message": "Token válido!",
         "user_id": get_jwt_identity()
     }), 200
+
+@main_bp.route('/admin/clientes/liberar-convenios', methods=['PUT'])
+def liberar_convenios_route():
+    return clientes_controller.liberar_convenios()

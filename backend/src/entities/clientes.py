@@ -226,3 +226,24 @@ def verificar_limite(cliente_id):
         print("Erro ao verificar limite:", e)
         return {"error": "Erro interno no servidor"}
          
+def liberar_convenios_mensalmente():
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                UPDATE clientes
+                SET 
+                    consumido = 0,
+                    saldo = limite,
+                    bloqueado = false
+            """)
+            conn.commit()
+            cur.close()
+            conn.close()
+            return {"message": "Convênios liberados com sucesso!"}, 200
+        except Exception as e:
+            print(f"Erro ao liberar convênios: {e}")
+            return {"error": "Erro ao liberar convênios"}, 500
+    else:
+        return {"error": "Erro ao conectar ao banco de dados"}, 500

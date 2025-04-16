@@ -70,3 +70,6 @@ def verificar_limite_cliente(cliente_id):
     except Exception as e:
         print("Erro no controlador verificar_limite_cliente", e)
         return {"error": "Erro ao verificar limite do cliente"}, 500
+
+def liberar_convenios():
+    return clientes.liberar_convenios_mensalmente()

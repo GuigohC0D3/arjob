@@ -96,22 +96,41 @@ def atualizar_status_comanda(comanda_id, total, mesa_id, itens=None, pagamento_i
         try:
             cur = conn.cursor()
 
-            # Atualiza o cliente_id na comanda!
+            # Atualiza a comanda com cliente, pagamento, total e fecha
             cur.execute("""
                 UPDATE comandas
-                SET cliente_id = %s
-                WHERE id = %s
-            """, (cliente_id, comanda_id))
-
-            # Atualiza o status e informações
-            cur.execute("""
-                UPDATE comandas
-                SET status = FALSE,
-                    total = %s,
+                SET cliente_id = %s,
                     pagamento_id = %s,
+                    total = %s,
+                    status = FALSE,
                     data_fechamento = NOW()
                 WHERE id = %s
-            """, (total, pagamento_id, comanda_id))
+            """, (cliente_id, pagamento_id, total, comanda_id))
+
+            print(f"🧾 Pagamento ID recebido: {pagamento_id}")
+            print(f"👤 Cliente ID recebido: {cliente_id}")
+            print(f"💵 Total da comanda: {total}")
+
+            # Lógica de convênio (ex: ID 5 representa convênio)
+            if pagamento_id == 5 and cliente_id:
+                # Atualiza saldo e consumido do cliente
+                cur.execute("""
+                    UPDATE clientes
+                    SET 
+                        consumido = consumido + %s,
+                        saldo = saldo - %s
+                    WHERE id = %s
+                    RETURNING consumido, limite
+                """, (total, total, cliente_id))
+                result = cur.fetchone()
+                if result:
+                    consumido, limite = result
+                    if consumido >= limite:
+                        cur.execute("""
+                            UPDATE clientes
+                            SET bloqueado = TRUE
+                            WHERE id = %s
+                        """, (cliente_id,))
 
             # Libera a mesa
             cur.execute("""
@@ -120,7 +139,7 @@ def atualizar_status_comanda(comanda_id, total, mesa_id, itens=None, pagamento_i
                 WHERE id = %s
             """, (mesa_id,))
 
-            # Cria histórico
+            # Cria histórico da comanda
             cur.execute("""
                 INSERT INTO historico_comandas (
                     comanda_id,
@@ -134,16 +153,15 @@ def atualizar_status_comanda(comanda_id, total, mesa_id, itens=None, pagamento_i
                 )
                 RETURNING id
             """, (comanda_id, cliente_id, pagamento_id, total, usuario_id))
-
             historico_id = cur.fetchone()[0]
 
-            # Insere os itens no histórico
+            # Insere os itens no histórico e atualiza estoque
             for item in itens:
                 produto_id = item.get('id')
                 quantidade = item.get('quantidade')
                 preco_unitario = item.get('preco')
 
-                if produto_id is None or quantidade is None or preco_unitario is None:
+                if None in (produto_id, quantidade, preco_unitario):
                     print(f"❌ Item inválido encontrado: {item}")
                     continue
 
@@ -155,15 +173,9 @@ def atualizar_status_comanda(comanda_id, total, mesa_id, itens=None, pagamento_i
                         preco_unitario,
                         historico_comanda_id
                     ) VALUES (%s, %s, %s, %s, %s)
-                """, (
-                    comanda_id,
-                    produto_id,
-                    quantidade,
-                    preco_unitario,
-                    historico_id
-                ))
+                """, (comanda_id, produto_id, quantidade, preco_unitario, historico_id))
 
-                # ✅ Atualiza o estoque do produto
+                # Atualiza estoque
                 cur.execute("""
                     UPDATE produtos
                     SET estoque = estoque - %s
@@ -171,8 +183,7 @@ def atualizar_status_comanda(comanda_id, total, mesa_id, itens=None, pagamento_i
                 """, (quantidade, produto_id, quantidade))
 
             conn.commit()
-
-            print(f"✅ Comanda {comanda_id} fechada, histórico {historico_id} criado com sucesso.")
+            print(f"✅ Comanda {comanda_id} fechada com sucesso. Histórico ID: {historico_id}")
             return {"message": "Comanda fechada com sucesso!"}, 200
 
         except Exception as e:
@@ -183,10 +194,10 @@ def atualizar_status_comanda(comanda_id, total, mesa_id, itens=None, pagamento_i
         finally:
             cur.close()
             conn.close()
-
     else:
         print("❌ Erro ao conectar ao banco de dados")
         return {"error": "Erro ao conectar ao banco de dados"}, 500
+
 
 def obter_comanda_por_code(code):
     conn = connect_db()
