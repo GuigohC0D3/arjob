@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 
-const PagamentoOptions = ({ onSelect }) => {
+const PagamentoOptions = ({ onSelect, clienteSelecionado }) => {
   const [opcoes, setOpcoes] = useState([]);
   const [selectedOption, setSelectedOption] = useState("");
 
@@ -27,7 +27,9 @@ const PagamentoOptions = ({ onSelect }) => {
     const selectedId = event.target.value;
     setSelectedOption(selectedId);
 
-    const opcaoSelecionada = opcoes.find((opcao) => opcao.id.toString() === selectedId);
+    const opcaoSelecionada = opcoes.find(
+      (opcao) => opcao.id.toString() === selectedId
+    );
     if (opcaoSelecionada) {
       onSelect(opcaoSelecionada);
     }
@@ -59,18 +61,36 @@ const PagamentoOptions = ({ onSelect }) => {
         "
       >
         <option value="">Selecione uma opção</option>
-        {opcoes.map((opcao) => (
-          <option key={opcao.id} value={opcao.id}>
-            {opcao.nome}
-          </option>
-        ))}
+        {opcoes.map((opcao) => {
+          // 🔒 Se o cliente estiver bloqueado, escondemos a opção "Convênio"
+          if (
+            opcao.nome.toLowerCase() === "convênio" &&
+            clienteSelecionado?.bloqueado
+          ) {
+            return null;
+          }
+
+          return (
+            <option key={opcao.id} value={opcao.id}>
+              {opcao.nome}
+            </option>
+          );
+        })}
       </select>
+
+      {/* ⚠️ Aviso visual se o convênio estiver bloqueado */}
+      {clienteSelecionado?.bloqueado && (
+        <p className="text-red-500 text-sm mt-2">
+          ⚠️ Convênio indisponível – limite atingido
+        </p>
+      )}
     </div>
   );
 };
 
 PagamentoOptions.propTypes = {
   onSelect: PropTypes.func.isRequired,
+  clienteSelecionado: PropTypes.object, // agora aceita o cliente como prop
 };
 
 export default PagamentoOptions;

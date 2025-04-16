@@ -52,6 +52,17 @@ const ComandaAberta = () => {
     }
   }, [state, comandaId]);
 
+  useEffect(() => {
+    if (clienteSelecionado?.bloqueado) {
+      confirmDialog({
+        message: "Este cliente atingiu o limite do convênio.",
+        header: "Convênio Bloqueado",
+        icon: "pi pi-exclamation-triangle",
+        acceptLabel: "Entendi",
+      });
+    }
+  }, [clienteSelecionado]);
+
   // Buscar produtos disponíveis
   const fetchProdutos = useCallback(async () => {
     try {
@@ -436,6 +447,7 @@ const ComandaAberta = () => {
             />
             <PagamentoOptions
               onSelect={(pagamento) => setPagamentoSelecionado(pagamento)}
+              clienteSelecionado={clienteSelecionado}
             />
 
             {clienteSelecionado &&

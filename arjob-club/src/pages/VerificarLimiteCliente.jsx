@@ -1,6 +1,6 @@
 // VerificarLimiteCliente.jsx
-import { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
+import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 
 const VerificarLimiteCliente = ({ clienteId }) => {
   const [limiteInfo, setLimiteInfo] = useState(null);
@@ -10,7 +10,9 @@ const VerificarLimiteCliente = ({ clienteId }) => {
     if (!clienteId) return; // se nenhum cliente for selecionado, não faz nada
     const fetchLimite = async () => {
       try {
-        const response = await fetch(`http://127.0.0.1:5000/clientes/${clienteId}/limite`);
+        const response = await fetch(
+          `http://127.0.0.1:5000/clientes/${clienteId}/limite`
+        );
         const data = await response.json();
         if (response.ok) {
           setLimiteInfo(data);
@@ -40,7 +42,7 @@ const VerificarLimiteCliente = ({ clienteId }) => {
         <strong>Consumido:</strong> R$ {limiteInfo.consumido.toFixed(2)}
       </p>
       <p>
-        <strong>Disponível:</strong> R$ {limiteInfo.disponivel.toFixed(2)}
+        <strong>Saldo:</strong> R$ {limiteInfo.disponivel.toFixed(2)}
       </p>
       <p>
         <strong>Status:</strong> {limiteInfo.status}
@@ -50,7 +52,7 @@ const VerificarLimiteCliente = ({ clienteId }) => {
 };
 
 VerificarLimiteCliente.propTypes = {
-    clienteId: PropTypes.number.isRequired,
-  };
+  clienteId: PropTypes.number.isRequired,
+};
 
 export default VerificarLimiteCliente;
