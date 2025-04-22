@@ -30,6 +30,7 @@ const ComandaAberta = () => {
   // Se o objeto atendente foi passado pelo state, use-o; senão, tente buscar detalhes da comanda
   useEffect(() => {
     if (state && state.atendente) {
+      console.log("👤 Usuário via state:", state.atendente)
       setUsuarioLogado(state.atendente);
     } else if (comandaId) {
       // Caso seu endpoint de detalhes da comanda retorne os dados do atendente,

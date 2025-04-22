@@ -22,24 +22,29 @@ const IniciarVenda = () => {
               `http://127.0.0.1:5000/comandas/mesa/${mesa.id}`
             );
 
+            if (!comandaResponse.ok) {
+              throw new Error("Sem comanda aberta");
+            }
+
             const comandaData = await comandaResponse.json();
 
-            const temComandaAberta =
-              comandaData &&
-              comandaData.comanda &&
-              comandaData.comanda.status === true;
+            const temComandaAberta = comandaData && comandaData.status === true;
 
             return {
               ...mesa,
               status: temComandaAberta,
-              comandaId: temComandaAberta ? comandaData.comanda.id : null,
+              comandaId: temComandaAberta ? comandaData.id : null,
             };
           } catch (error) {
             console.error(
               `❌ Erro ao buscar comanda da mesa ${mesa.id}:`,
               error
             );
-            return mesa;
+            return {
+              ...mesa,
+              status: false,
+              comandaId: null,
+            };
           }
         })
       );
