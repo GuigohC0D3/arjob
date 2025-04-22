@@ -178,16 +178,12 @@ def fechar_comanda_por_id_route(comanda_id):
     return comandas_controller.fechar_comanda_por_id(comanda_id)
 
 @main_bp.route('/comandas/<int:comanda_id>', methods=['GET'])
-def obter_comanda_por_id(comanda_id):
-    try:
-        comanda = comandas.obter_comanda_por_id(comanda_id)
-        if comanda:
-            return jsonify({"comanda": comanda}), 200
-        else:
-            return jsonify({"comanda": None, "message": "Nenhuma comanda encontrada com esse ID"}), 404
-    except Exception as e:
-        print(f"Erro ao obter comanda por ID: {e}")
-        return jsonify({"error": "Erro interno no servidor"}), 500
+def obter_comanda_por_id_route(comanda_id):
+    comanda = comandas.obter_comanda_por_id(comanda_id)
+    if comanda:
+        return jsonify(comanda), 200
+    return jsonify({"error": "Comanda não encontrada"}), 404
+
 
 @main_bp.route("/comandas", methods=["GET"])
 def listar_comandas():

@@ -199,45 +199,16 @@ def atualizar_status_comanda(comanda_id, total, mesa_id, itens=None, pagamento_i
         return {"error": "Erro ao conectar ao banco de dados"}, 500
 
 
-def obter_comanda_por_code(code):
-    conn = connect_db()
-    if conn:
-        try:
-            cur = conn.cursor()
-            cur.execute("""
-                SELECT id, code, mesa_id, status, total, cliente_id
-                FROM comandas
-                WHERE code = %s
-            """, (code,))
-            comanda = cur.fetchone()
-            cur.close()
-            conn.close()
-
-            if comanda:
-                return {
-                    "id": comanda[0],
-                    "code": comanda[1],
-                    "mesa_id": comanda[2],
-                    "status": comanda[3],
-                    "total": comanda[4],
-                    "cliente_id": comanda[5]
-                }
-            return None
-        except Exception as e:
-            print(f"❌ Erro ao buscar comanda por código: {e}")
-            return None
-    else:
-        print("Erro ao conectar ao banco de dados")
-        return None
-
 def obter_comanda_por_id(comanda_id):
     conn = connect_db()
     if conn:
         try:
             cur = conn.cursor()
             cur.execute("""
-                SELECT id, code, mesa_id, status FROM comandas
-                WHERE id = %s AND status = true
+                SELECT c.id, c.code, c.mesa_id, c.status, u.id, u.nome
+                FROM comandas c
+                LEFT JOIN usuarios u ON c.usuario_id = u.id
+                WHERE c.id = %s AND c.status = TRUE
             """, (comanda_id,))
             comanda = cur.fetchone()
             cur.close()
@@ -248,7 +219,11 @@ def obter_comanda_por_id(comanda_id):
                     "id": comanda[0],
                     "code": comanda[1],
                     "mesa_id": comanda[2],
-                    "status": comanda[3]
+                    "status": comanda[3],
+                    "atendente": {
+                        "id": comanda[4],
+                        "nome": comanda[5]
+                    } if comanda[4] else None
                 }
             return None
         except Exception as e:
@@ -259,47 +234,77 @@ def obter_comanda_por_id(comanda_id):
         return None
 
 
+def obter_comanda_por_id(comanda_id):
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT c.id, c.code, c.mesa_id, c.status, c.data_abertura,
+                       u.id, u.nome
+                FROM comandas c
+                LEFT JOIN usuarios u ON c.usuario_id = u.id
+                WHERE c.id = %s
+            """, (comanda_id,))
+            comanda = cur.fetchone()
+            cur.close()
+            conn.close()
+
+            if comanda:
+                return {
+                    "id": comanda[0],
+                    "numero": comanda[1],
+                    "mesa_id": comanda[2],
+                    "status": comanda[3],
+                    "data_abertura": comanda[4],
+                    "atendente": {
+                        "id": comanda[5],
+                        "nome": comanda[6]
+                    }
+                }
+            return None
+        except Exception as e:
+            print(f"Erro ao buscar comanda por ID: {e}")
+            return None
+    return None
+
+
+
+
 def obter_comanda_por_mesa(mesa_id):
     conn = connect_db()
-    if not conn:
-        print("❌ Erro ao conectar ao banco de dados")
-        return None
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT c.id, c.code, c.mesa_id, c.status, u.id, u.nome
+                FROM comandas c
+                LEFT JOIN usuarios u ON c.usuario_id = u.id
+                WHERE c.mesa_id = %s AND c.status = TRUE
+                LIMIT 1
+            """, (mesa_id,))
+            comanda = cur.fetchone()
+            cur.close()
+            conn.close()
 
-    try:
-        cur = conn.cursor()
-
-        print(f"🔍 Buscando comanda para mesa_id={mesa_id}")
-
-        cur.execute("""
-            SELECT id, mesa_id, status, code
-            FROM comandas
-            WHERE mesa_id = %s AND status = TRUE
-            LIMIT 1
-        """, (mesa_id,))
-
-        comanda = cur.fetchone()
-
-        if comanda:
-            comanda_dict = {
-                "id": comanda[0],
-                "mesa_id": comanda[1],
-                "status": comanda[2],
-                "code": comanda[3]
-            }
-            print(f"✅ Comanda encontrada: {comanda_dict}")
-            return comanda_dict
-        else:
-            print(f"⚠️ Nenhuma comanda aberta para a mesa {mesa_id}")
+            if comanda:
+                return {
+                    "id": comanda[0],
+                    "code": comanda[1],
+                    "mesa_id": comanda[2],
+                    "status": comanda[3],
+                    "atendente": {
+                        "id": comanda[4],
+                        "nome": comanda[5]
+                    } if comanda[4] else None
+                }
             return None
-
-    except Exception as e:
-        print(f"❌ Erro ao buscar comanda da mesa {mesa_id}: {e}")
+        except Exception as e:
+            print(f"Erro ao buscar comanda por mesa: {e}")
+            return None
+    else:
+        print("Erro ao conectar ao banco de dados")
         return None
-
-    finally:
-        cur.close()
-        conn.close()
-
 
 def fechar_comanda(comanda_id):
     conn = connect_db()
