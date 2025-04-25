@@ -184,12 +184,12 @@ def add_item_comanda(comanda_id, produto_id, quantidade, preco_unitario):
 # ✅ Obter itens da comanda
 def obter_itens_comanda(code):
     try:
-        comanda = comandas.obter_comanda_por_code(code)
+        comanda, status = comandas.obter_comanda_por_code(code)
 
-        if not comanda:
-            return jsonify({"error": "Comanda não encontrada"}), 404
+        if status != 200:
+            return jsonify(comanda), status  # comanda aqui já é um dict com {"error": "..."}.
 
-        comanda_id = comanda["id"]  # 💡 Aqui convertemos o code para ID
+        comanda_id = comanda["id"]
         itens, status = comandas.obter_itens_comanda(comanda_id)
 
         return jsonify(itens), status
@@ -197,6 +197,7 @@ def obter_itens_comanda(code):
     except Exception as e:
         print(f"❌ Erro ao obter itens da comanda histórica: {e}")
         return jsonify({"error": "Erro ao buscar itens"}), 500
+
 
 
 # ✅ Atualizar quantidade de item
@@ -246,15 +247,12 @@ def atualizar_item_da_comanda(comanda_id, item_id):
 # ✅ Buscar comanda por mesa
 def obter_comanda_por_mesa(mesa_id):
     try:
-        print(f"➡️ Controller: Buscando comanda aberta para mesa {mesa_id}")
 
         comanda = comandas.obter_comanda_por_mesa(mesa_id)
 
         if comanda:
             print(f"✅ Controller: Comanda encontrada {comanda}")
             return jsonify(comanda), 200  # ✅ retorna dict diretamente
-
-        print(f"⚠️ Controller: Nenhuma comanda aberta para mesa {mesa_id}")
         return jsonify({
             "message": "Nenhuma comanda aberta encontrada para esta mesa"
         }), 404

@@ -700,3 +700,83 @@ def listar_comandas():
     else:
         print("Erro ao conectar ao banco de dados")
         return []
+    
+def obter_comanda_por_code(code):
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT 
+                    c.id,
+                    c.code,
+                    m.numero AS mesa_numero,
+                    cl.nome AS cliente_nome,
+                    cl.cpf AS cliente_cpf,
+                    u.nome AS atendente_nome,
+                    c.total,
+                    c.status,
+                    c.data_abertura,
+                    c.data_fechamento,
+                    tp.descricao AS tipos_pagamento
+                FROM comandas c
+                JOIN mesas m ON c.mesa_id = m.id
+                LEFT JOIN clientes cl ON c.cliente_id = cl.id
+                LEFT JOIN usuarios u ON c.usuario_id = u.id
+                LEFT JOIN tipos_pagamento tp ON c.pagamento_id = tp.id
+                WHERE c.code = %s
+            """, (code,))
+            
+            comanda = cur.fetchone()
+
+            if not comanda:
+                cur.close()
+                conn.close()
+                return {"error": "Comanda não encontrada"}, 404
+
+            comanda_id = comanda[0]
+
+            cur.execute("""
+                SELECT 
+                    ic.produto_id, 
+                    p.nome, 
+                    ic.quantidade, 
+                    ic.preco_unitario
+                FROM itens_comanda ic
+                JOIN produtos p ON ic.produto_id = p.id
+                WHERE ic.comanda_id = %s
+            """, (comanda_id,))
+            
+            itens = cur.fetchall()
+
+            cur.close()
+            conn.close()
+
+            return {
+                "id": comanda[0],
+                "code": comanda[1],
+                "mesa": comanda[2],
+                "cliente": comanda[3] or "Não informado",
+                "cpf": comanda[4] or "Não informado",
+                "atendente": comanda[5] or "Não informado",
+                "total": float(comanda[6]) if comanda[6] else 0.00,
+                "status": comanda[7],
+                "data_abertura": comanda[8].isoformat() if comanda[8] else None,
+                "data_fechamento": comanda[9].isoformat() if comanda[9] else None,
+                "tipos_pagamento": comanda[10] or "Não informado",
+                "itens": [
+                    {
+                        "produto_id": item[0],
+                        "nome": item[1],
+                        "quantidade": item[2],
+                        "preco_unitario": float(item[3])
+                    }
+                    for item in itens
+                ]
+            }, 200
+
+        except Exception as e:
+            print(f"❌ Erro ao buscar comanda por código: {e}")
+            return {"error": "Erro ao buscar comanda"}, 500
+    else:
+        return {"error": "Erro ao conectar ao banco de dados"}, 500

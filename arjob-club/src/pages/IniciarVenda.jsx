@@ -22,9 +22,7 @@ const IniciarVenda = () => {
               `http://127.0.0.1:5000/comandas/mesa/${mesa.id}`
             );
 
-            if (!comandaResponse.ok) {
-              throw new Error("Sem comanda aberta");
-            }
+
 
             const comandaData = await comandaResponse.json();
 
