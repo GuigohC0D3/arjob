@@ -12,12 +12,14 @@ def create_app():
 
     app = Flask(__name__)
 
+    # CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+
     # Configurações do Flask-Mail
     app.config['MAIL_SERVER'] = 'smtp.gmail.com'
     app.config['MAIL_PORT'] = 587
     app.config['MAIL_USE_TLS'] = True
     app.config['MAIL_USERNAME'] = 'thundergametm@gmail.com'
-    app.config['MAIL_PASSWORD'] = 'oyhoezeizdybnajm'
+    app.config['MAIL_PASSWORD'] = 'ltyhtaiwjishphmv'
     app.config['MAIL_DEFAULT_SENDER'] = 'thundergametm@gmail.com'
 
     # Configurações do Flask-JWT-Extended
@@ -48,4 +50,5 @@ def create_app():
 
 if __name__ == '__main__':
     app = create_app()
+    
     app.run(host="0.0.0.0", port=5000, debug=True)

@@ -126,7 +126,7 @@ const CadastroCliente = () => {
     }
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/clientes", {
+      const response = await fetch("http://10.11.1.67:5000/clientes", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

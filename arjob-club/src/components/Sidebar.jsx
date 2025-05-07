@@ -17,22 +17,32 @@ const Sidebar = () => {
     setIsLoggedIn(!!token);
   }, []);
 
+  useEffect(() => {
+    const user = sessionStorage.getItem("user")
+    setIsLoggedIn(!!user)
+    console.log(user)
+  }, [])
+
   // Buscar permissões do usuário
   useEffect(() => {
     const fetchPermissoes = async () => {
       try {
         const token = sessionStorage.getItem("authToken");
-        if (!token) throw new Error("Token não encontrado. Faça login novamente.");
+        if (!token)
+          throw new Error("Token não encontrado. Faça login novamente.");
 
-        const response = await api.get("/permissoes", {
+        const response = await api.get("/permissoes?usuario_id=1", {
           headers: {
-            Authorization: `Bearer ${token}`,
+            // Authorization: `Bearer ${token}`,
           },
         });
 
         setPermissoes(response.data.permissoes || []);
       } catch (error) {
-        console.error("Erro ao buscar permissões:", error.response?.data || error.message);
+        console.error(
+          "Erro ao buscar permissões:",
+          error.response?.data || error.message
+        );
         setPermissoes([]);
       }
     };
@@ -45,17 +55,21 @@ const Sidebar = () => {
     const fetchCargo = async () => {
       try {
         const token = sessionStorage.getItem("authToken");
-        if (!token) throw new Error("Token não encontrado. Faça login novamente.");
+        if (!token)
+          throw new Error("Token não encontrado. Faça login novamente.");
 
-        const response = await api.get("/auth/cargo", {
+        const response = await api.get("/auth/cargo?user", {
           headers: {
-            Authorization: `Bearer ${token}`,
+            // Authorization: `Bearer ${token}`,
           },
         });
 
         setCargo(response.data.cargo);
       } catch (error) {
-        console.error("Erro ao buscar cargo:", error.response?.data || error.message);
+        console.error(
+          "Erro ao buscar cargo:",
+          error.response?.data || error.message
+        );
         setError(error.response?.data?.error || "Erro ao buscar cargo.");
       }
     };
@@ -114,8 +128,8 @@ const Sidebar = () => {
   ];
 
   // Filtrar itens do menu com base nas permissões
-  const filteredItems = menuItems.filter((item) =>
-   !item.permissao || permissoes.includes(item.permissao)
+  const filteredItems = menuItems.filter(
+    (item) => !item.permissao || permissoes.includes(item.permissao)
   );
 
   return (
@@ -145,9 +159,15 @@ const Sidebar = () => {
           <ul className="space-y-4">
             {isLoggedIn ? (
               filteredItems.map((item, index) => (
-                <li key={index} className="flex items-center p-3 space-x-4 hover:bg-gray-200 rounded-md">
+                <li
+                  key={index}
+                  className="flex items-center p-3 space-x-4 hover:bg-gray-200 rounded-md"
+                >
                   <i className={`${item.icon} text-lg`}></i>
-                  <Link to={item.path} className="text-gray-800 hover:text-gray-600">
+                  <Link
+                    to={item.path}
+                    className="text-gray-800 hover:text-gray-600"
+                  >
                     {item.name}
                   </Link>
                 </li>

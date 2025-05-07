@@ -28,7 +28,7 @@ main_bp = Blueprint('main', __name__)
 
 
 
-CORS(main_bp, methods=['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'])
+CORS(main_bp, resources={r"/*": {"origins": "http://10.11.1.67:5173/"}}, methods=['GET', 'POST', 'DELETE', 'PUT', 'OPTIONS'])
 
 @main_bp.route('/clientes', methods=['POST'])
 def addCliente():
@@ -229,6 +229,7 @@ def login_user_route():
         data = request.get_json()
         cpf = data.get('cpf')
         senha = data.get('senha')
+        print(data)
 
         if not cpf or not senha:
             return jsonify({'error': 'CPF e senha são obrigatórios'}), 400
@@ -412,10 +413,12 @@ def cors_preflight():
     return response, 200
 
 @main_bp.route('/auth/cargo', methods=['GET'])
-@jwt_required()
+# @jwt_required()
 def obter_cargo_usuario():
     try:
-        user_id = get_jwt_identity()
+        # user_id = get_jwt_identity()
+        user_id = request.args.get('usuario_id')
+        print(id)
         cargo = get_user_cargo(user_id)
         if cargo:
             return jsonify({"cargo": cargo}), 200
@@ -435,11 +438,15 @@ def permissoes_preflight():
     return response, 200
 
 @main_bp.route('/permissoes', methods=['GET'])
-@jwt_required()
+# @jwt_required()
 def listar_permissoes_usuario():
     try:
-        user_id = get_jwt_identity()  # Obtém o ID do usuário a partir do token
-        permissoes = get_user_permissions(user_id)
+        # user_id = get_jwt_identity() 
+        # user_id = usuario_id  # Obtém o ID do usuário a partir do token
+        id = request.args.get('usuario_id')
+        print(id)
+        permissoes = get_user_permissions(id)
+        print(permissoes)
         return jsonify({"permissoes": permissoes}), 200
     except Exception as e:
         print(f"Erro ao buscar permissões: {e}")

@@ -155,6 +155,13 @@ const RegisterUser = () => {
   return (
     <div className="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-md">
       <Toast ref={toast} />
+      <button
+        type="button"
+        onClick={() => navigate("/")}
+        className="flex items-center text-blue-600 font-medium hover:underline mb-4"
+      >
+        <i className="pi pi-arrow-left mr-2"></i> Voltar para o Login
+      </button>
       <form onSubmit={handleSubmit}>
         <h2 className="text-2xl font-bold text-center text-gray-700 mb-6">
           Registro de Usuário

@@ -28,6 +28,7 @@ const Login = () => {
 
       if (response.data && response.data.token) {
         const token = response.data.token; // Corrigido para pegar o token correto
+        console.log(response.data)
 
         // Salva no sessionStorage e localStorage
         sessionStorage.setItem("authToken", token);

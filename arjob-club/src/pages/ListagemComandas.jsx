@@ -18,7 +18,7 @@ const ListagemComandas = () => {
     const fetchComandas = async () => {
       try {
         const response = await fetch(
-          "http://127.0.0.1:5000/comandas?status=fechada"
+          "http://10.11.1.67:5000/comandas?status=fechada"
         );
         if (response.ok) {
           const dados = await response.json();
@@ -86,9 +86,16 @@ const ListagemComandas = () => {
       .then((itens) => {
         console.log("Itens da comanda:", itens);
         setComandaSelecionada({
-          ...comanda,
+          mesa: comanda.mesa,
+          cliente: comanda.cliente,
+          cpf: comanda.cpf,
+          atendente: comanda.atendente,
+          data_fechamento: comanda.data_fechamento,
+          total: comanda.total,
+          tipos_pagamento: comanda.tipos_pagamento,
           itens: Array.isArray(itens) ? itens : [],
         });
+
         setModalAberto(true);
       })
       .catch((err) => {
@@ -288,6 +295,11 @@ const ListagemComandas = () => {
                 {comandaSelecionada.atendente || "Não informado"}
               </p>
               <p>
+                <strong>Forma de Pagamento:</strong>{" "}
+                {comandaSelecionada.tipos_pagamento}
+              </p>
+
+              <p>
                 <strong>Total:</strong> R${" "}
                 {parseFloat(comandaSelecionada.total).toFixed(2)}
               </p>
@@ -299,12 +311,14 @@ const ListagemComandas = () => {
               <h3 className="text-lg font-semibold mt-4">Itens:</h3>
               {comandaSelecionada.itens?.length > 0 ? (
                 <ul className="list-disc pl-5 space-y-1">
-                  {deduplicateItems(comandaSelecionada.itens).map((item, idx) => (
-                    <li key={idx}>
-                      {item.nome} - R$
-                      {parseFloat(item.preco).toFixed(2)} x{item.quantidade}
-                    </li>
-                  ))}
+                  {deduplicateItems(comandaSelecionada.itens).map(
+                    (item, idx) => (
+                      <li key={idx}>
+                        {item.nome} - R$
+                        {parseFloat(item.preco).toFixed(2)} x{item.quantidade}
+                      </li>
+                    )
+                  )}
                 </ul>
               ) : (
                 <p className="text-gray-600">Nenhum item encontrado.</p>

@@ -8,7 +8,7 @@ import {
 } from "@react-pdf/renderer";
 import PropTypes from "prop-types";
 
-// (Opcional) Fonte monoespaçada para simular cupom
+// Fonte monoespaçada para simular cupom
 Font.register({
   family: "Courier",
   fonts: [
@@ -66,15 +66,14 @@ const styles = StyleSheet.create({
 });
 
 const DetalhesComandaPDF = ({ comanda }) => {
-  // Pegando dados que você já tem na comanda
   const {
-    mesa_id = "N/A",
-    cliente_nome = "Cliente não informado",
-    cliente_cpf = "CPF não informado",
+    mesa = "N/A",
+    cliente = "Cliente não informado",
+    cpf = "CPF não informado",
     atendente = "Atendente não informado",
     data_fechamento,
     total = 0,
-    pagamento = "Forma de pagamento não informada",
+    tipos_pagamento = "Forma de pagamento não informada",
     itens: rawItens = [],
   } = comanda;
 
@@ -104,9 +103,9 @@ const DetalhesComandaPDF = ({ comanda }) => {
         <View style={styles.divider} />
 
         <Text>Data: {dataFechamentoFormatada}</Text>
-        <Text>Mesa: {mesa_id}</Text>
-        <Text>Cliente: {cliente_nome}</Text>
-        <Text>CPF: {cliente_cpf}</Text>
+        <Text>Mesa: {mesa}</Text>
+        <Text>Cliente: {cliente}</Text>
+        <Text>CPF: {cpf}</Text>
         <Text>Garçom: {atendente}</Text>
 
         <View style={styles.divider} />
@@ -119,7 +118,6 @@ const DetalhesComandaPDF = ({ comanda }) => {
 
         {itens.map((item, idx) => (
           <View key={idx} style={styles.itemRow}>
-            {/* Produto principal */}
             <View style={styles.itemMain}>
               <Text>{item.nome}</Text>
               <Text>
@@ -127,7 +125,6 @@ const DetalhesComandaPDF = ({ comanda }) => {
               </Text>
             </View>
 
-            {/* Observação do produto, se tiver */}
             {item.observacao && item.observacao.trim() !== "" && (
               <Text style={styles.itemObs}>Obs: {item.observacao}</Text>
             )}
@@ -140,7 +137,7 @@ const DetalhesComandaPDF = ({ comanda }) => {
         <Text style={styles.bold}>
           TOTAL: R$ {parseFloat(total).toFixed(2)}
         </Text>
-        <Text>PAGAMENTO: {pagamento}</Text>
+        <Text>PAGAMENTO: {tipos_pagamento}</Text>
         <Text>IMPOSTOS APROXIMADOS: R$ 5,69</Text>
 
         <View style={styles.divider} />
@@ -148,7 +145,7 @@ const DetalhesComandaPDF = ({ comanda }) => {
         {/* Rodapé */}
         <View style={styles.footer}>
           <Text>OBRIGADO PELA PREFERÊNCIA!</Text>
-          <Text>05/12/2024 19:28:57</Text>
+          <Text>{dataFechamentoFormatada}</Text>
         </View>
       </Page>
     </Document>
@@ -157,13 +154,13 @@ const DetalhesComandaPDF = ({ comanda }) => {
 
 DetalhesComandaPDF.propTypes = {
   comanda: PropTypes.shape({
-    mesa_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    cliente_nome: PropTypes.string,
-    cliente_cpf: PropTypes.string,
+    mesa: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    cliente: PropTypes.string,
+    cpf: PropTypes.string,
     atendente: PropTypes.string,
     data_fechamento: PropTypes.string,
     total: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    pagamento: PropTypes.string,
+    tipos_pagamento: PropTypes.string,
     itens: PropTypes.arrayOf(
       PropTypes.shape({
         nome: PropTypes.string.isRequired,

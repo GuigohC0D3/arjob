@@ -38,7 +38,7 @@ const ComandaAberta = () => {
       const fetchComandaDetails = async () => {
         try {
           const res = await fetch(
-            `http://127.0.0.1:5000/comandas/${comandaId}`
+            `http://10.11.1.67:5000/comandas/${comandaId}`
           );
           const data = await res.json();
           // Supondo que a API retorne 'atendente' com os dados completos
@@ -67,7 +67,7 @@ const ComandaAberta = () => {
   // Buscar produtos disponíveis
   const fetchProdutos = useCallback(async () => {
     try {
-      const res = await fetch("http://127.0.0.1:5000/produtos");
+      const res = await fetch("http://10.11.1.67:5000/produtos");
       const data = await res.json();
       let produtosData = Array.isArray(data) ? data : data.produtos || [];
       if (Array.isArray(produtosData[0])) {
@@ -97,7 +97,7 @@ const ComandaAberta = () => {
     if (!comandaId) return;
     try {
       const res = await fetch(
-        `http://127.0.0.1:5000/comandas/${comandaId}/itens`
+        `http://10.11.1.67:5000/comandas/${comandaId}/itens`
       );
       const data = await res.json();
       if (!Array.isArray(data)) {
@@ -129,7 +129,7 @@ const ComandaAberta = () => {
 
     try {
       const res = await fetch(
-        `http://127.0.0.1:5000/comandas/${comandaId}/itens`,
+        `http://10.11.1.67:5000/comandas/${comandaId}/itens`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -157,7 +157,7 @@ const ComandaAberta = () => {
     if (!comandaId) return;
     try {
       await fetch(
-        `http://127.0.0.1:5000/comandas/${comandaId}/itens/${item.id}`,
+        `http://10.11.1.67:5000/comandas/${comandaId}/itens/${item.id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -175,14 +175,14 @@ const ComandaAberta = () => {
     try {
       if (item.quantidade === 1) {
         await fetch(
-          `http://127.0.0.1:5000/comandas/${comandaId}/itens/${item.id}`,
+          `http://10.11.1.67:5000/comandas/${comandaId}/itens/${item.id}`,
           {
             method: "DELETE",
           }
         );
       } else {
         await fetch(
-          `http://127.0.0.1:5000/comandas/${comandaId}/itens/${item.id}`,
+          `http://10.11.1.67:5000/comandas/${comandaId}/itens/${item.id}`,
           {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -253,7 +253,7 @@ const ComandaAberta = () => {
     };
 
     try {
-      await fetch(`http://127.0.0.1:5000/comandas/${comandaId}/fechar`, {
+      await fetch(`http://10.11.1.67:5000/comandas/${comandaId}/fechar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dadosParaEnviar),

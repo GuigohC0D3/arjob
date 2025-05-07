@@ -10,7 +10,7 @@ const IniciarVenda = () => {
 
   const fetchMesas = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:5000/mesas");
+      const response = await fetch("http://10.11.1.67:5000/mesas");
       if (!response.ok) throw new Error("Erro ao carregar mesas");
 
       const mesasData = await response.json();
@@ -19,10 +19,8 @@ const IniciarVenda = () => {
         mesasData.map(async (mesa) => {
           try {
             const comandaResponse = await fetch(
-              `http://127.0.0.1:5000/comandas/mesa/${mesa.id}`
+              `http://10.11.1.67:5000/comandas/mesa/${mesa.id}`
             );
-
-
 
             const comandaData = await comandaResponse.json();
 
@@ -73,7 +71,7 @@ const IniciarVenda = () => {
 
   const adicionarNovasMesas = async () => {
     try {
-      await fetch("http://127.0.0.1:5000/mesas/adicionar", {
+      await fetch("http://10.11.1.67:5000/mesas/adicionar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quantidade: parseInt(quantidadeMesas) }),
