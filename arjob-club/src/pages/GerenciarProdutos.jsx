@@ -20,7 +20,7 @@ const GerenciarProdutos = () => {
 
   const fetchProdutos = async () => {
     try {
-      const response = await fetch("http://10.11.1.67:5000/produtos");
+      const response = await fetch("http://10.11.1.80:5000/produtos");
       let data = await response.json();
       if (Array.isArray(data) && Array.isArray(data[0])) data = data[0];
       setProdutos(data);
@@ -31,7 +31,7 @@ const GerenciarProdutos = () => {
 
   const fetchCategorias = async () => {
     try {
-      const response = await fetch("http://10.11.1.67:5000/categorias");
+      const response = await fetch("http://10.11.1.80:5000/categorias");
       const data = await response.json();
       setCategorias(data);
     } catch (error) {
@@ -53,7 +53,7 @@ const GerenciarProdutos = () => {
     };
 
     try {
-      const response = await fetch("http://10.11.1.67:5000/produtos", {
+      const response = await fetch("http://10.11.1.80:5000/produtos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(produto),
@@ -81,7 +81,7 @@ const GerenciarProdutos = () => {
     formData.append("file", arquivo);
 
     try {
-      const response = await fetch("http://10.11.1.67:5000/produtos/importar", {
+      const response = await fetch("http://10.11.1.80:5000/produtos/importar", {
         method: "POST",
         body: formData,
       });

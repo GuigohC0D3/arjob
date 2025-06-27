@@ -11,7 +11,7 @@ const VerificarLimiteCliente = ({ clienteId }) => {
     const fetchLimite = async () => {
       try {
         const response = await fetch(
-          `http://10.11.1.67:5000/clientes/${clienteId}/limite`
+          `http://10.11.1.80:5000/clientes/${clienteId}/limite`
         );
         const data = await response.json();
         if (response.ok) {

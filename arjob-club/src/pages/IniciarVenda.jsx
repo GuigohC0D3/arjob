@@ -10,7 +10,7 @@ const IniciarVenda = () => {
 
   const fetchMesas = async () => {
     try {
-      const response = await fetch("http://10.11.1.67:5000/mesas");
+      const response = await fetch("http://10.11.1.80:5000/mesas");
       if (!response.ok) throw new Error("Erro ao carregar mesas");
 
       const mesasData = await response.json();
@@ -19,11 +19,23 @@ const IniciarVenda = () => {
         mesasData.map(async (mesa) => {
           try {
             const comandaResponse = await fetch(
-              `http://10.11.1.67:5000/comandas/mesa/${mesa.id}`
+              `http://10.11.1.80:5000/comandas/mesa/${mesa.id}`
             );
 
-            const comandaData = await comandaResponse.json();
+            // Se comanda não encontrada, ignora o erro
+            if (!comandaResponse.ok) {
+              if (comandaResponse.status === 404) {
+                return {
+                  ...mesa,
+                  status: false,
+                  comandaId: null,
+                };
+              } else {
+                throw new Error(`Erro ${comandaResponse.status}`);
+              }
+            }
 
+            const comandaData = await comandaResponse.json();
             const temComandaAberta = comandaData && comandaData.status === true;
 
             return {
@@ -32,10 +44,11 @@ const IniciarVenda = () => {
               comandaId: temComandaAberta ? comandaData.id : null,
             };
           } catch (error) {
-            console.error(
-              `❌ Erro ao buscar comanda da mesa ${mesa.id}:`,
-              error
-            );
+            // Mostra erro só se for diferente de 404
+            if (!error.message.includes("404")) {
+              //console.error(`❌ Erro inesperado na mesa ${mesa.id}:`, error);
+            }
+
             return {
               ...mesa,
               status: false,
@@ -55,6 +68,18 @@ const IniciarVenda = () => {
     fetchMesas();
   }, []);
 
+  const removerUltimaMesa = async () => {
+    try {
+      await fetch("http://10.11.1.80:5000/mesas/remover", {
+        method: "DELETE",
+      });
+
+      await fetchMesas();
+    } catch (error) {
+      console.error("❌ Erro ao remover mesa:", error);
+    }
+  };
+
   const handleSelecionarMesa = (mesa) => {
     if (mesa.status && mesa.comandaId) {
       navigate(`/comanda-aberta/${mesa.comandaId}`);
@@ -71,7 +96,7 @@ const IniciarVenda = () => {
 
   const adicionarNovasMesas = async () => {
     try {
-      await fetch("http://10.11.1.67:5000/mesas/adicionar", {
+      await fetch("http://10.11.1.80:5000/mesas/adicionar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quantidade: parseInt(quantidadeMesas) }),
@@ -91,6 +116,13 @@ const IniciarVenda = () => {
         className="mb-6 px-6 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition"
       >
         + Adicionar Mesas
+      </button>
+
+      <button
+        onClick={removerUltimaMesa}
+        className="mb-6 px-6 py-2 bg-black text-white font-semibold rounded hover:bg-slate-800 transition"
+      >
+        - Remover Mesas
       </button>
 
       <Modal

@@ -18,7 +18,7 @@ def abrir_comanda(mesa_id, atendente_id):
 
         return response, status_code
     except Exception as e:
-        print(f"❌ Erro ao abrir comanda: {e}")
+        print(f"Erro ao abrir comanda: {e}")
         return {"error": "Erro interno no servidor"}, 500
 
 
@@ -26,14 +26,14 @@ def abrir_comanda(mesa_id, atendente_id):
 def fechar_comanda(code):
     try:
         dados = request.json
-        print(f"🔹 Dados recebidos na requisição: {dados}")
+        print(f" Dados recebidos na requisição: {dados}")
 
         total = dados.get("total")
         mesa_id = dados.get("mesa_id")
         pagamento_id = dados.get("pagamento_id")
         itens = dados.get("itens")
         usuario_id = dados.get("usuario_id")
-        cliente_id = dados.get("cliente_id")  # ✅ Adicionado aqui
+        cliente_id = dados.get("cliente_id")  
 
         # Validação
         if not (total and mesa_id and pagamento_id and cliente_id):
@@ -48,7 +48,6 @@ def fechar_comanda(code):
 
         comanda_id = comanda["id"]
 
-        # ✅ Atualiza status, grava histórico e itens
         response, status_code = comandas.atualizar_status_comanda(
             comanda_id=comanda_id,
             total=total,
@@ -56,13 +55,12 @@ def fechar_comanda(code):
             pagamento_id=pagamento_id,
             itens=itens,
             usuario_id=usuario_id,
-            cliente_id=cliente_id  # ✅ Aqui também
+            cliente_id=cliente_id  
         )
 
         if status_code != 200:
             return response, status_code
 
-        # ✅ Baixa estoque com base no histórico
         baixa_response = comandas.baixar_estoque(comanda_id)
         if baixa_response.get("error"):
             return baixa_response, 500
@@ -253,9 +251,7 @@ def obter_comanda_por_mesa(mesa_id):
         if comanda:
             print(f"✅ Controller: Comanda encontrada {comanda}")
             return jsonify(comanda), 200  # ✅ retorna dict diretamente
-        return jsonify({
-            "message": "Nenhuma comanda aberta encontrada para esta mesa"
-        }), 404
+        return '', 204
     except Exception as e:
         print(f"❌ Controller: Erro ao obter comanda por mesa {mesa_id}: {e}")
         return jsonify({"error": "Erro interno no servidor"}), 500

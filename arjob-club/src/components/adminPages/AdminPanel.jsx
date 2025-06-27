@@ -17,6 +17,18 @@ import Logs from "./Filters";
 import Filters from "./LogsAdmin";
 import Notifications from "./Notification";
 import Settings from "./Settings";
+import RegisterUserModal from "../../pages/RegisterUserModal";
+
+// Função utilitária para ordenar por nome e sobrenome
+const ordenarPorNomeCompleto = (a, b) => {
+  const [primeiroNomeA, ...restoA] = a.nome.split(" ");
+  const [primeiroNomeB, ...restoB] = b.nome.split(" ");
+
+  const nomeComp = primeiroNomeA.localeCompare(primeiroNomeB);
+  if (nomeComp !== 0) return nomeComp;
+
+  return restoA.join(" ").localeCompare(restoB.join(" "));
+};
 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState("usuarios");
@@ -30,6 +42,7 @@ const AdminPanel = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4;
 
+  const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [editCargoModal, setEditCargoModal] = useState({
     open: false,
     userId: null,
@@ -67,11 +80,13 @@ const AdminPanel = () => {
         return acc;
       }, {});
 
-      const usuariosAtualizados = response.data[0].map((usuario) => ({
-        ...usuario,
-        status_id: statusMap[usuario.id],
-        status: statusLabels[statusMap[usuario.id]] || "Desconhecido",
-      }));
+      const usuariosAtualizados = response.data[0]
+        .map((usuario) => ({
+          ...usuario,
+          status_id: statusMap[usuario.id],
+          status: statusLabels[statusMap[usuario.id]] || "Desconhecido",
+        }))
+        .sort(ordenarPorNomeCompleto);
 
       setUsuarios(usuariosAtualizados);
     } catch {
@@ -91,11 +106,13 @@ const AdminPanel = () => {
         return acc;
       }, {});
 
-      const clientesAtualizados = response.data.map((cliente) => ({
-        ...cliente,
-        status_id: cliente.status_id,
-        status: statusMap[cliente.status_id] || "Desconhecido",
-      }));
+      const clientesAtualizados = response.data
+        .map((cliente) => ({
+          ...cliente,
+          status_id: cliente.status_id,
+          status: statusMap[cliente.status_id] || "Desconhecido",
+        }))
+        .sort(ordenarPorNomeCompleto);
 
       setClientes(clientesAtualizados);
     } catch (err) {
@@ -195,17 +212,16 @@ const AdminPanel = () => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
+        <button
+          onClick={() => setRegisterModalOpen(true)}
+          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
+        >
+          Registrar Colaborador
+        </button>
       </div>
 
       <div className="flex space-x-4 mb-4">
-        {[
-          "usuarios",
-          "clientes",
-          // "dashboard",
-          // "logs",
-          // "notificações",
-          // "configuirações",
-        ].map((tab) => (
+        {["usuarios", "clientes"].map((tab) => (
           <button
             key={tab}
             className={`flex-1 py-2 px-4 font-bold text-sm rounded-md transition ${
@@ -224,35 +240,27 @@ const AdminPanel = () => {
       <table className="w-full border-collapse shadow-md">
         <thead>
           <tr className="bg-black text-white text-left">
-            {/* Colunas fixas */}
             <th className="py-3 px-4">Nome</th>
             <th className="py-3 px-4">Criado em</th>
             <th className="py-3 px-4">Status</th>
-
-            {/* Se for a aba "clientes", adiciona as colunas para Limite e Saldo */}
             {activeTab === "clientes" && (
               <>
                 <th className="py-3 px-4">Limite</th>
                 <th className="py-3 px-4">Saldo</th>
               </>
             )}
-
-            {/* Coluna de Ações sempre por último */}
             <th className="py-3 px-4">Ações</th>
           </tr>
         </thead>
         <tbody>
           {currentItems.map((item) => (
             <tr key={item.id} className="border-b hover:bg-gray-100">
-              {/* Nome */}
               <td className="py-3 px-4">
                 <p className="font-bold text-lg">{item.nome}</p>
                 <p className="text-gray-600 text-sm">{item.email}</p>
                 <p className="text-gray-500 text-xs">CPF: {item.cpf}</p>
               </td>
-              {/* Criado em */}
               <td className="py-3 px-4 text-gray-600">{item.criado_em}</td>
-              {/* Status */}
               <td className="py-3 px-4">
                 <span
                   className={`px-3 py-1 rounded-full text-white text-xs font-bold ${
@@ -262,7 +270,6 @@ const AdminPanel = () => {
                   {item.status || "Desconhecido"}
                 </span>
               </td>
-              {/* Se a aba ativa for clientes, renderiza Limite e Saldo */}
               {activeTab === "clientes" && (
                 <>
                   <td className="py-3 px-4">
@@ -277,7 +284,6 @@ const AdminPanel = () => {
                   </td>
                 </>
               )}
-              {/* Ações */}
               <td className="py-3 px-4 flex space-x-2">
                 <button
                   className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"
@@ -352,6 +358,11 @@ const AdminPanel = () => {
           onUpdate={activeTab === "clientes" ? fetchClientes : fetchUsuarios}
         />
       )}
+
+      <RegisterUserModal
+        visible={registerModalOpen}
+        onHide={() => setRegisterModalOpen(false)}
+      />
     </div>
   );
 };

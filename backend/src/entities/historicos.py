@@ -68,7 +68,7 @@ def obter_historico_completo(comanda_code):
             }, 200
 
         except Exception as e:
-            print(f"❌ Erro ao obter histórico completo: {e}")
+            print(f"Erro ao obter histórico completo: {e}")
             return {"error": "Erro ao obter histórico completo"}, 500
     else:
         return {"error": "Erro ao conectar ao banco de dados"}, 500

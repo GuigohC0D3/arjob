@@ -56,3 +56,9 @@ def adicionar_mesas():
     if resultado:
         return jsonify({"message": f"{quantidade} mesas adicionadas com sucesso"}), 201
     return jsonify({"error": "Erro ao adicionar mesas"}), 500
+
+def remover_ultima_mesa():
+    resultado = mesas.excluir_ultima_mesa()
+    if resultado:
+        return jsonify({"message": "Última mesa removida com sucesso"}), 200
+    return jsonify({"error": "Erro ao remover última mesa"}), 500

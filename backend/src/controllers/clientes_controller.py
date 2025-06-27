@@ -72,4 +72,4 @@ def verificar_limite_cliente(cliente_id):
         return {"error": "Erro ao verificar limite do cliente"}, 500
 
 def liberar_convenios():
-    return clientes.liberar_convenios_mensalmente()
+    return clientes.liberar_convenios_mensalmente() 

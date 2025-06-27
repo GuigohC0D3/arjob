@@ -148,3 +148,36 @@ def adicionar_mesas(quantidade):
     finally:
         if conn:
             conn.close()
+
+def excluir_ultima_mesa():
+    conn = connect_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            # Seleciona a mesa com maior número
+            cur.execute("SELECT id FROM mesas ORDER BY numero DESC LIMIT 1")
+            mesa = cur.fetchone()
+
+            if not mesa:
+                print("⚠️ Nenhuma mesa encontrada para remover.")
+                return False
+
+            mesa_id = mesa[0]
+
+            # Exclui a mesa
+            cur.execute("DELETE FROM mesas WHERE id = %s", (mesa_id,))
+            conn.commit()
+
+            print(f"✅ Mesa {mesa_id} removida com sucesso.")
+            return True
+
+        except Exception as e:
+            print(f"❌ Erro ao remover última mesa: {e}")
+            return False
+
+        finally:
+            cur.close()
+            conn.close()
+    else:
+        print("❌ Erro ao conectar ao banco de dados.")
+        return False

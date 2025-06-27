@@ -1,10 +1,9 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../apiConfig";
+import { useState, useRef } from "react";
 import { Toast } from "primereact/toast";
-import { useRef } from "react";
+import api from "../apiConfig";
+import PropTypes from "prop-types";
 
-const RegisterUser = () => {
+const RegisterUser = ({ onClose, toast }) => {
   const [formData, setFormData] = useState({
     nome: "",
     cpf: "",
@@ -17,8 +16,9 @@ const RegisterUser = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate = useNavigate();
-  const toast = useRef(null);
+
+  const localToast = useRef(null);
+  const toastRef = toast || localToast;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -66,18 +66,16 @@ const RegisterUser = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Formulário enviado");
     const { nome, cpf, email, senha, confirmarSenha } = formData;
     const newErrors = {};
 
     if (!nome) newErrors.nome = "Por favor, preencha seu nome.";
     if (!cpf)
-      newErrors.cpf =
-        "CPF inválido. Certifique-se de que está no formato correto.";
+      newErrors.cpf = "CPF inválido. Certifique-se de que está no formato correto.";
     if (!email || !email.includes("@")) newErrors.email = "E-mail inválido.";
 
     if (passwordStrength === "fraca" || passwordStrength === "média") {
-      toast.current.show({
+      toastRef.current?.show({
         severity: "warn",
         summary: "Aviso",
         detail: "Senha fraca ou média, por favor digite uma senha mais forte.",
@@ -92,19 +90,16 @@ const RegisterUser = () => {
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      console.log("Erros encontrados:", newErrors);
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      console.log("Verificando duplicidade no banco de dados...");
       const checkResponse = await api.post(`/users/check`, { cpf, email });
-      console.log("Resposta do backend para verificação:", checkResponse.data);
 
       if (checkResponse.data.exists) {
-        toast.current.show({
+        toastRef.current?.show({
           severity: "warn",
           summary: "Aviso",
           detail: checkResponse.data.message,
@@ -114,32 +109,22 @@ const RegisterUser = () => {
         return;
       }
 
-      console.log("Criando usuário...");
-      const response = await api.post(`/users`, {
-        nome,
-        cpf,
-        email,
-        senha,
-      });
+      const response = await api.post(`/users`, { nome, cpf, email, senha });
 
       if (response.data) {
-        console.log("Usuário registrado com sucesso:", response.data);
-        toast.current.show({
+        toastRef.current?.show({
           severity: "success",
           summary: "Sucesso",
           detail: "Usuário registrado com sucesso!",
           life: 3000,
         });
+
         await api.post(`/send-confirmation-email`, { email });
-        navigate("/");
+
+        if (onClose) onClose(); // Fechar o modal se veio de lá
       }
     } catch (error) {
-      console.error(
-        "Erro ao registrar usuário:",
-        error.response?.data || error.message
-      );
-
-      toast.current.show({
+      toastRef.current?.show({
         severity: "error",
         summary: "Erro",
         detail:
@@ -154,24 +139,15 @@ const RegisterUser = () => {
 
   return (
     <div className="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-md">
-      <Toast ref={toast} />
-      <button
-        type="button"
-        onClick={() => navigate("/")}
-        className="flex items-center text-blue-600 font-medium hover:underline mb-4"
-      >
-        <i className="pi pi-arrow-left mr-2"></i> Voltar para o Login
-      </button>
+      {!toast && <Toast ref={localToast} />}
       <form onSubmit={handleSubmit}>
         <h2 className="text-2xl font-bold text-center text-gray-700 mb-6">
           Registro de Usuário
         </h2>
 
+        {/* Nome */}
         <div className="mb-4">
-          <label
-            htmlFor="nome"
-            className="block text-gray-700 font-medium mb-1"
-          >
+          <label htmlFor="nome" className="block text-gray-700 font-medium mb-1">
             Nome*
           </label>
           <input
@@ -184,10 +160,10 @@ const RegisterUser = () => {
             className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
-          {errors.nome && (
-            <p className="text-sm text-red-600 mt-1">{errors.nome}</p>
-          )}
+          {errors.nome && <p className="text-sm text-red-600 mt-1">{errors.nome}</p>}
         </div>
+
+        {/* CPF */}
         <div className="mb-4">
           <label htmlFor="cpf" className="block text-gray-700 font-medium mb-1">
             CPF*
@@ -202,16 +178,12 @@ const RegisterUser = () => {
             className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
-          {errors.cpf && (
-            <p className="text-sm text-red-600 mt-1">{errors.cpf}</p>
-          )}
+          {errors.cpf && <p className="text-sm text-red-600 mt-1">{errors.cpf}</p>}
         </div>
 
+        {/* Email */}
         <div className="mb-4">
-          <label
-            htmlFor="email"
-            className="block text-gray-700 font-medium mb-1"
-          >
+          <label htmlFor="email" className="block text-gray-700 font-medium mb-1">
             E-mail*
           </label>
           <input
@@ -224,16 +196,12 @@ const RegisterUser = () => {
             className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
-          {errors.email && (
-            <p className="text-sm text-red-600 mt-1">{errors.email}</p>
-          )}
+          {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email}</p>}
         </div>
 
+        {/* Senha */}
         <div className="mb-4">
-          <label
-            htmlFor="senha"
-            className="block text-gray-700 font-medium mb-1"
-          >
+          <label htmlFor="senha" className="block text-gray-700 font-medium mb-1">
             Senha*
           </label>
           <div className="relative">
@@ -264,7 +232,7 @@ const RegisterUser = () => {
                   ? "bg-green-400 w-3/4"
                   : passwordStrength === "média"
                   ? "bg-yellow-500 w-1/2"
-                  : "bg-red-500 w-1" // Fraca ou valor padrão
+                  : "bg-red-500 w-1"
               }`}
             ></div>
           </div>
@@ -289,11 +257,9 @@ const RegisterUser = () => {
           </p>
         </div>
 
+        {/* Confirmar Senha */}
         <div className="mb-4">
-          <label
-            htmlFor="confirmarSenha"
-            className="block text-gray-700 font-medium mb-1"
-          >
+          <label htmlFor="confirmarSenha" className="block text-gray-700 font-medium mb-1">
             Confirmar Senha*
           </label>
           <div className="relative">
@@ -332,6 +298,11 @@ const RegisterUser = () => {
       </form>
     </div>
   );
+};
+
+RegisterUser.propTypes = {
+  onClose: PropTypes.func,
+  toast: PropTypes.object,
 };
 
 export default RegisterUser;

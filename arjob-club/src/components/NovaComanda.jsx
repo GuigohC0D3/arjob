@@ -12,7 +12,7 @@ const NovaComanda = () => {
   useEffect(() => {
     const fetchAtendentes = async () => {
       try {
-        const response = await fetch("http://10.11.1.67:5000/atendentes");
+        const response = await fetch("http://10.11.1.80:5000/atendentes");
         if (response.ok) {
           const data = await response.json();
           setAtendentes(data);
@@ -29,7 +29,7 @@ const NovaComanda = () => {
 
   async function verificarComandaAberta(mesaId) {
     try {
-      const response = await fetch(`http://10.11.1.67:5000/comandas/mesa/${mesaId}`);
+      const response = await fetch(`http://10.11.1.80:5000/comandas/mesa/${mesaId}`);
       const data = await response.json();
 
       if (response.ok && data.comanda && data.comanda.id) {
@@ -55,7 +55,7 @@ const NovaComanda = () => {
       const existeComanda = await verificarComandaAberta(mesaId);
       if (existeComanda) return;
 
-      const response = await fetch("http://10.11.1.67:5000/comandas", {
+      const response = await fetch("http://10.11.1.80:5000/comandas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

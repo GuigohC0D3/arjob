@@ -16,7 +16,7 @@ const FecharComanda = ({
   useEffect(() => {
     const fetchPagamentos = async () => {
       try {
-        const response = await fetch("http://10.11.1.67:5000/tipos_pagamento");
+        const response = await fetch("http://10.11.1.80:5000/tipos_pagamento");
         const data = await response.json();
         setTiposPagamento(data);
       } catch (error) {
@@ -49,7 +49,7 @@ const FecharComanda = ({
 
     try {
       const response = await fetch(
-        `http://10.11.1.67:5000/comandas/${selectedMesa.code}/fechar`,
+        `http://10.11.1.80:5000/comandas/${selectedMesa.code}/fechar`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

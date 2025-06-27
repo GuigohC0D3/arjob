@@ -8,7 +8,7 @@ const PagamentoOptions = ({ onSelect, clienteSelecionado }) => {
   useEffect(() => {
     const fetchOpcoes = async () => {
       try {
-        const response = await fetch("http://10.11.1.67:5000/pagamentos/tipos");
+        const response = await fetch("http://10.11.1.80:5000/pagamentos/tipos");
         if (response.ok) {
           const data = await response.json();
           setOpcoes(data);

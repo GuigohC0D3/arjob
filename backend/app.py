@@ -42,3 +42,8 @@ def create_app():
     app.register_blueprint(main_bp)
 
     return app
+
+# Adicionado para rodar o servidor Flask
+if __name__ == "__main__":
+    app = create_app()
+    app.run(debug=True, host="0.0.0.0", port=5000)

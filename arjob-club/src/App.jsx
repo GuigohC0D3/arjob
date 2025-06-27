@@ -23,6 +23,9 @@ import ComandaAberta from "./pages/ComandaAberta";
 import GerenciarProdutos from "./pages/GerenciarProdutos";
 import ForgotPassword from "./pages/ForgotPassword"
 import NovaSenha from "./pages/NovaSenha"
+import Modal from 'react-modal';
+
+Modal.setAppElement('#root');
 
 const PrivateRoute = () => {
   const authToken = sessionStorage.getItem("authToken");

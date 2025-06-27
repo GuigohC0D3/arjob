@@ -28,7 +28,7 @@ const Login = () => {
 
       if (response.data && response.data.token) {
         const token = response.data.token; // Corrigido para pegar o token correto
-        console.log(response.data)
+        console.log(response.data);
 
         // Salva no sessionStorage e localStorage
         sessionStorage.setItem("authToken", token);
@@ -54,13 +54,8 @@ const Login = () => {
     }
   };
 
-  // Redirecionar para a página de registro
-  const handleRegister = () => {
-    navigate("/Register");
-  };
-
   const handleForgotPassword = () => {
-    navigate("/forgot-password"); // redireciona para página de recuperação
+    navigate("/forgot-password"); 
   };
 
   return (
@@ -112,14 +107,6 @@ const Login = () => {
             className="w-full bg-blue-600 text-white py-3 rounded-md shadow-md hover:bg-blue-700 transition-all duration-300 transform hover:scale-105"
           >
             Entrar
-          </button>
-
-          <button
-            type="button"
-            onClick={handleRegister}
-            className="w-full bg-blue-600 text-white py-3 rounded-md shadow-md hover:bg-blue-700 transition-all duration-300 transform hover:scale-105"
-          >
-            Registrar
           </button>
 
           <button

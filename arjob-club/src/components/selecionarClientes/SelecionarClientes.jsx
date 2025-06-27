@@ -11,7 +11,7 @@ const SelecionarClientes = ({ onSelectCliente }) => {
   useEffect(() => {
     const fetchClientes = async () => {
       try {
-        const response = await fetch("http://10.11.1.67:5000/clientes");
+        const response = await fetch("http://10.11.1.80:5000/clientes");
 
         if (response.ok) {
           const data = await response.json();

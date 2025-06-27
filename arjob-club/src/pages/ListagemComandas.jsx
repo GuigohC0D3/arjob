@@ -18,7 +18,7 @@ const ListagemComandas = () => {
     const fetchComandas = async () => {
       try {
         const response = await fetch(
-          "http://10.11.1.67:5000/comandas?status=fechada"
+          "http://10.11.1.80:5000/comandas?status=fechada"
         );
         if (response.ok) {
           const dados = await response.json();

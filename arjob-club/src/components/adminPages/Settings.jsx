@@ -25,7 +25,7 @@ const Settings = () => {
     setError(null);
     try {
       const updatedSettings = { ...settings, [key]: value };
-      await axios.put("http://10.11.1.67:5000/admin/settings", updatedSettings);
+      await axios.put("http://10.11.1.80:5000/admin/settings", updatedSettings);
       setSettings(updatedSettings);
     } catch (err) {
       setError("Erro ao atualizar configurações. Tente novamente.");

@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Paginator } from "primereact/paginator";
 import { motion } from "framer-motion";
+import { Toast } from "primereact/toast";
+import { useRef } from "react";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.min.css";
@@ -26,11 +28,12 @@ const ComandaAberta = () => {
   const produtosPorPagina = 8;
   const [loading, setLoading] = useState(true);
   const [usuarioLogado, setUsuarioLogado] = useState({ id: null, nome: "" });
+  const toast = useRef(null);
 
   // Se o objeto atendente foi passado pelo state, use-o; senão, tente buscar detalhes da comanda
   useEffect(() => {
     if (state && state.atendente) {
-      console.log("👤 Usuário via state:", state.atendente)
+      console.log("👤 Usuário via state:", state.atendente);
       setUsuarioLogado(state.atendente);
     } else if (comandaId) {
       // Caso seu endpoint de detalhes da comanda retorne os dados do atendente,
@@ -38,7 +41,7 @@ const ComandaAberta = () => {
       const fetchComandaDetails = async () => {
         try {
           const res = await fetch(
-            `http://10.11.1.67:5000/comandas/${comandaId}`
+            `http://10.11.1.80:5000/comandas/${comandaId}`
           );
           const data = await res.json();
           // Supondo que a API retorne 'atendente' com os dados completos
@@ -67,7 +70,7 @@ const ComandaAberta = () => {
   // Buscar produtos disponíveis
   const fetchProdutos = useCallback(async () => {
     try {
-      const res = await fetch("http://10.11.1.67:5000/produtos");
+      const res = await fetch("http://10.11.1.80:5000/produtos");
       const data = await res.json();
       let produtosData = Array.isArray(data) ? data : data.produtos || [];
       if (Array.isArray(produtosData[0])) {
@@ -97,7 +100,7 @@ const ComandaAberta = () => {
     if (!comandaId) return;
     try {
       const res = await fetch(
-        `http://10.11.1.67:5000/comandas/${comandaId}/itens`
+        `http://10.11.1.80:5000/comandas/${comandaId}/itens`
       );
       const data = await res.json();
       if (!Array.isArray(data)) {
@@ -125,11 +128,9 @@ const ComandaAberta = () => {
       preco_unitario: Number(produto.preco),
     };
 
-    console.log("Payload enviado:", payload);
-
     try {
       const res = await fetch(
-        `http://10.11.1.67:5000/comandas/${comandaId}/itens`,
+        `http://10.11.1.80:5000/comandas/${comandaId}/itens`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -140,16 +141,32 @@ const ComandaAberta = () => {
       if (!res.ok) {
         const errorData = await res.json();
         console.error("Erro ao adicionar produto:", errorData);
-        alert("Erro ao adicionar produto. Verifique o console.");
+
+        toast.current?.show({
+          severity: "error",
+          summary: "Erro",
+          detail: `Erro ao adicionar "${produto.nome}"`,
+          life: 3000,
+        });
         return;
       }
 
-      console.log("Produto adicionado com sucesso!");
-      // Aqui você precisa atualizar a lista de itens para que a UI seja atualizada.
-      // Por exemplo:
-      await fetchItensComanda(); // Atualiza o estado com os itens novos.
+      toast.current?.show({
+        severity: "success",
+        summary: "Adicionado",
+        detail: `"${produto.nome}" foi adicionado à comanda`,
+        life: 2000,
+      });
+
+      await fetchItensComanda();
     } catch (err) {
       console.error("Erro ao adicionar produto:", err);
+      toast.current?.show({
+        severity: "error",
+        summary: "Erro de rede",
+        detail: "Não foi possível comunicar com o servidor.",
+        life: 3000,
+      });
     }
   };
 
@@ -157,7 +174,7 @@ const ComandaAberta = () => {
     if (!comandaId) return;
     try {
       await fetch(
-        `http://10.11.1.67:5000/comandas/${comandaId}/itens/${item.id}`,
+        `http://10.11.1.80:5000/comandas/${comandaId}/itens/${item.id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -175,14 +192,14 @@ const ComandaAberta = () => {
     try {
       if (item.quantidade === 1) {
         await fetch(
-          `http://10.11.1.67:5000/comandas/${comandaId}/itens/${item.id}`,
+          `http://10.11.1.80:5000/comandas/${comandaId}/itens/${item.id}`,
           {
             method: "DELETE",
           }
         );
       } else {
         await fetch(
-          `http://10.11.1.67:5000/comandas/${comandaId}/itens/${item.id}`,
+          `http://10.11.1.80:5000/comandas/${comandaId}/itens/${item.id}`,
           {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -253,7 +270,7 @@ const ComandaAberta = () => {
     };
 
     try {
-      await fetch(`http://10.11.1.67:5000/comandas/${comandaId}/fechar`, {
+      await fetch(`http://10.11.1.80:5000/comandas/${comandaId}/fechar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dadosParaEnviar),
@@ -301,6 +318,7 @@ const ComandaAberta = () => {
 
   return (
     <>
+      <Toast ref={toast} />
       <motion.div className="p-6 md:p-10 max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
         {/* Botão para voltar para mesas */}
         <div className="flex justify-start mb-6">
@@ -367,10 +385,10 @@ const ComandaAberta = () => {
               key={produto.id}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="flex flex-col justify-between p-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition duration-300 ease-in-out"
+              className="flex flex-col justify-between p-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition duration-300 ease-in-out h-full min-h-[240px]"
             >
-              <div className="flex flex-col items-center text-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">
+              <div className="flex flex-col items-center text-center flex-grow">
+                <h3 className="text-lg font-semibold text-gray-800 break-words">
                   {produto.nome}
                 </h3>
                 <p className="mt-2 text-gray-500 text-base">
@@ -380,13 +398,13 @@ const ComandaAberta = () => {
 
               <button
                 onClick={() => adicionarProduto(produto)}
-                className="mt-auto w-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2 rounded-lg shadow transition-all duration-300"
+                className="mt-6 w-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2 rounded-lg shadow transition-all duration-300"
               >
                 Adicionar
               </button>
             </motion.div>
           ))}
-        </div>
+        </div>  
 
         <div className="flex justify-center mt-8">
           <Paginator

@@ -17,7 +17,7 @@ const Dashboard = () => {
         setChartData(response.data.chartData);
         setRecentActivities(response.data.recentActivities);
       } catch (err) {
-        setError("Erro ao carregar dados do dashboard. Tente novamente.");
+        setError("Erro ao carregar dados do dashboard. Tente novamente.", err);
       } finally {
         setLoading(false);
       }
