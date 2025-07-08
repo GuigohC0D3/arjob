@@ -18,10 +18,10 @@ const Sidebar = () => {
   }, []);
 
   useEffect(() => {
-    const user = sessionStorage.getItem("user")
-    setIsLoggedIn(!!user)
-    console.log(user)
-  }, [])
+    const user = sessionStorage.getItem("user");
+    setIsLoggedIn(!!user);
+    console.log(user);
+  }, []);
 
   // Buscar permissões do usuário
   useEffect(() => {
@@ -55,10 +55,14 @@ const Sidebar = () => {
     const fetchCargo = async () => {
       try {
         const token = sessionStorage.getItem("authToken");
-        if (!token)
-          throw new Error("Token não encontrado. Faça login novamente.");
+        const usuario_id = sessionStorage.getItem("usuario_id");
 
-        const response = await api.get("/auth/cargo?user", {
+        if (!token || !usuario_id)
+          throw new Error(
+            "Token ou usuário não encontrado. Faça login novamente."
+          );
+
+        const response = await api.get(`/auth/cargo?usuario_id=${usuario_id}`, {
           headers: {
             // Authorization: `Bearer ${token}`,
           },

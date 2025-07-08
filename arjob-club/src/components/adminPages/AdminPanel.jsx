@@ -1,32 +1,18 @@
-// Importações essenciais
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../apiConfig";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
-import "primereact/resources/themes/saga-blue/theme.css";
-import "primereact/resources/primereact.min.css";
-
-// Importando ícones FontAwesome
-import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
-
-// Importando componentes adicionais
+import { FaEye, FaEdit, FaUserTimes } from "react-icons/fa";
 import EditCargo from "./actionsaAdmin/EditCargo";
 import ViewProfile from "./actionsaAdmin/ViewProfile";
-import Dashboard from "./DashboardAdmin";
-import Logs from "./Filters";
-import Filters from "./LogsAdmin";
-import Notifications from "./Notification";
-import Settings from "./Settings";
 import RegisterUserModal from "../../pages/RegisterUserModal";
 
-// Função utilitária para ordenar por nome e sobrenome
 const ordenarPorNomeCompleto = (a, b) => {
   const [primeiroNomeA, ...restoA] = a.nome.split(" ");
   const [primeiroNomeB, ...restoB] = b.nome.split(" ");
-
   const nomeComp = primeiroNomeA.localeCompare(primeiroNomeB);
   if (nomeComp !== 0) return nomeComp;
-
   return restoA.join(" ").localeCompare(restoB.join(" "));
 };
 
@@ -35,12 +21,10 @@ const AdminPanel = () => {
   const [usuarios, setUsuarios] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [, setError] = useState(null);
   const toast = useRef(null);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 4;
+  const itemsPerPage = 6;
 
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [editCargoModal, setEditCargoModal] = useState({
@@ -63,23 +47,16 @@ const AdminPanel = () => {
     []
   );
 
-  const statusColors = {
-    Ativo: "bg-green-500",
-    Inativo: "bg-gray-500",
-    Pendente: "bg-yellow-500",
-    Bloqueado: "bg-red-500",
-  };
+  const navigate = useNavigate();
 
   const fetchUsuarios = useCallback(async () => {
     try {
       const response = await api.get("/admin/usuarios");
       const statusResponse = await api.get("/admin/usuarios/status");
-
       const statusMap = statusResponse.data.reduce((acc, user) => {
         acc[user.id] = user.status;
         return acc;
       }, {});
-
       const usuariosAtualizados = response.data[0]
         .map((usuario) => ({
           ...usuario,
@@ -87,25 +64,20 @@ const AdminPanel = () => {
           status: statusLabels[statusMap[usuario.id]] || "Desconhecido",
         }))
         .sort(ordenarPorNomeCompleto);
-
       setUsuarios(usuariosAtualizados);
-    } catch {
-      setError("Erro ao carregar usuários. Tente novamente.");
+    } catch (err) {
+      console.error(err);
     }
   }, [statusLabels]);
 
   const fetchClientes = async () => {
-    setLoading(true);
-    setError(null);
     try {
       const response = await api.get("/admin/clientes");
       const statusResponse = await api.get("/admin/clientes/status");
-
-      const statusMap = statusResponse.data.reduce((acc, status) => {
-        acc[status.id] = status.nome;
+      const statusMap = statusResponse.data.reduce((acc, s) => {
+        acc[s.id] = s.nome;
         return acc;
       }, {});
-
       const clientesAtualizados = response.data
         .map((cliente) => ({
           ...cliente,
@@ -113,19 +85,9 @@ const AdminPanel = () => {
           status: statusMap[cliente.status_id] || "Desconhecido",
         }))
         .sort(ordenarPorNomeCompleto);
-
       setClientes(clientesAtualizados);
     } catch (err) {
-      console.error("Erro ao carregar clientes:", err);
-      setError("Erro ao carregar clientes.");
-      toast.current.show({
-        severity: "error",
-        summary: "Erro",
-        detail: "Erro ao carregar clientes.",
-        life: 3000,
-      });
-    } finally {
-      setLoading(false);
+      console.error(err);
     }
   };
 
@@ -136,209 +98,188 @@ const AdminPanel = () => {
 
   const handleDelete = async (userId) => {
     confirmDialog({
-      message: "Você tem certeza que deseja excluir este usuário?",
+      message: "Deseja mesmo desativar este usuário?",
       header: "Confirmação",
       icon: "pi pi-exclamation-triangle",
+      draggable: false,
       accept: async () => {
         try {
-          const token =
-            localStorage.getItem("token") ||
-            sessionStorage.getItem("authToken");
-
-          if (!token) {
-            toast.current.show({
-              severity: "error",
-              summary: "Erro de autenticação",
-              detail: "Faça login novamente.",
-              life: 3000,
-            });
-            return;
-          }
-
-          await api.delete(`/admin/usuarios/${userId}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
+          await api.delete(`/admin/usuarios/${userId}`);
           toast.current.show({
             severity: "success",
             summary: "Sucesso",
-            detail: "Usuário excluído com sucesso.",
-            life: 3000,
+            detail: "Usuário desativado.",
           });
-
           fetchUsuarios();
-        } catch (error) {
-          console.error("❌ Erro ao excluir usuário:", error);
+        } catch {
           toast.current.show({
             severity: "error",
             summary: "Erro",
-            detail: "Erro ao excluir usuário. Verifique suas permissões.",
-            life: 3000,
+            detail: "Falha ao desativar.",
           });
         }
       },
     });
   };
 
-  const handleEditCargo = (userId, currentCargo) => {
-    setEditCargoModal({ open: true, userId, currentCargo });
-  };
-
-  const handleView = (user) => {
-    setViewProfileModal({ open: true, user });
-  };
-
-  const dataToDisplay = activeTab === "usuarios" ? usuarios : clientes;
-  const filteredData = dataToDisplay?.filter((item) =>
-    item?.nome?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredData = (activeTab === "usuarios" ? usuarios : clientes).filter(
+    (item) => item?.nome?.toLowerCase().includes(searchTerm.toLowerCase())
   );
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredData.slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = filteredData.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
-    <div className="max-w-7xl mx-auto p-6 bg-white rounded-lg shadow-md">
+    <div className="max-w-7xl mx-auto px-6 py-8">
       <Toast ref={toast} />
       <ConfirmDialog />
 
-      <div className="flex justify-between items-center mb-4">
-        <input
-          type="text"
-          placeholder="Pesquise um nome"
-          className="border px-3 py-2 rounded-md shadow w-64"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <button
-          onClick={() => setRegisterModalOpen(true)}
-          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
-        >
-          Registrar Colaborador
-        </button>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-center mb-8 space-y-4 md:space-y-0">
+        <h1 className="text-3xl font-bold text-gray-800">
+          Painel Administrativo
+        </h1>
+        <div className="flex space-x-4">
+          <input
+            type="text"
+            placeholder="Buscar por nome..."
+            className="border rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <button
+            onClick={() => setRegisterModalOpen(true)}
+            className="bg-blue-600 text-white px-5 py-2 rounded-md shadow hover:bg-blue-700 transition"
+          >
+            Registrar
+          </button>
+          <button
+            onClick={() => navigate("/relatorio")}
+            className="bg-green-600 text-white px-5 py-2 rounded-md shadow hover:bg-green-700 transition"
+          >
+            Relatório de Fechamento
+          </button>
+        </div>
       </div>
 
-      <div className="flex space-x-4 mb-4">
+      {/* Tabs */}
+      <div className="flex mb-8 space-x-4">
         {["usuarios", "clientes"].map((tab) => (
           <button
             key={tab}
-            className={`flex-1 py-2 px-4 font-bold text-sm rounded-md transition ${
+            className={`px-6 py-2 rounded-full font-semibold transition 
+            ${
               activeTab === tab
-                ? "bg-blue-500 text-white"
+                ? "bg-blue-600 text-white shadow-md"
                 : "bg-gray-200 text-gray-700 hover:bg-gray-300"
             }`}
             onClick={() => setActiveTab(tab)}
-            disabled={loading}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
       </div>
 
-      <table className="w-full border-collapse shadow-md">
-        <thead>
-          <tr className="bg-black text-white text-left">
-            <th className="py-3 px-4">Nome</th>
-            <th className="py-3 px-4">Criado em</th>
-            <th className="py-3 px-4">Status</th>
-            {activeTab === "clientes" && (
-              <>
-                <th className="py-3 px-4">Limite</th>
-                <th className="py-3 px-4">Saldo</th>
-              </>
-            )}
-            <th className="py-3 px-4">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentItems.map((item) => (
-            <tr key={item.id} className="border-b hover:bg-gray-100">
-              <td className="py-3 px-4">
-                <p className="font-bold text-lg">{item.nome}</p>
-                <p className="text-gray-600 text-sm">{item.email}</p>
-                <p className="text-gray-500 text-xs">CPF: {item.cpf}</p>
-              </td>
-              <td className="py-3 px-4 text-gray-600">{item.criado_em}</td>
-              <td className="py-3 px-4">
-                <span
-                  className={`px-3 py-1 rounded-full text-white text-xs font-bold ${
-                    statusColors[item.status] || "bg-gray-400"
-                  }`}
-                >
-                  {item.status || "Desconhecido"}
-                </span>
-              </td>
-              {activeTab === "clientes" && (
-                <>
-                  <td className="py-3 px-4">
-                    {item.limite !== undefined
-                      ? `R$ ${parseFloat(item.limite).toFixed(2)}`
-                      : "R$ N/A"}
-                  </td>
-                  <td className="py-3 px-4">
-                    {item.saldo !== undefined
-                      ? `R$ ${parseFloat(item.saldo).toFixed(2)}`
-                      : "R$ N/A"}
-                  </td>
-                </>
-              )}
-              <td className="py-3 px-4 flex space-x-2">
-                <button
-                  className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"
-                  onClick={() => handleView(item)}
-                >
-                  <FaEye />
-                </button>
-                <button
-                  className="bg-yellow-500 text-white p-2 rounded-md hover:bg-yellow-600"
-                  onClick={() => handleEditCargo(item.id, item.cargo)}
-                >
-                  <FaEdit />
-                </button>
-                <button
-                  className="bg-red-500 text-white p-2 rounded-md hover:bg-red-600"
-                  onClick={() => handleDelete(item.id)}
-                >
-                  <FaTrash />
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* Cards */}
+      <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mb-10">
+        {currentItems.map((item) => (
+          <div
+            key={item.id}
+            className="relative w-64 h-64 bg-white p-5 rounded-xl shadow hover:shadow-lg 
+  transition transform hover:scale-105 flex flex-col justify-between"
+          >
+            <div
+              className={`absolute top-3 right-3 w-[10px] aspect-square rounded-full flex-shrink-0
+      ${
+        item.status === "Ativo"
+          ? "bg-green-500 animate-pulse"
+          : item.status === "Pendente"
+          ? "bg-yellow-400 animate-pulse"
+          : item.status === "Bloqueado"
+          ? "bg-red-500 animate-pulse"
+          : "bg-gray-400"
+      }`}
+              title={item.status}
+            ></div>
 
-      <div className="flex justify-between items-center mt-4">
-        <p>
-          Results 1 to {filteredData.length} of {dataToDisplay.length}
-        </p>
+            <div className="flex-1">
+              <h2 className="text-lg font-bold text-gray-800 break-words w-52">
+                {item.nome}
+              </h2>
+              <p className="text-sm text-gray-600 break-words w-52 mt-2">
+                Email: {item.email}
+              </p>
+              <p className="text-sm text-gray-500 break-words w-52">
+                CPF: {item.cpf}
+              </p>
+            </div>
+
+            <div className="flex justify-center space-x-5 mt-4">
+              <button
+                className="text-blue-600 hover:text-blue-800 transition text-2xl"
+                onClick={() => setViewProfileModal({ open: true, user: item })}
+              >
+                <FaEye />
+              </button>
+              <button
+                className="text-yellow-500 hover:text-yellow-600 transition text-2xl"
+                onClick={() =>
+                  setEditCargoModal({
+                    open: true,
+                    userId: item.id,
+                    currentCargo: item.cargo,
+                  })
+                }
+              >
+                <FaEdit />
+              </button>
+              <button
+                className="text-red-500 hover:text-red-700 transition text-2xl"
+                onClick={() => handleDelete(item.id)}
+              >
+                <FaUserTimes />
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {activeTab === "dashboard" && <Dashboard />}
-      {activeTab === "logs" && <Logs />}
-      {activeTab === "filters" && <Filters />}
-      {activeTab === "notifications" && <Notifications />}
-      {activeTab === "settings" && <Settings />}
-
-      <div className="flex justify-between items-center mt-4">
+      {/* Pagination */}
+      <div className="flex justify-center items-center space-x-6 mt-6">
         <button
+          onClick={() => setCurrentPage((prev) => prev - 1)}
           disabled={currentPage === 1}
-          onClick={() => setCurrentPage(currentPage - 1)}
+          className={`px-4 py-2 rounded-md ${
+            currentPage === 1
+              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+              : "bg-blue-600 text-white hover:bg-blue-700 transition"
+          }`}
         >
           Anterior
         </button>
-        <span>
+        <span className="font-semibold text-gray-700">
           Página {currentPage} de {totalPages}
         </span>
         <button
+          onClick={() => setCurrentPage((prev) => prev + 1)}
           disabled={currentPage === totalPages}
-          onClick={() => setCurrentPage(currentPage + 1)}
+          className={`px-4 py-2 rounded-md ${
+            currentPage === totalPages
+              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+              : "bg-blue-600 text-white hover:bg-blue-700 transition"
+          }`}
         >
           Próximo
         </button>
       </div>
 
+      {/* Modals */}
+      <RegisterUserModal
+        visible={registerModalOpen}
+        onHide={() => setRegisterModalOpen(false)}
+      />
       {editCargoModal.open && (
         <EditCargo
           userId={editCargoModal.userId}
@@ -349,7 +290,6 @@ const AdminPanel = () => {
           onUpdate={fetchUsuarios}
         />
       )}
-
       {viewProfileModal.open && (
         <ViewProfile
           user={viewProfileModal.user}
@@ -358,11 +298,6 @@ const AdminPanel = () => {
           onUpdate={activeTab === "clientes" ? fetchClientes : fetchUsuarios}
         />
       )}
-
-      <RegisterUserModal
-        visible={registerModalOpen}
-        onHide={() => setRegisterModalOpen(false)}
-      />
     </div>
   );
 };

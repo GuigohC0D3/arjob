@@ -23,6 +23,8 @@ import ComandaAberta from "./pages/ComandaAberta";
 import GerenciarProdutos from "./pages/GerenciarProdutos";
 import ForgotPassword from "./pages/ForgotPassword"
 import NovaSenha from "./pages/NovaSenha"
+import Relatorio from "./components/adminPages/relatorio";
+import RelatorioDetalhado from "./components/adminPages/RelatorioDetalhado";
 import Modal from 'react-modal';
 
 Modal.setAppElement('#root');
@@ -65,6 +67,8 @@ const AppContent = () => {
             <Route path="/produtos" element={<GerenciarProdutos />} />
             <Route path="/Fluxo" element={<FluxoDeCaixa />} />
             <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/relatorio" element={<Relatorio />} />
+            <Route path="/relatorio_detalhado" element={<RelatorioDetalhado />} />
 
             {/* ✅ Rota corrigida de NovaComanda */}
             <Route path="/nova-comanda/:mesaId" element={<NovaComanda />} />

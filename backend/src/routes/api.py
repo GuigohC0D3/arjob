@@ -4,8 +4,7 @@ import pandas as pd
 from flask_cors import cross_origin, CORS
 from math import ceil
 from datetime import datetime
-from ..controllers import dashboard_controller
-from ..controllers import clientes_controller, departamento_cliente_controller, departamentos_controller,  mesas_controller, comandas_controller, produtos_controller, buscar_produtos_controller, users_controller, permissoes_controller, cargos_controller, pagamentos_controller
+from ..controllers import clientes_controller, departamento_cliente_controller, departamentos_controller,  mesas_controller, comandas_controller, produtos_controller, buscar_produtos_controller, users_controller, permissoes_controller, cargos_controller, pagamentos_controller, dashboard_controller, relatorios_controller
 from ..entities import comandas, produtos, pagamentos
 from ..classes.user import User
 from ..entities.users import authenticate_user, get_user_permissions, get_user_cargo, send_verification_email, corrigir_senhas
@@ -15,7 +14,7 @@ from src.extensions import mail
 from itsdangerous import URLSafeTimedSerializer
 from src.utils.token_utils import generate_token, verify_token  # Importa utilitários de token
 from datetime import timedelta
-from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
+from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token  
 from ..utils.hash_utils import gerar_hash_md5  # se estiver em um módulo separado
 from ..entities import movimentacao_caixa
 import re
@@ -728,3 +727,15 @@ def test_token():
 @main_bp.route('/admin/clientes/liberar-convenios', methods=['PUT'])
 def liberar_convenios_route():
     return clientes_controller.liberar_convenios()
+
+@main_bp.route("/relatorios", methods=["GET"])
+def listar_relatorios():
+    return relatorios_controller.listar_relatorios()
+
+@main_bp.route('/relatorios/cliente/<cpf>', methods=['GET'])
+def relatorio_cliente_mes(cpf):
+    mes = request.args.get('mes')
+    ano = request.args.get('ano')
+    if not mes or not ano:
+        return jsonify({"error": "Parâmetros mes e ano são obrigatórios"}), 400
+    return relatorios_controller.listar_consumos_cliente_mes(cpf, mes, ano)

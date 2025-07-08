@@ -6,6 +6,10 @@ const IniciarVenda = () => {
   const [mesas, setMesas] = useState([]);
   const [modalAberto, setModalAberto] = useState(false);
   const [quantidadeMesas, setQuantidadeMesas] = useState(1);
+
+  const [modalRemoverAberto, setModalRemoverAberto] = useState(false);
+  const [quantidadeRemover, setQuantidadeRemover] = useState(1);
+
   const navigate = useNavigate();
 
   const fetchMesas = async () => {
@@ -22,14 +26,9 @@ const IniciarVenda = () => {
               `http://10.11.1.80:5000/comandas/mesa/${mesa.id}`
             );
 
-            // Se comanda não encontrada, ignora o erro
             if (!comandaResponse.ok) {
               if (comandaResponse.status === 404) {
-                return {
-                  ...mesa,
-                  status: false,
-                  comandaId: null,
-                };
+                return { ...mesa, status: false, comandaId: null };
               } else {
                 throw new Error(`Erro ${comandaResponse.status}`);
               }
@@ -44,23 +43,14 @@ const IniciarVenda = () => {
               comandaId: temComandaAberta ? comandaData.id : null,
             };
           } catch (error) {
-            // Mostra erro só se for diferente de 404
-            if (!error.message.includes("404")) {
-              //console.error(`❌ Erro inesperado na mesa ${mesa.id}:`, error);
-            }
-
-            return {
-              ...mesa,
-              status: false,
-              comandaId: null,
-            };
+            return { ...mesa, status: false, comandaId: null, error };
           }
         })
       );
 
       setMesas(mesasAtualizadas.sort((a, b) => a.numero - b.numero));
     } catch (error) {
-      console.error("❌ Erro ao buscar mesas:", error);
+      console.error("Erro ao buscar mesas:", error);
     }
   };
 
@@ -68,15 +58,33 @@ const IniciarVenda = () => {
     fetchMesas();
   }, []);
 
-  const removerUltimaMesa = async () => {
+  const adicionarNovasMesas = async () => {
+    try {
+      await fetch("http://10.11.1.80:5000/mesas/adicionar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quantidade: parseInt(quantidadeMesas) }),
+      });
+
+      fecharModal();
+      await fetchMesas();
+    } catch (error) {
+      console.error("❌ Erro ao adicionar novas mesas:", error);
+    }
+  };
+
+  const removerMesas = async (quantidade) => {
     try {
       await fetch("http://10.11.1.80:5000/mesas/remover", {
         method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quantidade: parseInt(quantidade) }),
       });
 
+      fecharModalRemover();
       await fetchMesas();
     } catch (error) {
-      console.error("❌ Erro ao remover mesa:", error);
+      console.error("❌ Erro ao remover mesas:", error);
     }
   };
 
@@ -94,37 +102,29 @@ const IniciarVenda = () => {
     setModalAberto(false);
   };
 
-  const adicionarNovasMesas = async () => {
-    try {
-      await fetch("http://10.11.1.80:5000/mesas/adicionar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quantidade: parseInt(quantidadeMesas) }),
-      });
-
-      fecharModal();
-      await fetchMesas();
-    } catch (error) {
-      console.error("❌ Erro ao adicionar novas mesas:", error);
-    }
+  const abrirModalRemover = () => setModalRemoverAberto(true);
+  const fecharModalRemover = () => {
+    setQuantidadeRemover(1);
+    setModalRemoverAberto(false);
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
       <button
         onClick={abrirModal}
-        className="mb-6 px-6 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition"
+        className="mb-4 px-6 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition"
       >
         + Adicionar Mesas
       </button>
 
       <button
-        onClick={removerUltimaMesa}
-        className="mb-6 px-6 py-2 bg-black text-white font-semibold rounded hover:bg-slate-800 transition"
+        onClick={abrirModalRemover}
+        className="mb-6 px-6 py-2 bg-red-600 text-white font-semibold rounded hover:bg-red-700 transition"
       >
         - Remover Mesas
       </button>
 
+      {/* Modal Adicionar Mesas */}
       <Modal
         isOpen={modalAberto}
         onRequestClose={fecharModal}
@@ -153,6 +153,39 @@ const IniciarVenda = () => {
             className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
           >
             Adicionar
+          </button>
+        </div>
+      </Modal>
+
+      {/* Modal Remover Mesas */}
+      <Modal
+        isOpen={modalRemoverAberto}
+        onRequestClose={fecharModalRemover}
+        className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full"
+        overlayClassName="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center"
+      >
+        <h2 className="text-lg font-bold mb-4 text-gray-800">
+          Quantas mesas deseja remover?
+        </h2>
+        <input
+          type="number"
+          min={1}
+          value={quantidadeRemover}
+          onChange={(e) => setQuantidadeRemover(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded mb-4"
+        />
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={fecharModalRemover}
+            className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={() => removerMesas(quantidadeRemover)}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Remover
           </button>
         </div>
       </Modal>

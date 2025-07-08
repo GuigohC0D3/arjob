@@ -84,13 +84,13 @@ def buscar_cliente_por_cpf(cpf):
         conn = connect_db()
         if conn:
             cur = conn.cursor()
-            cur.execute("SELECT id, nome, cpf FROM clientes WHERE cpf = %s", (cpf,))
+            cur.execute("SELECT id, nome, cpf, filial, convenio FROM clientes WHERE cpf = %s", (cpf,))
             cliente = cur.fetchone()
             cur.close()
             conn.close()
 
             if cliente:
-                return {"id": cliente[0], "nome": cliente[1], "cpf": cliente[2]}, 200
+                return {"id": cliente[0], "nome": cliente[1], "cpf": cliente[2], "filial": cliente[3], "convenio": cliente[4]}, 200
             else:
                 return {"error": "Cliente não encontrado"}, 404
     except Exception as e:

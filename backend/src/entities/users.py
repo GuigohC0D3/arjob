@@ -284,7 +284,7 @@ def get_user_cargo(usuario_id):
     """Retorna o cargo do usuário com base no ID."""
     conn = connect_db()
     if conn:
-        try:
+        try:    
             cur = conn.cursor()
             cur.execute("""
                 SELECT c.nome 
@@ -296,8 +296,8 @@ def get_user_cargo(usuario_id):
             cur.close()
             conn.close()
 
-            if cargo and cargo[0]:  # 🔥 Verifica se há um cargo atribuído
-                return cargo[0].lower()  # 🔥 Retorna o cargo em letras minúsculas
+            if cargo and cargo[0]:  
+                return cargo[0].lower() 
             else:
                 print(f"⚠️ Usuário {usuario_id} não tem um cargo atribuído.")
                 return "desconhecido"  # 🔥 Retorna um valor padrão em vez de `None`

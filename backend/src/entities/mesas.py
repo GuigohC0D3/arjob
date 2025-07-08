@@ -159,7 +159,7 @@ def excluir_ultima_mesa():
             mesa = cur.fetchone()
 
             if not mesa:
-                print("⚠️ Nenhuma mesa encontrada para remover.")
+                print("Nenhuma mesa encontrada para remover.")
                 return False
 
             mesa_id = mesa[0]
@@ -168,16 +168,16 @@ def excluir_ultima_mesa():
             cur.execute("DELETE FROM mesas WHERE id = %s", (mesa_id,))
             conn.commit()
 
-            print(f"✅ Mesa {mesa_id} removida com sucesso.")
+            print(f"Mesa {mesa_id} removida com sucesso.")
             return True
 
         except Exception as e:
-            print(f"❌ Erro ao remover última mesa: {e}")
+            print(f"Erro ao remover última mesa: {e}")
             return False
 
         finally:
             cur.close()
             conn.close()
     else:
-        print("❌ Erro ao conectar ao banco de dados.")
+        print("Erro ao conectar ao banco de dados.")
         return False
