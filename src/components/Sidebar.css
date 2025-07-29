@@ -1,0 +1,96 @@
+/* Sidebar padrão */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: -250px; /* Esconde fora da tela */
+    width: 250px;
+    height: 100%;
+    background-color: #f8f9fa;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    transition: left 0.3s ease; /* Transição suave */
+    z-index: 100;
+  }
+  
+  /* Sidebar aberta */
+  .sidebar.open {
+    left: 0; /* Mostra a sidebar */
+  }
+  
+  /* Botão de fechar */
+  .close-btn {
+    position: absolute;
+    top: 1rem;
+    color: #e9ecef;
+    left: 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.5rem;
+  }
+  
+  /* Botão hambúrguer */
+  .hamburger-btn {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    background: transparent;
+    color: rgb(46, 43, 43);
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 101; /* Fica acima da sidebar */
+    transition: background 0.3s ease;
+  }
+  
+  .hamburger-btn:hover {
+    background: transparent;
+  }
+  
+  /* Esconde o botão hambúrguer quando necessário */
+  .hidden {
+    display: none;
+  }
+  
+  /* Alinhamento do menu */
+  .menu ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .menu li {
+    padding: 1rem;
+  }
+  
+  .menu a {
+    text-decoration: none;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* Espaço entre ícone e texto */
+  }
+  
+  .menu a:hover {
+    background-color: #e9ecef;
+    border-radius: 4px;
+  }
+  
+  .sidebar-header {
+    padding: 1rem;
+    background-color: #343536;
+    color: white;
+    font-size: 1.5rem;
+    text-align: center;
+  }
+  
+  .sidebar-cargo {
+    padding: 1rem;
+    font-size: 1rem;
+    color: #555;
+  }
+  
