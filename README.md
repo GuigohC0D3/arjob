@@ -22,17 +22,10 @@ O **ARJOB** é uma solução interna que gerencia comandas e pedidos dentro do c
 
 ## 🛠️ Tecnologias Utilizadas
 
-- **Frontend**: ReactJS (ou outra, me confirma!)  
-- **Backend**: Node.js / Express  
-- **Banco de Dados**: MongoDB (ou outro?)  
+- **Frontend**: ReactJS
+- **Backend**: Python
+- **Banco de Dados**: Postgresql
 - **Linguagens**: JavaScript e Python  
-
----
-
-## 📂 Estrutura do Projeto
-
-
----
 
 ## 🖥️ Como Rodar o Projeto Localmente
 
