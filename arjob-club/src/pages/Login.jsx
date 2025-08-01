@@ -8,7 +8,6 @@ const Login = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // Função para formatar o CPF
   const handleCpfChange = (e) => {
     const value = e.target.value;
     const cleanedValue = value.replace(/\D/g, "");
@@ -20,28 +19,46 @@ const Login = () => {
     setCpf(formattedCPF);
   };
 
-  // Função para autenticar o usuário
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
       const response = await api.post("/login", { cpf, senha });
 
       if (response.data && response.data.token) {
-        const token = response.data.token; // Corrigido para pegar o token correto
-        console.log(response.data);
+        const { token, user, permissions } = response.data;
 
-        // Salva no sessionStorage e localStorage
+        console.log("🔐 Dados recebidos no login:", {
+          token,
+          user,
+          permissions,
+        });
+
+        // ✅ Limpa session anterior
+        sessionStorage.clear();
+
         sessionStorage.setItem("authToken", token);
-        localStorage.setItem("token", token);
+        sessionStorage.setItem("user", JSON.stringify(user));
+        sessionStorage.setItem("permissions", JSON.stringify(permissions));
+        localStorage.setItem("token", token); // opcional
 
-        sessionStorage.setItem("user", JSON.stringify(response.data.user));
-        sessionStorage.setItem(
-          "permissions",
-          JSON.stringify(response.data.permissions)
-        );
+        console.log("⚡ Usuario salvo:", user);
+        console.log("🧭 SessionStorage logo após login:", {
+          authToken: sessionStorage.getItem("authToken"),
+          user: sessionStorage.getItem("user"),
+          twoFAConfirmed: sessionStorage.getItem("twoFAConfirmed"),
+        });
 
-        console.log("✅ Token armazenado com sucesso:", token);
-        navigate("/Home");
+        if (user.otp_verificacao) {
+          console.log(
+            "🔒 Usuário possui 2FA ativo. Redirecionando para /verify-2fa."
+          );
+          sessionStorage.setItem("twoFAConfirmed", "false");
+          navigate("/verify-2fa");
+        } else {
+          console.log("✅ Login normal, indo direto para Home.");
+          sessionStorage.setItem("twoFAConfirmed", "true");
+          navigate("/Home");
+        }
       } else {
         setError("Erro: Token não recebido do servidor.");
       }
@@ -55,7 +72,7 @@ const Login = () => {
   };
 
   const handleForgotPassword = () => {
-    navigate("/forgot-password"); 
+    navigate("/forgot-password");
   };
 
   return (

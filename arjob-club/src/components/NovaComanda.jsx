@@ -29,7 +29,9 @@ const NovaComanda = () => {
 
   async function verificarComandaAberta(mesaId) {
     try {
-      const response = await fetch(`http://10.11.1.80:5000/comandas/mesa/${mesaId}`);
+      const response = await fetch(
+        `http://10.11.1.80:5000/comandas/mesa/${mesaId}`
+      );
       const data = await response.json();
 
       if (response.ok && data.comanda && data.comanda.id) {
@@ -78,7 +80,9 @@ const NovaComanda = () => {
       );
 
       console.log("✅ Comanda criada com sucesso:", responseData);
-      navigate(`/comanda-aberta/${responseData.id}`, { state: { atendente: atendenteObj } });
+      navigate(`/comanda-aberta/${responseData.id}`, {
+        state: { atendente: atendenteObj },
+      });
     } catch (error) {
       console.error("❌ Erro ao conectar ao servidor:", error);
       alert("Erro de conexão com o servidor ao abrir a comanda.");

@@ -294,6 +294,80 @@ const ComandaAberta = () => {
     }
   };
 
+  const handleImprimirParcial = () => {
+    const janela = window.open("", "_blank", "width=800,height=600");
+    const clienteNome = clienteSelecionado?.nome || "Não selecionado";
+    const clienteCPF = clienteSelecionado?.cpf || "---";
+    const clienteConvenio = clienteSelecionado?.convenio || "---";
+    const dataHora = new Date().toLocaleString("pt-BR");
+
+    let conteudoHTML = `
+    <html>
+    <head>
+      <title>Parcial da Comanda</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 20px; font-size: 12px; }
+        h1, h3, p { margin: 0 0 8px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #333; padding: 4px 6px; text-align: left; font-size: 11px; }
+        .total { font-size: 1em; font-weight: bold; margin-top: 15px; }
+        .assinatura { margin-top: 30px; }
+        @media print {
+          table, tr, td, th { page-break-inside: avoid; }
+        }
+      </style>
+    </head>
+    <body>
+      <h1>Parcial da Comanda Nº ${comandaId}</h1>
+      <h3>Cliente: ${clienteNome}</h3>
+      <p>CPF: ${clienteCPF}<br/>
+         Data e Hora: ${dataHora}<br/>
+         Convênio: ${clienteConvenio}</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>Qtd</th>
+            <th>Unitário</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${comandaItens
+            .map(
+              (item) => `
+            <tr>
+              <td>${item.nome}</td>
+              <td>${item.quantidade}</td>
+              <td>R$ ${item.preco.toFixed(2)}</td>
+              <td>R$ ${(item.preco * item.quantidade).toFixed(2)}</td>
+            </tr>
+          `
+            )
+            .join("")}
+        </tbody>
+      </table>
+
+      <div class="total">
+        Total da Comanda: R$ ${totalComanda.toFixed(2)}
+      </div>
+
+      <div class="assinatura">
+        _________________________________<br/>
+        Assinatura do Cliente
+      </div>
+    </body>
+    </html>
+  `;
+
+    janela.document.open();
+    janela.document.write(conteudoHTML);
+    janela.document.close();
+
+    janela.onload = () => janela.print();
+  };
+
   // Filtragem e paginação dos produtos
   const produtosFiltrados = produtos
     .filter(
@@ -319,26 +393,27 @@ const ComandaAberta = () => {
   return (
     <>
       <Toast ref={toast} />
-      <motion.div className="p-6 md:p-10 max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
-        {/* Botão para voltar para mesas */}
-        <div className="flex justify-start mb-6">
+
+      <motion.div className="p-4 md:p-6 w-full max-w-6xl mx-auto bg-white rounded-lg shadow-lg">
+        {/* Voltar */}
+        <div className="flex justify-start mb-4">
           <button
             onClick={() => navigate("/iniciar-venda")}
-            className="bg-neutral-700 hover:bg-neutral-800 text-white px-6 py-2 rounded-lg transition"
+            className="bg-neutral-700 hover:bg-neutral-800 text-white px-5 py-2 rounded-lg transition"
           >
             ← Voltar para mesas
           </button>
         </div>
 
         {/* Cabeçalho */}
-        <h1 className="text-3xl font-bold mb-2 text-center text-gray-800">
-          Comanda da Mesa {comandaId}
+        <h1 className="text-2xl md:text-3xl font-bold mb-2 text-center text-gray-800">
+          Comanda Nº {comandaId}
         </h1>
         <p className="text-center text-gray-500 mb-6">
           Atendente: {usuarioLogado.nome || "Não informado"}
         </p>
 
-        {/* Input de busca */}
+        {/* Busca */}
         <div className="mb-6">
           <input
             type="text"
@@ -349,15 +424,15 @@ const ComandaAberta = () => {
           />
         </div>
 
-        {/* Botões de categorias */}
-        <div className="flex flex-wrap justify-center gap-3 mb-8">
+        {/* Categorias */}
+        <div className="flex flex-wrap justify-center gap-3 mb-6">
           <button
             className={`px-4 py-2 rounded-full border transition 
-              ${
-                !categoriaSelecionada
-                  ? "bg-blue-600 text-white shadow"
-                  : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100"
-              }`}
+          ${
+            !categoriaSelecionada
+              ? "bg-blue-600 text-white shadow"
+              : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100"
+          }`}
             onClick={() => setCategoriaSelecionada(null)}
           >
             Todas
@@ -366,11 +441,11 @@ const ComandaAberta = () => {
             <button
               key={`${cat}-${idx}`}
               className={`px-4 py-2 rounded-full border transition
-                ${
-                  categoriaSelecionada === cat
-                    ? "bg-blue-600 text-white shadow"
-                    : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100"
-                }`}
+            ${
+              categoriaSelecionada === cat
+                ? "bg-blue-600 text-white shadow"
+                : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100"
+            }`}
               onClick={() => setCategoriaSelecionada(cat)}
             >
               {cat}
@@ -378,34 +453,62 @@ const ComandaAberta = () => {
           ))}
         </div>
 
-        {/* Lista de produtos */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {produtosPaginados.map((produto) => (
-            <motion.div
-              key={produto.id}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="flex flex-col justify-between p-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition duration-300 ease-in-out h-full min-h-[240px]"
-            >
-              <div className="flex flex-col items-center text-center flex-grow">
-                <h3 className="text-lg font-semibold text-gray-800 break-words">
-                  {produto.nome}
-                </h3>
-                <p className="mt-2 text-gray-500 text-base">
-                  R$ {produto.preco.toFixed(2)}
-                </p>
-              </div>
+        {/* Produtos em 2 colunas */}
+        <div className="flex gap-6">
+          <div className="flex flex-col gap-4 w-1/2">
+            {produtosPaginados
+              .filter((_, idx) => idx % 2 === 0)
+              .map((produto) => (
+                <div
+                  key={produto.id}
+                  className="flex justify-between items-center p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md hover:bg-gray-50 transition"
+                >
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 break-words">
+                      {produto.nome}
+                    </h3>
+                    <p className="text-gray-500 text-sm">
+                      R$ {produto.preco.toFixed(2)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => adicionarProduto(produto)}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition"
+                  >
+                    Adicionar
+                  </button>
+                </div>
+              ))}
+          </div>
 
-              <button
-                onClick={() => adicionarProduto(produto)}
-                className="mt-6 w-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2 rounded-lg shadow transition-all duration-300"
-              >
-                Adicionar
-              </button>
-            </motion.div>
-          ))}
-        </div>  
+          <div className="flex flex-col gap-4 w-1/2">
+            {produtosPaginados
+              .filter((_, idx) => idx % 2 !== 0)
+              .map((produto) => (
+                <div
+                  key={produto.id}
+                  className="flex justify-between items-center p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md hover:bg-gray-50 transition"
+                >
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 break-words">
+                      {produto.nome}
+                    </h3>
+                    <p className="text-gray-500 text-sm">
+                      R$ {produto.preco.toFixed(2)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => adicionarProduto(produto)}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition"
+                  >
+                    Adicionar
+                  </button>
+                </div>
+              ))}
+          </div>
+        </div>
 
+        {/* Paginator */}
         <div className="flex justify-center mt-8">
           <Paginator
             first={currentPage * produtosPorPagina}
@@ -415,8 +518,8 @@ const ComandaAberta = () => {
           />
         </div>
 
-        {/* Itens da Comanda */}
-        <div className="mt-12 bg-gray-50 p-8 rounded-lg shadow-inner">
+        {/* Itens da comanda */}
+        <div className="mt-12 bg-gray-50 p-6 rounded-lg shadow-inner">
           <h2 className="font-semibold text-xl mb-6 text-gray-700 border-b pb-2">
             Itens da Comanda
           </h2>
@@ -477,7 +580,7 @@ const ComandaAberta = () => {
           </div>
         </div>
 
-        {/* Fechamento da Comanda */}
+        {/* Total */}
         <div className="mt-12 text-center">
           <h3 className="text-xl font-bold text-gray-800 mb-4">
             Total:{" "}
@@ -489,6 +592,13 @@ const ComandaAberta = () => {
             className="bg-red-600 hover:bg-red-700 text-white px-10 py-3 rounded-lg transition font-semibold uppercase shadow-md"
           >
             Fechar Comanda
+          </button>
+
+          <button
+            onClick={handleImprimirParcial}
+            className="ml-4 bg-blue-600 hover:bg-blue-700 text-white px-10 py-3 rounded-lg transition font-semibold uppercase shadow-md"
+          >
+            Imprimir Parcial
           </button>
         </div>
       </motion.div>
